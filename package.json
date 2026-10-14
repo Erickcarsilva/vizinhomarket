@@ -1,0 +1,15 @@
+{
+  "name": "vizinhomarket",
+  "version": "1.0.0",
+  "description": "VizinhoMarket — apps, backend e site",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test:db": "node supabase/tests/run.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.9"
+  },
+  "private": true
+}
