@@ -1,0 +1,111 @@
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { useCart } from "@/lib/CartContext";
+import { brl, FULFILLMENT, PAYMENT } from "@/lib/constants";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import CartItems from "@/components/checkout/CartItems";
+import ChoiceGroup from "@/components/checkout/ChoiceGroup";
+import SavedAddresses from "@/components/checkout/SavedAddresses";
+
+const Label = ({ children }) => <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold mb-3">{children}</p>;
+
+export default function Checkout() {
+  const navigate = useNavigate();
+  const { cart, subtotal, clear } = useCart();
+  const saved = JSON.parse(localStorage.getItem("perto_customer") || "{}");
+  const modes = cart.store?.delivery_modes?.length ? cart.store.delivery_modes : ["loja"];
+  const savedAddrs = JSON.parse(localStorage.getItem("perto_addresses") || "[]");
+  const defIdx = Number(localStorage.getItem("perto_addresses_default") || "-1");
+  const defAddr = defIdx >= 0 ? savedAddrs[defIdx] : "";
+  const [form, setForm] = useState({ name: saved.name || "", phone: saved.phone || "", address: saved.address || defAddr || "", fulfillment: modes[0], payment: "pix", change_for: "", notes: "" });
+  const [sending, setSending] = useState(false);
+  // Uma chave por tentativa de compra: se o clique repetir ou a conexão cair, o servidor devolve o mesmo pedido.
+  const [idempotencyKey] = useState(() => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`));
+  const [error, setError] = useState("");
+  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v?.target ? v.target.value : v }));
+
+  if (!cart.items.length) {
+    return (
+      <div className="max-w-md mx-auto px-5 py-32 text-center">
+        <h1 className="font-display text-4xl">Seu carrinho está vazio</h1>
+        <Link to="/" className="inline-block mt-8 h-12 leading-[3rem] px-8 rounded-full bg-primary text-primary-foreground font-semibold">Explorar lojas</Link>
+      </div>
+    );
+  }
+
+  const pickup = form.fulfillment === "retirada";
+  const fee = pickup ? 0 : cart.store.delivery_fee;
+  const total = subtotal + fee;
+  const belowMin = subtotal < (cart.store.min_order || 0);
+  const valid = form.name && form.phone && (pickup || form.address) && !belowMin;
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSending(true);
+    setError("");
+    localStorage.setItem("perto_customer", JSON.stringify({ name: form.name, phone: form.phone, address: form.address }));
+    try {
+      const order = await base44.entities.Order.create({
+        store_id: cart.store.id, idempotency_key: idempotencyKey,
+        customer_name: form.name, customer_phone: form.phone, address: pickup ? "" : form.address,
+        fulfillment: form.fulfillment, payment_method: form.payment,
+        change_for: form.payment === "dinheiro" && form.change_for ? Number(form.change_for) : undefined,
+        notes: form.notes, items: cart.items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
+      });
+      clear();
+      navigate(`/pedido/${order.id}`);
+    } catch (err) {
+      setSending(false);
+      setError(err?.message || "Não foi possível registrar seu pedido. Tente novamente.");
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="max-w-5xl mx-auto px-5 py-12 grid lg:grid-cols-[1fr_360px] gap-12">
+      <div className="space-y-10">
+        <div>
+          <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Seu pedido</p>
+          <h1 className="font-display text-4xl mt-2">{cart.store.name}</h1>
+          <Link to={`/loja/${cart.store.id}`} className="inline-block mt-3 text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">Continuar comprando</Link>
+          <div className="mt-4"><CartItems /></div>
+        </div>
+        <div>
+          <Label>Como receber</Label>
+          <ChoiceGroup options={modes.map((m) => [m, FULFILLMENT[m]])} value={form.fulfillment} onChange={set("fulfillment")} />
+        </div>
+        <div className="space-y-3">
+          <Label>Seus dados</Label>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Input placeholder="Nome" value={form.name} onChange={set("name")} className="h-12 rounded-xl" />
+            <Input placeholder="WhatsApp / telefone" value={form.phone} onChange={set("phone")} className="h-12 rounded-xl" />
+          </div>
+          {!pickup && (
+            <div className="space-y-3">
+              <SavedAddresses value={form.address} onPick={(a) => set("address")(a)} />
+              <Input placeholder="Endereço completo (rua, número, bairro)" value={form.address} onChange={set("address")} className="h-12 rounded-xl" />
+            </div>
+          )}
+          <Textarea placeholder="Observações (opcional)" value={form.notes} onChange={set("notes")} className="rounded-xl" />
+        </div>
+        <div className="space-y-3">
+          <Label>Pagamento na {pickup ? "retirada" : "entrega"}</Label>
+          <ChoiceGroup options={Object.entries(PAYMENT)} value={form.payment} onChange={set("payment")} />
+          {form.payment === "dinheiro" && <Input type="number" placeholder="Troco para quanto? (opcional)" value={form.change_for} onChange={set("change_for")} className="h-12 rounded-xl max-w-xs" />}
+        </div>
+      </div>
+      <aside className="lg:sticky lg:top-24 h-fit bg-card border border-border rounded-2xl p-6 space-y-3">
+        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>{brl(subtotal)}</span></div>
+        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Entrega</span><span>{fee ? brl(fee) : "Grátis"}</span></div>
+        <div className="flex justify-between pt-3 border-t border-border"><span className="font-semibold">Total</span><span className="font-display text-2xl">{brl(total)}</span></div>
+        {belowMin && <p className="text-sm text-accent">Pedido mínimo: {brl(cart.store.min_order)}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <button disabled={!valid || sending} className="w-full h-13 py-4 rounded-full bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition">
+          {sending && <Loader2 className="w-4 h-4 animate-spin" />} Fazer pedido
+        </button>
+      </aside>
+    </form>
+  );
+}

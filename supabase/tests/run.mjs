@@ -37,7 +37,7 @@ const eq = (a, b) => { if (String(a) !== String(b)) throw new Error(`esperado ${
 
 // ---------- Montagem ----------
 await db.exec(readFileSync(join(here, 'shim_supabase_local.sql'), 'utf8'));
-for (const f of readdirSync(migDir).filter(f => f.endsWith('.sql')).sort()) {
+for (const f of readdirSync(migDir).filter(f => f.endsWith('.sql') && !f.includes('supabase_platform')).sort()) {
   await db.exec(readFileSync(join(migDir, f), 'utf8'));
 }
 
@@ -324,6 +324,30 @@ await as(cour1);
 await ok('Entregador não vê CPF de outros entregadores', async () => eq((await q('select count(*) c from public.couriers'))[0].c, 1));
 await as(null);
 await fails('Visitante não cria pedido', () => q("select public.create_order($1, '[]'::jsonb, 'pickup', 'pix', 'chave-anon-01', 'x', 'y')", [storeA]), 'permission denied');
+
+
+// ---------- 11. Ajustes para as telas (19/10) ----------
+await as(null);
+await fails('Visitante não vê a comissão negociada da loja', () => q('select commission_rate from public.stores'), 'permission denied');
+await as(custA);
+await fails('Cliente não vê a comissão negociada da loja', () => q('select commission_rate from public.stores'), 'permission denied');
+await ok('Cliente lê colunas públicas da loja', async () => eq((await q('select name from public.stores where id = $1', [storeA]))[0].name, 'Mercado Teste'));
+await fails('Endereço sem bairro é recusado quando a loja entrega por bairro', async () => {
+  const [{ id }] = await q("insert into public.addresses (user_id, line, city_id) values ($1, 'Rua Sem Bairro, 5', $2) returning id", [custA.id, city]);
+  return createOrder([{ product_id: pArroz, quantity: 1 }], 'chave-pedido-0030', { address: id });
+}, 'Informe o bairro');
+await ok('Endereço sem bairro é aceito quando a loja usa taxa única', async () => {
+  await as(ownerA); await q('delete from public.delivery_zones where store_id = $1', [storeA]);
+  await as(custA);
+  const [{ id: addr }] = await q("insert into public.addresses (user_id, line, city_id) values ($1, 'Rua Sem Bairro, 6', $2) returning id", [custA.id, city]);
+  const id = (await createOrder([{ product_id: pArroz, quantity: 1 }], 'chave-pedido-0031', { address: addr }))[0].id;
+  return eq((await q('select delivery_fee from public.orders where id = $1', [id]))[0].delivery_fee, '0.00');
+});
+await ok('Cliente indica uma loja', async () => { await q("insert into public.store_referrals (store_name, contact) values ('Padaria Nova', '67999990000')"); return true; });
+await ok('Cliente não lê as indicações', async () => eq((await q('select count(*) c from public.store_referrals'))[0].c, 0));
+await fails('Cliente não forja quem indicou', () => q("insert into public.store_referrals (store_name, referred_by) values ('X loja', $1)", [custB.id]), 'permission denied');
+await as(admin);
+await ok('Admin lê as indicações com o autor gravado pelo servidor', async () => eq((await q('select referred_by from public.store_referrals'))[0].referred_by, custA.id));
 
 // ---------- Relatório ----------
 const passed = results.filter(r => r.pass).length;

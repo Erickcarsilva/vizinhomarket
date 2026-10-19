@@ -162,6 +162,7 @@ begin
     if a.city_id <> s.city_id then raise exception 'Endereço fora da cidade da loja'; end if;
     select exists (select 1 from public.delivery_zones where store_id = s.id) into v_has_zones;
     if v_has_zones then
+      if a.neighborhood_id is null then raise exception 'Informe o bairro do endereço de entrega'; end if;
       select fee into v_fee from public.delivery_zones where store_id = s.id and neighborhood_id = a.neighborhood_id;
       if not found then raise exception 'A loja não entrega neste bairro'; end if;
     else

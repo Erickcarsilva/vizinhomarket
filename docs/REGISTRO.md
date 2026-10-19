@@ -84,5 +84,39 @@ O build compila, mas o app não roda fora do Base44 sem `VITE_BASE44_APP_ID`: lo
 - `supabase/migrations/202610140001_base.sql` a `202610140004_reference_data.sql`
 - `supabase/tests/run.mjs`, `supabase/tests/shim_supabase_local.sql`, `supabase/README.md`
 
+## Fase 2 — Telas do Base44 ligadas ao backend novo (19/10/2026)
+
+### Decisões
+- 19/10: as telas do Base44 foram mantidas. Uma camada de compatibilidade (`apps/web/src/api/base44Client.js`) traduz as chamadas antigas para o Supabase.
+- 19/10: mensalidade e teste de 30 dias removidos das telas. A antiga tela "Assinatura" agora leva a "Comissões e faturas".
+- 19/10: bairro do endereço é opcional enquanto não houver lista oficial. Se a loja tiver zonas de entrega, o pedido exige bairro.
+- 19/10: a taxa de comissão da loja não aparece para o público, só para o dono e o admin.
+- 19/10: o vínculo avaliação→pedido só pode ser lido por quem está logado. A tela do pedido precisa dele.
+- 19/10: a imagem padrão (sem foto) passou a vir de dentro do app. Antes vinha do servidor do Wix.
+
+### Feito
+- Login e cadastro com código por e-mail; papéis cliente, lojista e admin.
+- Cadastro de loja: o horário em texto vira 7 dias estruturados, e o CPF/CNPJ fica em dados privados. A tela agora mostra o erro se o envio falhar.
+- O admin aprova a loja, e o lojista cadastra e edita produtos (sem apagar o histórico).
+- O pedido é calculado no servidor (proteção contra repetição do envio). Cliente vê o código de entrega; lojista avança os status e conclui com o código; comissão por pedido; avaliação.
+- Tabela "Indique uma loja" (`store_referrals`).
+- Migração de plataforma: tempo real e armazenamento de imagens (`202610190001_supabase_platform.sql`), não testada localmente.
+
+### Testes executados
+| Teste | Resultado |
+|---|---|
+| Bateria do banco (PGlite) | 96/96 passaram |
+| Ponta a ponta pelas telas (`e2e/pedido-completo.mjs`): Postgres 17.5 + PostgREST 12.2.3 + login simulado + Chromium, tela de celular 390px | 19/19 passaram |
+| Fraudes pela API com login de cliente: alterar total ou status, confirmar a própria entrega, ler CPF/CNPJ | Todas recusadas (HTTP 403 ou vazio) |
+| Preço adulterado no carrinho do navegador (R$ 0,01) | Ignorado; servidor cobrou R$ 45,00 |
+
+### Limites do teste ponta a ponta
+- O login é simulado: aceita qualquer código, e o e-mail real do Supabase não foi testado.
+- Tempo real, envio de imagem e app do entregador não foram testados.
+
+### Problemas encontrados e corrigidos
+- A tela do pedido falhava com "sem permissão" ao buscar a avaliação: faltava liberar `reviews.order_id`.
+- O cadastro de loja não tinha tratamento de erro.
+
 ## Próxima tarefa recomendada
-Erick: criar a conta e o projeto de teste no Supabase. Claude: aplicar as migrações no projeto de teste (com aprovação), rodar a bateria lá e iniciar a Fase 2 (monorepo e troca do login do Base44 pelo Supabase).
+Erick: criar o projeto `vizinhomarket-teste` no Supabase (plano Free, São Paulo) e conversar com a primeira loja piloto. Claude: aplicar as migrações no projeto de teste (com aprovação), repetir o teste ponta a ponta contra o Supabase real (e-mail, tempo real, imagens) e preparar o build Android (Capacitor).

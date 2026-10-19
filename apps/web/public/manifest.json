@@ -1,0 +1,15 @@
+{
+  "name": "VizinhoMarket",
+  "short_name": "VizinhoMarket",
+  "description": "O comércio de Sidrolândia no seu celular.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4EFE6",
+  "theme_color": "#1F4D3A",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

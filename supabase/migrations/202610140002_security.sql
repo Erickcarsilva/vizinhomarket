@@ -77,6 +77,7 @@ alter table public.commission_rules     enable row level security;
 alter table public.invoices             enable row level security;
 alter table public.push_tokens          enable row level security;
 alter table public.audit_log            enable row level security;
+alter table public.store_referrals      enable row level security;
 
 -- ---------- Referência pública: cidades, bairros, categorias ----------
 grant select on public.cities, public.neighborhoods, public.categories to anon, authenticated;
@@ -98,7 +99,12 @@ grant select on public.user_roles to authenticated;
 create policy roles_read on public.user_roles for select to authenticated using (user_id = auth.uid() or public.is_admin());
 
 -- ---------- Comércios ----------
-grant select on public.stores to anon, authenticated;
+-- Comissão negociada com cada loja não é pública: todas as colunas, menos commission_rate.
+grant select (id, city_id, category_id, name, slug, description, logo_url, cover_url, phone_public, address_line,
+              neighborhood_id, lat, lng, is_paused, accepts_pickup, accepts_store_delivery, accepts_platform_delivery,
+              delivery_fee_default, min_order, prep_time_min, status, rating_avg, rating_count, approved_at,
+              created_by, created_at, updated_at)
+  on public.stores to anon, authenticated;
 -- O comércio edita só campos operacionais. status, commission_rate, rating_*, city_id, category_id, slug: só por função.
 grant update (name, description, logo_url, cover_url, phone_public, address_line, neighborhood_id, lat, lng,
               is_paused, accepts_pickup, accepts_store_delivery, accepts_platform_delivery,
@@ -188,6 +194,9 @@ create policy order_secrets_customer on public.order_secrets for select to authe
 -- ---------- Avaliações (públicas; escrita por função) ----------
 -- Quem avaliou e o entregador não ficam expostos: só as colunas abaixo são legíveis.
 grant select (id, store_id, store_rating, comment, created_at) on public.reviews to anon, authenticated;
+-- order_id só para usuários logados: permite ao cliente ver a avaliação junto do próprio pedido
+-- (os dados do pedido continuam protegidos pela política de orders).
+grant select (order_id) on public.reviews to authenticated;
 create policy reviews_read on public.reviews for select using (true);
 
 -- ---------- Financeiro ----------
@@ -195,6 +204,15 @@ grant select on public.commission_rules to authenticated;
 create policy commission_rules_admin on public.commission_rules for select to authenticated using (public.is_admin());
 grant select on public.invoices to authenticated;
 create policy invoices_read on public.invoices for select to authenticated using (public.is_store_owner(store_id) or public.is_admin());
+
+-- ---------- Indicações ----------
+grant insert (store_name, category, contact, notes) on public.store_referrals to authenticated;
+grant select on public.store_referrals to authenticated;
+create policy referrals_insert on public.store_referrals for insert to authenticated with check (true);
+create policy referrals_admin_read on public.store_referrals for select to authenticated using (public.is_admin());
+create function public.set_referrer() returns trigger language plpgsql security definer set search_path = public as $$
+begin new.referred_by := auth.uid(); return new; end $$;
+create trigger trg_referrals_owner before insert on public.store_referrals for each row execute function public.set_referrer();
 
 -- ---------- Push e auditoria ----------
 grant select, insert, delete on public.push_tokens to authenticated;

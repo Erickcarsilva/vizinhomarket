@@ -204,7 +204,7 @@ create table public.addresses (
   line            text not null check (char_length(line) between 3 and 200),
   reference       text check (char_length(reference) <= 200),
   city_id         uuid not null references public.cities(id),
-  neighborhood_id uuid not null references public.neighborhoods(id),
+  neighborhood_id uuid references public.neighborhoods(id),   -- opcional enquanto a lista de bairros não estiver cadastrada
   lat             double precision,
   lng             double precision,
   is_default      boolean not null default false,
@@ -339,6 +339,17 @@ create table public.invoices (
   created_at       timestamptz not null default now(),
   paid_at          timestamptz,
   unique (store_id, period_start, period_end)
+);
+
+-- ---------- Indicação de loja (cliente sugere um comércio) ----------
+create table public.store_referrals (
+  id           uuid primary key default gen_random_uuid(),
+  store_name   text not null check (char_length(store_name) between 2 and 120),
+  category     text check (char_length(category) <= 60),
+  contact      text check (char_length(contact) <= 120),
+  notes        text check (char_length(notes) <= 500),
+  referred_by  uuid references auth.users(id),
+  created_at   timestamptz not null default now()
 );
 
 -- ---------- Notificações e auditoria ----------
