@@ -17,6 +17,8 @@ import {
   LogOut,
   LogIn,
   UserPlus,
+  HelpCircle,
+  MessageCircle,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -107,8 +109,7 @@ export default function MobileMenu() {
                 <NavLink to="/lojista" icon={Store} label="Painel da loja" onClick={close} />
                 <NavLink to="/gerenciar-produtos" icon={Package} label="Produtos" onClick={close} />
                 <NavLink to="/relatorios" icon={BarChart3} label="Relatórios" onClick={close} />
-                <NavLink to="/financeiro" icon={Wallet} label="Financeiro" onClick={close} />
-                <NavLink to="/financeiro" icon={Settings} label="Comissões" onClick={close} />
+                <NavLink to="/financeiro" icon={Wallet} label="Comissões" onClick={close} />
                 <NavLink to="/editar-perfil" icon={Settings} label="Perfil da loja" onClick={close} />
               </>
             )}
@@ -120,6 +121,17 @@ export default function MobileMenu() {
                 <NavLink to="/admin" icon={Shield} label="Operação" onClick={close} />
               </>
             )}
+
+            {!hasStores && (
+              <>
+                <GroupLabel>Para comerciantes</GroupLabel>
+                <NavLink to="/cadastrar-loja" icon={Store} label="Cadastre sua loja" onClick={close} />
+              </>
+            )}
+
+            <GroupLabel>Ajuda</GroupLabel>
+            <NavLink to="/faq" icon={HelpCircle} label="Dúvidas" onClick={close} />
+            <NavLink to="/suporte" icon={MessageCircle} label="Suporte" onClick={close} />
 
             {isAuthenticated && (
               <div className="pt-4 px-2">

@@ -50,29 +50,12 @@ export default function Layout() {
         </div>
       </header>
       <main className="flex-1"><Outlet /></main>
-      <footer className="border-t border-border/60 mt-24">
-        <div className="max-w-6xl mx-auto px-5 py-10 flex flex-col sm:flex-row gap-6 justify-between text-sm text-muted-foreground">
-          <p><Brand size="sm" className="text-foreground" /> — o comércio de Sidrolândia, a um toque.</p>
-          <div className="flex gap-5">
-            <Link to="/busca" className="hover:text-foreground transition-colors">Busca</Link>
-            <Link to="/vitrine" className="hover:text-foreground transition-colors">Vitrine</Link>
-            <Link to="/categorias" className="hover:text-foreground transition-colors">Categorias</Link>
-            <Link to="/sobre" className="hover:text-foreground transition-colors">Sobre</Link>
-            <Link to="/avaliacoes" className="hover:text-foreground transition-colors">Avaliações</Link>
-            <Link to="/cadastrar-loja" className="hover:text-foreground transition-colors">Cadastre sua loja</Link>
-            <Link to="/lojista" className="hover:text-foreground transition-colors">Área do lojista</Link>
-            <Link to="/entregador-dashboard" className="hover:text-foreground transition-colors">Entregador</Link>
-            {user?.role === "admin" && <Link to="/admin" className="hover:text-foreground transition-colors">Administração</Link>}
-          </div>
-          <div className="flex gap-5 mt-2">
-            <Link to="/configuracoes-notificacoes" className="hover:text-foreground transition-colors">Notificações</Link>
-            <Link to="/financeiro" className="hover:text-foreground transition-colors">Comissões</Link>
-            {user?.role === "admin" && <Link to="/admin-dashboard" className="hover:text-foreground transition-colors">Painel admin</Link>}
-            <Link to="/faq" className="hover:text-foreground transition-colors">Dúvidas</Link>
-            <Link to="/indique-loja" className="hover:text-foreground transition-colors">Indique uma loja</Link>
-            <Link to="/termos-uso" className="hover:text-foreground transition-colors">Termos de uso</Link>
+      <footer className="border-t border-border/60 mt-16">
+        <div className="max-w-6xl mx-auto px-5 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+          <p><Brand size="sm" className="text-foreground" /> · Sidrolândia/MS</p>
+          <div className="flex gap-4">
+            <Link to="/termos-uso" className="hover:text-foreground transition-colors">Termos</Link>
             <Link to="/privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
-            <Link to="/suporte" className="hover:text-foreground transition-colors">Suporte</Link>
           </div>
         </div>
       </footer>
