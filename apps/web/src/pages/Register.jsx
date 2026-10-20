@@ -35,7 +35,11 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await base44.auth.register({ email, password });
+      const res = await base44.auth.register({ email, password });
+      if (res && res.needsVerification === false) {
+        window.location.href = safeReturnTo();
+        return;
+      }
       setShowOtp(true);
     } catch (err) {
       setError(err.message || "Falha no cadastro");

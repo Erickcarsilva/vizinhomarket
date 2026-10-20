@@ -370,8 +370,10 @@ const auth = {
     fail(error);
   },
   async register({ email, password, full_name, phone }) {
-    const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name, phone } } });
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name, phone } } });
     fail(error);
+    // Sem confirmação por e-mail (configuração do Supabase), a sessão já vem pronta e não há código a digitar.
+    return { needsVerification: !data?.session };
   },
   async verifyOtp({ email, otpCode }) {
     let res = await supabase.auth.verifyOtp({ email, token: otpCode, type: "signup" });
