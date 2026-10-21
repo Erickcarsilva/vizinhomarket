@@ -208,5 +208,42 @@ O build compila, mas o app não roda fora do Base44 sem `VITE_BASE44_APP_ID`: lo
 | e2e Bloco 1 | 22/22 |
 | e2e painel admin | 28/28 |
 
+## Correções pré-piloto (21/10/2026) — ramo `correcoes-pre-piloto`
+
+Autorizado por Erick: itens 1 a 8 de uma vez, um commit por item, revisão no fim. Nada no banco real, nada publicado, sem push.
+
+| Item | O que mudou | Evidência |
+|---|---|---|
+| 1 | Totais do comerciante calculados no servidor (`store_summary`, `store_daily`, `store_top_products`); listas com "Carregar mais" (Histórico, Comissões, Pedidos do admin). Fim do limite de 500 pedidos. | banco 148/148 (seção 14, 1.350 pedidos); `telas.mjs` com 623 entregues bate com o banco |
+| 2 | Farmácia inativa (migração 202610210003) e fora das telas; cadastro não cai mais na primeira categoria. | banco 151/151 (seção 15) |
+| 3 | Suporte sem contatos inventados (VITE_SUPPORT_*); Sobre/FAQ/Ajuda sem teste grátis de 30 dias, sem 7,99% fixo, sem entrega pela plataforma; comerciante não escolhe mais "Entrega pela plataforma". | revisão de texto; e2e |
+| 4 | 43 pacotes sem uso removidos, 35 componentes de interface e 2 arquivos mortos; React Router 7.18.4. | `npm audit --omit=dev` = 0; docs/DEPENDENCIAS.md |
+| 5 | `00_zerar` movido para `deploy/perigoso/` com 3 travas. | `zerar-trava.mjs` 4/4 |
+| 6 | Backup pelo método oficial (com permissões), conferência, SHA256SUMS e issue em caso de falha; docs/RESTAURAR.md. | `backup-restauracao.sh` 9/9 (o método antigo perdia 473 permissões por coluna) |
+| 7 | Testes sem caminhos fixos, `rodar-todos.sh`, CI no GitHub, nova suíte `telas.mjs`. | `telas.mjs` 16/16 |
+| 8 | SQL gerado das migrações (`deploy/gerar.mjs`): banco completo e `04_atualizacao_totais_farmacia.sql`. | `validar-deploy.mjs` 4/4 |
+
+### Testes finais (clone limpo do ramo, 21/10)
+| Teste | Resultado |
+|---|---|
+| Banco (PGlite) | 151/151 |
+| Lint e build dos 3 produtos | OK |
+| `npm audit --omit=dev` | 0 vulnerabilidades |
+| e2e pedido completo | 19/19 |
+| e2e Bloco 1 | 22/22 |
+| e2e painel admin | 28/28 |
+| e2e telas (volume) | 16/16 |
+| Travas do zerar | 4/4 |
+| Arquivos de instalação | 4/4 |
+| Ensaio de backup e restauração | 9/9 |
+
+### Não verificado ainda (depende do Supabase real, GitHub e Netlify)
+- CI e backup rodando no GitHub; e-mail, fotos, tempo real, bloqueio de login, exclusão de conta e pg_cron no Supabase real.
+
+### Decisões em aberto
+- Percentual de comissão: o banco usa 8% (provisório); os textos antigos diziam 7,99%. Os textos agora não citam número.
+- Contatos reais de suporte (WhatsApp, e-mail, horário) para cadastrar no Netlify.
+- Migrar para o Tailwind 4 depois do piloto (elimina os 8 avisos de ferramentas de build).
+
 ## Próxima tarefa recomendada
-Erick: criar o projeto `vizinhomarket-teste` no Supabase (plano Free, São Paulo) e conversar com a primeira loja piloto. Claude: aplicar as migrações no projeto de teste (com aprovação), repetir o teste ponta a ponta contra o Supabase real (e-mail, tempo real, imagens) e preparar o build Android (Capacitor).
+Erick revisa o relatório de 21/10 e autoriza juntar o ramo `correcoes-pre-piloto` ao principal. Depois: GitHub privado, atualização 04 no Supabase de teste, Netlify com os 3 sites e validação real (calendário no relatório).
