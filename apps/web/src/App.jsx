@@ -25,6 +25,7 @@ import RegisterStore from '@/pages/RegisterStore';
 import Driver from '@/pages/Driver';
 import Terms from '@/pages/Terms';
 import Privacy from '@/pages/Privacy';
+import DeleteAccount from '@/pages/DeleteAccount';
 import Reports from '@/pages/Reports';
 import ManageProducts from '@/pages/ManageProducts';
 import Profile from '@/pages/Profile';
@@ -88,6 +89,7 @@ const AuthenticatedApp = () => {
         <Route path="/pedido/:id" element={<OrderTracking />} />
         <Route path="/termos" element={<Navigate to="/termos-uso" replace />} />
         <Route path="/privacidade" element={<Privacy />} />
+        <Route path="/excluir-conta" element={<DeleteAccount />} />
         <Route path="/suporte" element={<Support />} />
         <Route path="/vitrine" element={<Vitrine />} />
         <Route path="/sobre" element={<Sobre />} />

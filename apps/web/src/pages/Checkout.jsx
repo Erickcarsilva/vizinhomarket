@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -15,12 +16,15 @@ const Label = ({ children }) => <p className="text-xs uppercase tracking-[0.2em]
 export default function Checkout() {
   const navigate = useNavigate();
   const { cart, subtotal, clear } = useCart();
-  const saved = JSON.parse(localStorage.getItem("perto_customer") || "{}");
   const modes = cart.store?.delivery_modes?.length ? cart.store.delivery_modes : ["loja"];
-  const savedAddrs = JSON.parse(localStorage.getItem("perto_addresses") || "[]");
-  const defIdx = Number(localStorage.getItem("perto_addresses_default") || "-1");
-  const defAddr = defIdx >= 0 ? savedAddrs[defIdx] : "";
-  const [form, setForm] = useState({ name: saved.name || "", phone: saved.phone || "", address: saved.address || defAddr || "", fulfillment: modes[0], payment: "pix", change_for: "", notes: "" });
+  const { data: profile } = useQuery({ queryKey: ["my-profile"], queryFn: () => base44.account.getProfile() });
+  const { data: addresses = [] } = useQuery({ queryKey: ["my-addresses"], queryFn: () => base44.account.listAddresses() });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", fulfillment: modes[0], payment: "pix", change_for: "", notes: "" });
+  // Preenche com o que está salvo na conta, sem apagar o que a pessoa já digitou.
+  useEffect(() => {
+    const def = addresses.find((a) => a.is_default) || addresses[0];
+    setForm((f) => ({ ...f, name: f.name || profile?.full_name || "", phone: f.phone || profile?.phone || "", address: f.address || def?.line || "" }));
+  }, [profile, addresses]);
   const [sending, setSending] = useState(false);
   // Uma chave por tentativa de compra: se o clique repetir ou a conexão cair, o servidor devolve o mesmo pedido.
   const [idempotencyKey] = useState(() => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`));
@@ -46,15 +50,19 @@ export default function Checkout() {
     e.preventDefault();
     setSending(true);
     setError("");
-    localStorage.setItem("perto_customer", JSON.stringify({ name: form.name, phone: form.phone, address: form.address }));
     try {
       const order = await base44.entities.Order.create({
         store_id: cart.store.id, idempotency_key: idempotencyKey,
         customer_name: form.name, customer_phone: form.phone, address: pickup ? "" : form.address,
         fulfillment: form.fulfillment, payment_method: form.payment,
         change_for: form.payment === "dinheiro" && form.change_for ? Number(form.change_for) : undefined,
-        notes: form.notes, items: cart.items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
+        notes: form.notes,
+        items: cart.items.map((i) => ({ product_id: i.product_id, variant_id: i.variant_id || null, addon_ids: i.addon_ids || [], quantity: i.quantity })),
       });
+      // Guarda nome e telefone na conta para o próximo pedido (falha aqui não atrapalha o pedido).
+      if (profile && (profile.full_name !== form.name || profile.phone !== form.phone)) {
+        base44.account.updateProfile({ full_name: form.name, phone: form.phone }).catch(() => {});
+      }
       clear();
       navigate(`/pedido/${order.id}`);
     } catch (err) {
@@ -84,7 +92,7 @@ export default function Checkout() {
           </div>
           {!pickup && (
             <div className="space-y-3">
-              <SavedAddresses value={form.address} onPick={(a) => set("address")(a)} />
+              <SavedAddresses list={addresses} value={form.address} onPick={(a) => set("address")(a)} />
               <Input placeholder="Endereço completo (rua, número, bairro)" value={form.address} onChange={set("address")} className="h-12 rounded-xl" />
             </div>
           )}

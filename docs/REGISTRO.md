@@ -118,5 +118,44 @@ O build compila, mas o app não roda fora do Base44 sem `VITE_BASE44_APP_ID`: lo
 - A tela do pedido falhava com "sem permissão" ao buscar a avaliação: faltava liberar `reviews.order_id`.
 - O cadastro de loja não tinha tratamento de erro.
 
+## Bloco 1 — Itens para o piloto (20/10/2026)
+
+### Feito
+- Supabase de teste criado pelo Erick (vizinhomarket-teste, região East US). Banco aplicado e conferido: 27 tabelas e 9 categorias.
+- Tamanhos e adicionais: o lojista cadastra pela tela; o cliente escolhe num painel; o lojista vê o que foi escolhido no pedido. O servidor confere as regras e o preço.
+- Perfil, telefone e endereços ficam salvos na conta, não só no aparelho. O checkout já vem preenchido.
+- Botão "Entrar com Google" fica escondido até configurar (VITE_GOOGLE_LOGIN=1).
+- O cliente cancela o pedido enquanto a loja ainda não aceitou.
+- Pedido sem aceite em 15 minutos é cancelado sozinho (pg_cron, a cada minuto). O estoque volta.
+- Chave Pix da loja: cadastrada pelo lojista e mostrada só ao cliente daquele pedido, quando ele paga com Pix.
+- Alerta de pedido novo:
+  - bipe repetindo a cada 5 s até o aceite;
+  - notificação do sistema com o app em segundo plano;
+  - tela sempre acesa;
+  - conferência a cada 20 s caso o tempo real caia.
+- Excluir conta: no perfil e na página pública /excluir-conta, como a Google Play exige. Dados pessoais são apagados e pedidos ficam anônimos. Dono de loja e quem tem pedido em andamento não conseguem excluir.
+- Registro de erros do app (client_errors). O admin vê no painel; os registros são apagados depois de 30 dias.
+- Backup diário: rotina pronta para o GitHub (.github/workflows/backup-banco.yml). Falta o repositório e o segredo SUPABASE_DB_URL.
+- Termo do piloto (docs/VizinhoMarket_Termo_do_Piloto.docx e .pdf).
+- Cadastro entra direto quando o Supabase não exige confirmação de e-mail.
+
+### Testes
+| Teste | Resultado |
+|---|---|
+| Bateria do banco (PGlite) | 114/114 |
+| Ponta a ponta do pedido (e2e/pedido-completo.mjs) | 19/19 |
+| Ponta a ponta do Bloco 1 (e2e/bloco1.mjs) | 22/22 |
+| Atualização 02_atualizacao_bloco1.sql aplicada sobre o banco de 19/10 (Postgres 17, simulando o Supabase) | OK |
+
+### Problemas encontrados pelos testes e corrigidos
+- Uma tabela nova ficava legível por visitantes, porque o padrão do banco libera tabelas novas. Corrigido com revoke explícito.
+- Telefone obrigatório impedia anonimizar o pedido. Agora o telefone só pode ficar vazio quando o pedido não tem mais cliente vinculado.
+- O alarme não tocaria no primeiro pedido de uma loja nova.
+
+### Precisa testar no Supabase real
+- A exclusão da conta apaga o usuário do login (auth.users): depende da permissão do Supabase.
+- pg_cron ativado.
+- Notificação e tela acesa no Android.
+
 ## Próxima tarefa recomendada
 Erick: criar o projeto `vizinhomarket-teste` no Supabase (plano Free, São Paulo) e conversar com a primeira loja piloto. Claude: aplicar as migrações no projeto de teste (com aprovação), repetir o teste ponta a ponta contra o Supabase real (e-mail, tempo real, imagens) e preparar o build Android (Capacitor).

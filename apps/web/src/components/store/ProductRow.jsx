@@ -3,6 +3,7 @@ import { Plus, Heart } from "lucide-react";
 import { Image } from "@/components/ui/image";
 import { brl } from "@/lib/constants";
 import { isFavorite, toggleFavorite } from "@/lib/favorites";
+import { hasOptions, startingPrice } from "@/components/store/ProductOptions";
 
 export default function ProductRow({ product, disabled, onAdd, inCart }) {
   const [fav, setFav] = useState(() => isFavorite(product.id));
@@ -12,7 +13,7 @@ export default function ProductRow({ product, disabled, onAdd, inCart }) {
       <div className="flex-1 min-w-0">
         <h4 className="font-semibold">{product.name}</h4>
         {product.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{product.description}</p>}
-        <p className="mt-2 font-display text-lg">{brl(product.price)}</p>
+        <p className="mt-2 font-display text-lg">{hasOptions(product) && (product.variants || []).some((v) => v.available) ? <><span className="text-xs font-sans text-muted-foreground mr-1">a partir de</span>{brl(startingPrice(product))}</> : brl(product.price)}</p>
       </div>
       <div className="relative shrink-0">
         <button

@@ -1,0 +1,40 @@
+# Backup diário do banco do Supabase (o plano gratuito não tem backup automático).
+# Como ativar: no GitHub, Settings → Secrets and variables → Actions → New repository secret
+#   Nome: SUPABASE_DB_URL
+#   Valor: a "Connection string" do Supabase (Connect → Direct → Session pooler), com a senha do banco.
+# Os backups ficam em Actions → (execução) → Artifacts, guardados por 30 dias. Repositório deve ser PRIVADO.
+name: Backup diário do banco
+
+on:
+  schedule:
+    - cron: "0 7 * * *"   # todo dia às 7h UTC (3h em Sidrolândia)
+  workflow_dispatch: {}    # botão "Run workflow" para fazer um backup na hora
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Conferir se o segredo existe
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then echo "Cadastre o segredo SUPABASE_DB_URL (veja o topo deste arquivo)."; exit 1; fi
+
+      - name: Gerar o backup (estrutura + dados)
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          mkdir -p backup
+          STAMP=$(date -u +%Y-%m-%d)
+          docker run --rm -e DB_URL="$DB_URL" -v "$PWD/backup:/out" postgres:17 \
+            bash -c 'pg_dump "$DB_URL" --no-owner --no-privileges --schema=public --schema=auth --schema=storage -Fc -f /out/vizinhomarket.dump'
+          mv backup/vizinhomarket.dump "backup/vizinhomarket-$STAMP.dump"
+          ls -lh backup
+
+      - name: Guardar o backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-banco-${{ github.run_id }}
+          path: backup/*.dump
+          retention-days: 30

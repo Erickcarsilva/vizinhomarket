@@ -11,6 +11,7 @@ export default function AdminDashboard() {
   const qc = useQueryClient();
   const { data: stores = [] } = useQuery({ queryKey: ["stores", "all"], queryFn: () => base44.entities.Store.list("-created_date", 500) });
   const { data: orders = [] } = useQuery({ queryKey: ["orders", "all"], queryFn: () => base44.entities.Order.list("-created_date", 1000) });
+  const { data: appErrors = [] } = useQuery({ queryKey: ["client-errors"], queryFn: () => base44.admin.listErrors(30) });
 
   const now = new Date();
   const inMonth = (d, year, month) => { const x = new Date(d); return x.getFullYear() === year && x.getMonth() === month; };
@@ -55,6 +56,24 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground py-10 text-center rounded-2xl border border-border bg-card">Nenhuma loja aguardando aprovação.</p>
         ) : (
           <StoresTable stores={pending} onChanged={() => qc.invalidateQueries({ queryKey: ["stores"] })} />
+        )}
+      </section>
+      <section>
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="font-display text-2xl">Erros recentes no app</h2>
+          <span className="text-sm text-muted-foreground">últimos 30</span>
+        </div>
+        {appErrors.length === 0 ? (
+          <p className="text-muted-foreground py-8 text-center rounded-2xl border border-border bg-card">Nenhum erro registrado.</p>
+        ) : (
+          <div className="rounded-2xl border border-border bg-card divide-y divide-border text-sm">
+            {appErrors.map((e) => (
+              <div key={e.id} className="p-4">
+                <p className="font-medium break-words">{e.message}</p>
+                <p className="text-xs text-muted-foreground mt-1">{new Date(e.created_at).toLocaleString("pt-BR")} · {e.url || "?"} · {(e.user_agent || "").slice(0, 60)}</p>
+              </div>
+            ))}
+          </div>
         )}
       </section>
       <Link to="/admin" className="inline-flex items-center h-11 px-6 rounded-full border border-border font-semibold hover:bg-secondary transition-colors">Ver operação completa →</Link>

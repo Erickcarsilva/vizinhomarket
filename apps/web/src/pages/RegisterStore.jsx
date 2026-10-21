@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CATEGORIES, FULFILLMENT } from "@/lib/constants";
 
 export default function RegisterStore() {
-  const [form, setForm] = useState({ name: "", category: "alimentacao", owner_name: "", cnpj_cpf: "", description: "", phone: "", address: "", city: "Sidrolândia", opening_hours: "", delivery_fee: "", delivery_modes: ["loja", "retirada"] });
+  const [form, setForm] = useState({ name: "", category: "alimentacao", owner_name: "", cnpj_cpf: "", description: "", phone: "", address: "", city: "Sidrolândia", opening_hours: "", delivery_fee: "", pix_key: "", delivery_modes: ["loja", "retirada"] });
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
@@ -61,6 +61,7 @@ export default function RegisterStore() {
         <Input required placeholder="Endereço" value={form.address} onChange={set("address")} className="h-12 rounded-xl" />
         <Input required placeholder="Cidade" value={form.city} onChange={set("city")} className="h-12 rounded-xl max-w-xs" />
         <Input type="number" step="0.01" placeholder="Taxa de entrega (R$)" value={form.delivery_fee} onChange={set("delivery_fee")} className="h-12 rounded-xl max-w-xs" />
+        <Input placeholder="Chave Pix da loja (opcional)" value={form.pix_key} onChange={set("pix_key")} className="h-12 rounded-xl" />
         <div className="flex flex-wrap gap-2">
           {Object.entries(FULFILLMENT).map(([k, l]) => <button type="button" key={k} onClick={() => toggle(k)} className={chip(form.delivery_modes.includes(k))}>{l}</button>)}
         </div>

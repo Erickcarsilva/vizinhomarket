@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,11 @@ const F = ({ label, children }) => <label className="block"><span className="tex
 export default function StoreSettings({ store, onSaved }) {
   const [form, setForm] = useState(store);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    base44.entities.Store.getPrivate(store.id).then((p) => setForm((f) => ({ ...f, pix_key: f.pix_key ?? p.pix_key ?? "" }))).catch(() => {});
+  }, [store.id]);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const modes = form.delivery_modes || [];
   const toggleMode = (m) => setForm((f) => ({ ...f, delivery_modes: modes.includes(m) ? modes.filter((x) => x !== m) : [...modes, m] }));
@@ -18,22 +23,31 @@ export default function StoreSettings({ store, onSaved }) {
   const upload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setBusy(true);
-    const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-    setForm((f) => ({ ...f, cover_url: file_url }));
-    setBusy(false);
+    setBusy(true); setError("");
+    try {
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+      setForm((f) => ({ ...f, cover_url: file_url }));
+    } catch (err) { setError(err.message || "Não foi possível enviar a foto."); }
+    finally { setBusy(false); }
   };
 
   const save = async (e) => {
     e.preventDefault();
-    setBusy(true);
-    await base44.entities.Store.update(store.id, {
-      name: form.name, description: form.description, phone: form.phone, address: form.address,
-      opening_hours: form.opening_hours, is_open: form.is_open, cover_url: form.cover_url, delivery_modes: modes,
-      delivery_fee: Number(form.delivery_fee) || 0, min_order: Number(form.min_order) || 0, delivery_time_min: Number(form.delivery_time_min) || 40,
-    });
-    setBusy(false);
-    onSaved();
+    setBusy(true); setError(""); setSaved(false);
+    try {
+      await base44.entities.Store.update(store.id, {
+        name: form.name, description: form.description, phone: form.phone, address: form.address,
+        opening_hours: form.opening_hours, is_open: form.is_open, cover_url: form.cover_url, delivery_modes: modes,
+        delivery_fee: Number(form.delivery_fee) || 0, min_order: Number(form.min_order) || 0, delivery_time_min: Number(form.delivery_time_min) || 40,
+        pix_key: form.pix_key ?? undefined,
+      });
+      setSaved(true);
+      onSaved();
+    } catch (err) {
+      setError(err.message || "Não foi possível salvar.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -49,6 +63,10 @@ export default function StoreSettings({ store, onSaved }) {
         <F label="Horário"><Input value={form.opening_hours || ""} onChange={set("opening_hours")} placeholder="Seg–Sáb, 18h–23h" /></F>
       </div>
       <F label="Endereço"><Input value={form.address || ""} onChange={set("address")} /></F>
+      <F label="Chave Pix para receber dos clientes">
+        <Input value={form.pix_key || ""} onChange={set("pix_key")} placeholder="CNPJ, celular, e-mail ou chave aleatória" />
+        <p className="text-xs text-muted-foreground mt-1">Aparece só para o cliente que escolher Pix, na tela do pedido dele.</p>
+      </F>
       <div className="grid grid-cols-3 gap-4">
         <F label="Taxa (R$)"><Input type="number" step="0.01" value={form.delivery_fee ?? ""} onChange={set("delivery_fee")} /></F>
         <F label="Mínimo (R$)"><Input type="number" step="0.01" value={form.min_order ?? ""} onChange={set("min_order")} /></F>
@@ -65,6 +83,8 @@ export default function StoreSettings({ store, onSaved }) {
       <button disabled={busy || !modes.length} className="h-12 px-8 rounded-full bg-primary text-primary-foreground font-semibold flex items-center gap-2 disabled:opacity-50">
         {busy && <Loader2 className="w-4 h-4 animate-spin" />} Salvar alterações
       </button>
+      {saved && <p className="text-sm text-primary">Alterações salvas.</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

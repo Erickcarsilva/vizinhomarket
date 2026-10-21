@@ -349,6 +349,66 @@ await fails('Cliente não forja quem indicou', () => q("insert into public.store
 await as(admin);
 await ok('Admin lê as indicações com o autor gravado pelo servidor', async () => eq((await q('select referred_by from public.store_referrals'))[0].referred_by, custA.id));
 
+// ---------- 12. Bloco 1 do piloto (20/10) ----------
+await as(ownerA);
+await q("update public.store_private set pix_key = 'pix@mercadoteste.com' where store_id = $1", [storeA]);
+const pB1 = (await q("insert into public.products (store_id, name, price, stock) values ($1, 'Produto Bloco1', 10, 1000) returning id", [storeA]))[0].id;
+await as(custA);
+const oPix = (await createOrder([{ product_id: pB1, quantity: 1 }], 'chave-bloco1-0001'))[0].id;
+await ok('Cliente que pagou com Pix vê a chave Pix da loja', async () => {
+  const [{ i }] = await q('select public.order_payment_info($1) i', [oPix]);
+  eq(i.pix_key, 'pix@mercadoteste.com');
+  return eq(Number(i.amount), Number((await q('select total from public.orders where id = $1', [oPix]))[0].total));
+});
+await ok('Chave Pix continua fora da tabela pública da loja', async () => eq((await q("select count(*) c from information_schema.columns where table_name = 'stores' and column_name like '%pix%'"))[0].c, 0));
+await as(custB);
+await fails('Outro cliente não vê a chave Pix daquele pedido', () => q('select public.order_payment_info($1)', [oPix]), 'não encontrado');
+await as(custA);
+const oCard = (await createOrder([{ product_id: pB1, quantity: 1 }], 'chave-bloco1-0002', { payment: 'card_on_delivery' }))[0].id;
+await ok('Pedido no cartão não expõe chave Pix', async () => eq((await q('select public.order_payment_info($1) i', [oCard]))[0].i, null));
+await fails('Cliente não roda o cancelamento automático', () => q('select public.expire_stale_orders()'), 'permission denied');
+await su();
+await q("update public.orders set created_at = now() - interval '20 minutes' where id = $1", [oCard]);
+await ok('Pedido sem aceite há mais de 15 min é cancelado sozinho', async () => {
+  const [{ n }] = await q('select public.expire_stale_orders() n'); eq(n, 1);
+  const [o] = await q('select status, cancel_reason from public.orders where id = $1', [oCard]);
+  eq(o.status, 'CANCELLED'); return /não respondeu/.test(o.cancel_reason);
+});
+await ok('Pedido recente não é cancelado', async () => eq((await q('select status from public.orders where id = $1', [oPix]))[0].status, 'CREATED'));
+await ok('Cancelamento automático devolve o estoque', async () => eq((await q('select stock from public.products where id = $1', [pB1]))[0].stock, '999.000'));
+
+await as(custA);
+await fails('Cliente com pedido em andamento não exclui a conta', () => q('select public.delete_my_account()'), 'em andamento');
+await as(ownerA);
+await fails('Dono de loja não exclui a conta sem encerrar a loja', () => q('select public.delete_my_account()'), 'dono de uma loja');
+await su();
+const custC = await mk('clienteC');
+const [{ id: addrC }] = await q("insert into public.addresses (user_id, line, city_id, neighborhood_id) values ($1, 'Rua C, 3', $2, $3) returning id", [custC.id, city, bairro1]);
+await as(custC);
+const oC = (await q("select public.create_order($1, $2::jsonb, 'store_delivery', 'cash', 'chave-bloco1-0003', 'Cliente C', '67911112222', $3, 'apto 2', null) id", [storeA, JSON.stringify([{ product_id: pB1, quantity: 1 }]), addrC]))[0].id;
+await q("select public.cancel_order($1, '')", [oC]);
+await ok('Cliente exclui a própria conta', async () => { await q('select public.delete_my_account()'); return true; });
+await su();
+await ok('Conta excluída some do login, do perfil e dos endereços', async () => {
+  eq((await q('select count(*) c from auth.users where id = $1', [custC.id]))[0].c, 0);
+  eq((await q('select count(*) c from public.profiles where id = $1', [custC.id]))[0].c, 0);
+  return eq((await q('select count(*) c from public.addresses where user_id = $1', [custC.id]))[0].c, 0);
+});
+await ok('Pedido da conta excluída fica anônimo para a loja', async () => {
+  const [o] = await q('select customer_id, customer_name, customer_phone, address_line, total from public.orders where id = $1', [oC]);
+  eq(o.customer_id, null); eq(o.customer_name, 'Cliente removido'); eq(o.customer_phone, null); return eq(o.address_line, null);
+});
+
+await as(custA);
+await fails('Pedido de cliente ativo continua exigindo telefone', () => q("select public.create_order($1, $2::jsonb, 'pickup', 'cash', 'chave-bloco1-0004', 'Cliente A', null, null, null, null)", [storeA, JSON.stringify([{ product_id: pB1, quantity: 1 }])]), 'orders_phone_required|telefone|null');
+await as(null);
+await ok('App registra erro mesmo sem login', async () => { await q("select public.log_client_error('Erro de teste', 'pilha', '/carrinho', 'Android', '1.0')"); return true; });
+await fails('Visitante não lê os erros', () => q('select * from public.client_errors'), 'permission denied');
+await as(custA);
+await ok('Cliente não lê os erros', async () => eq((await q('select count(*) c from public.client_errors'))[0].c, 0));
+await as(admin);
+await ok('Admin lê os erros registrados', async () => eq((await q('select message from public.client_errors'))[0].message, 'Erro de teste'));
+
 // ---------- Relatório ----------
 const passed = results.filter(r => r.pass).length;
 for (const r of results) console.log(`${r.pass ? 'PASSOU' : 'FALHOU'}  ${r.name}${r.pass ? '' : '  →  ' + r.detail}`);

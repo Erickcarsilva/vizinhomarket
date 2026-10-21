@@ -156,7 +156,14 @@ const Store = {
     const up = await supabase.from("stores").update(row).eq("id", id);
     fail(up.error);
     if (d.opening_hours) await saveHours(id, d.opening_hours);
+    if (d.pix_key) fail((await supabase.from("store_private").update({ pix_key: d.pix_key.trim() }).eq("store_id", id)).error);
     return Store.get(id);
+  },
+  // Dados privados (só o dono e o admin conseguem ler: regra do banco)
+  async getPrivate(id) {
+    const { data, error } = await supabase.from("store_private").select("pix_key, owner_name, legal_name").eq("store_id", id).maybeSingle();
+    fail(error);
+    return data || {};
   },
   async update(id, d) {
     // Aprovação/suspensão é do admin e passa pela função do servidor.
@@ -170,17 +177,62 @@ const Store = {
       fail(error);
     }
     if (d.opening_hours !== undefined) await saveHours(id, d.opening_hours);
+    if (d.pix_key !== undefined) fail((await supabase.from("store_private").update({ pix_key: d.pix_key?.trim() || null }).eq("store_id", id)).error);
     return Store.get(id);
   },
 };
 
 // ---------------------------------------------------------------- produtos
-const PRODUCT_SELECT = "id, store_id, section, name, description, image_url, price, unit, stock, available, age_restricted, sort, created_at";
+const PRODUCT_SELECT = "id, store_id, section, name, description, image_url, price, unit, stock, available, age_restricted, sort, created_at, " +
+  "variants:product_variants(id, name, price, available, sort), " +
+  "addon_groups:product_addon_groups(id, name, min_select, max_select, sort, addons:product_addons(id, name, price, available, sort))";
+const bySort = (a, b) => (a.sort ?? 0) - (b.sort ?? 0);
 const productFromRow = (r) => r && ({
   id: r.id, store_id: r.store_id, name: r.name, description: r.description || "", image_url: r.image_url || "",
   price: Number(r.price), category: r.section || "", unit: r.unit, stock: r.stock == null ? null : Number(r.stock),
   available: r.available, age_restricted: r.age_restricted, created_date: r.created_at,
+  // Tamanhos (ex.: P/M/G) e grupos de adicionais (ex.: "Adicionais", mín. 0, máx. 3)
+  variants: (r.variants || []).slice().sort(bySort).map((v) => ({ id: v.id, name: v.name, price: Number(v.price), available: v.available })),
+  addon_groups: (r.addon_groups || []).slice().sort(bySort).map((g) => ({
+    id: g.id, name: g.name, min: g.min_select, max: g.max_select,
+    addons: (g.addons || []).slice().sort(bySort).map((a) => ({ id: a.id, name: a.name, price: Number(a.price), available: a.available })),
+  })),
 });
+// Grava tamanhos e adicionais mantendo os ids existentes (carrinhos abertos continuam válidos).
+async function syncList(table, parentCol, parentId, items, toRow) {
+  const { data: current, error } = await supabase.from(table).select("id").eq(parentCol, parentId);
+  fail(error);
+  const keep = new Set(items.filter((i) => i.id).map((i) => i.id));
+  const gone = (current || []).map((c) => c.id).filter((id) => !keep.has(id));
+  if (gone.length) fail((await supabase.from(table).delete().in("id", gone)).error);
+  const ids = [];
+  for (const [n, it] of items.entries()) {
+    const row = { ...toRow(it), sort: n };
+    if (it.id) { fail((await supabase.from(table).update(row).eq("id", it.id)).error); ids.push(it.id); }
+    else {
+      const { data, error: e2 } = await supabase.from(table).insert({ ...row, [parentCol]: parentId }).select("id").single();
+      fail(e2); ids.push(data.id);
+    }
+  }
+  return ids;
+}
+async function saveOptions(productId, d) {
+  if (d.variants !== undefined) {
+    const list = (d.variants || []).filter((v) => String(v.name || "").trim());
+    await syncList("product_variants", "product_id", productId, list, (v) => ({ name: v.name.trim(), price: Number(v.price) || 0, available: v.available !== false }));
+  }
+  if (d.addon_groups !== undefined) {
+    const groups = (d.addon_groups || []).filter((g) => String(g.name || "").trim());
+    const ids = await syncList("product_addon_groups", "product_id", productId, groups, (g) => {
+      const max = Math.max(1, Number(g.max) || 1);
+      return { name: g.name.trim(), min_select: Math.min(Math.max(0, Number(g.min) || 0), max), max_select: max };
+    });
+    for (const [n, g] of groups.entries()) {
+      const addons = (g.addons || []).filter((a) => String(a.name || "").trim());
+      await syncList("product_addons", "group_id", ids[n], addons, (a) => ({ name: a.name.trim(), price: Number(a.price) || 0, available: a.available !== false }));
+    }
+  }
+}
 const productToRow = (d) => {
   const row = {};
   for (const k of ["name", "description", "image_url", "available", "unit", "age_restricted"]) if (d[k] !== undefined) row[k] = d[k];
@@ -205,14 +257,16 @@ const Product = {
     return productFromRow(data);
   },
   async create(d) {
-    const { data, error } = await supabase.from("products").insert({ ...productToRow(d), store_id: d.store_id }).select(PRODUCT_SELECT).single();
+    const { data, error } = await supabase.from("products").insert({ ...productToRow(d), store_id: d.store_id }).select("id").single();
     fail(error);
-    return productFromRow(data);
+    await saveOptions(data.id, d);
+    return Product.get(data.id);
   },
   async update(id, d) {
-    const { data, error } = await supabase.from("products").update(productToRow(d)).eq("id", id).select(PRODUCT_SELECT).single();
-    fail(error);
-    return productFromRow(data);
+    const row = productToRow(d);
+    if (Object.keys(row).length) fail((await supabase.from("products").update(row).eq("id", id)).error);
+    await saveOptions(id, d);
+    return Product.get(id);
   },
   async delete(id) {
     // Sem exclusão física: preserva o histórico dos pedidos.
@@ -236,7 +290,11 @@ const orderFromRow = (r) => {
     customer_name: r.customer_name, customer_phone: r.customer_phone,
     address: [r.address_line, r.address_reference].filter(Boolean).join(" — "), notes: r.notes || "",
     age_check_required: r.age_check_required,
-    items: (r.items || []).map((i) => ({ product_id: i.product_id, name: i.variant_name ? `${i.name} (${i.variant_name})` : i.name, price: Number(i.unit_price), quantity: Number(i.quantity), line_total: Number(i.line_total) })),
+    items: (r.items || []).map((i) => ({
+      product_id: i.product_id, name: i.variant_name ? `${i.name} (${i.variant_name})` : i.name,
+      addons: (Array.isArray(i.addons) ? i.addons : []).map((a) => a.name).filter(Boolean),
+      price: Number(i.unit_price), quantity: Number(i.quantity), line_total: Number(i.line_total),
+    })),
     subtotal: Number(r.subtotal), delivery_fee: Number(r.delivery_fee), total: Number(r.total),
     commission_rate: Number(r.commission_rate), commission_amount: Number(r.commission_amount),
     status_history: (r.events || []).slice().sort((a, b) => a.created_at.localeCompare(b.created_at)).map((e) => ({ status: e.status, at: e.created_at })),
@@ -315,6 +373,11 @@ const Order = {
       fail(error);
     }
     return Order.get(id);
+  },
+  async paymentInfo(id) {
+    const { data, error } = await supabase.rpc("order_payment_info", { p_order_id: id });
+    fail(error);
+    return data || null;
   },
   async deliveryCode(id) {
     const { data, error } = await supabase.from("order_secrets").select("delivery_code").eq("order_id", id).maybeSingle();
@@ -395,6 +458,74 @@ const auth = {
   },
 };
 
+// ---------------------------------------------------------------- conta do cliente
+const account = {
+  async getProfile() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data, error } = await supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle();
+    fail(error);
+    return { full_name: data?.full_name || "", phone: data?.phone || "" };
+  },
+  async updateProfile({ full_name, phone }) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Faça login para continuar");
+    const { error } = await supabase.from("profiles").update({ full_name: full_name?.trim() || null, phone: phone?.trim() || null }).eq("id", user.id);
+    fail(error);
+  },
+  async listAddresses() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data, error } = await supabase.from("addresses").select("id, line, reference, is_default, created_at").eq("user_id", user.id).order("created_at");
+    fail(error);
+    return data;
+  },
+  async addAddress(line) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Faça login para continuar");
+    const city = await defaultCity();
+    const { count } = await supabase.from("addresses").select("id", { count: "exact", head: true }).eq("user_id", user.id);
+    const { error } = await supabase.from("addresses").insert({ user_id: user.id, line: line.trim(), city_id: city.id, is_default: !count });
+    fail(error);
+  },
+  async removeAddress(id) { fail((await supabase.from("addresses").delete().eq("id", id)).error); },
+  async setDefaultAddress(id) {
+    const { data: { user } } = await supabase.auth.getUser();
+    fail((await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id)).error);
+    fail((await supabase.from("addresses").update({ is_default: true }).eq("id", id)).error);
+  },
+  async deleteAccount() {
+    const { error } = await supabase.rpc("delete_my_account");
+    fail(error);
+    await supabase.auth.signOut().catch(() => {});
+  },
+};
+
+// ---------------------------------------------------------------- administração
+const admin = {
+  async listErrors(limit = 30) {
+    const { data, error } = await supabase.from("client_errors").select("id, message, url, user_agent, app_version, created_at").order("created_at", { ascending: false }).limit(limit);
+    fail(error);
+    return data;
+  },
+};
+
+// Registro de erros: nunca deixa uma falha no envio virar outro erro na tela.
+let lastErrorSent = 0;
+export async function reportError(err, extra = {}) {
+  try {
+    if (Date.now() - lastErrorSent < 3000) return;
+    lastErrorSent = Date.now();
+    await supabase.rpc("log_client_error", {
+      p_message: String(err?.message || err || "erro desconhecido"),
+      p_stack: err?.stack ? String(err.stack) : extra.stack || null,
+      p_url: typeof location !== "undefined" ? location.pathname : null,
+      p_user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+      p_app_version: import.meta.env.VITE_APP_VERSION || "web",
+    });
+  } catch { /* sem rede ou sem permissão: ignora */ }
+}
+
 // ---------------------------------------------------------------- arquivos
 const integrations = {
   Core: {
@@ -414,6 +545,8 @@ const integrations = {
 export const base44 = {
   entities: { Store, Product, Order, StoreReferral },
   auth,
+  account,
+  admin,
   integrations,
   app: { async getPublicSettings() { return {}; } },
 };

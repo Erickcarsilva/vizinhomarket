@@ -15,10 +15,13 @@ export default function Partner() {
   const qc = useQueryClient();
   const { stores: myStores, store, pickStore } = usePartnerStore();
 
-  const { data: orders = [] } = useQuery({
+  const { data: orders = [], isSuccess: ordersReady } = useQuery({
     queryKey: ["orders", store?.id],
     queryFn: () => base44.entities.Order.filter({ store_id: store.id }, "-created_date", 300),
     enabled: !!store,
+    // Reserva caso o tempo real caia (internet móvel instável): confere de novo a cada 20 s.
+    refetchInterval: 20000,
+    refetchIntervalInBackground: true,
   });
 
   useEffect(() => base44.entities.Order.subscribe((e) => {
@@ -29,7 +32,7 @@ export default function Partner() {
 
   return (
     <div className="max-w-6xl mx-auto px-5 py-12 space-y-10">
-      <NewOrderAlert orders={orders} />
+      <NewOrderAlert key={store?.id} orders={orders} ready={ordersReady} />
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Área do lojista</p>

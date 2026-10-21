@@ -35,7 +35,12 @@ export default function OrderCard({ order, onChanged }) {
         <span className={`text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap ${STATUS[order.status].tone}`}>{STATUS[order.status].label}</span>
       </div>
       <ul className="text-sm space-y-0.5">
-        {order.items.map((i) => <li key={i.product_id}>{i.quantity}× {i.name}</li>)}
+        {order.items.map((i, n) => (
+          <li key={n}>
+            <span className="font-medium">{i.quantity}× {i.name}</span>
+            {i.addons?.length > 0 && <span className="block pl-5 text-xs text-muted-foreground">+ {i.addons.join(", ")}</span>}
+          </li>
+        ))}
       </ul>
       {order.notes && <p className="text-sm bg-secondary rounded-lg px-3 py-2">“{order.notes}”</p>}
       <div className="text-xs text-muted-foreground space-y-0.5">

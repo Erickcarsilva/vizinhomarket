@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -6,10 +6,12 @@ import { useCart } from "@/lib/CartContext";
 import StoreHeader from "@/components/store/StoreHeader";
 import ProductRow from "@/components/store/ProductRow";
 import CartBar from "@/components/store/CartBar";
+import ProductOptions, { hasOptions } from "@/components/store/ProductOptions";
 
 export default function StorePage() {
   const { id } = useParams();
-  const { cart, add, clear } = useCart();
+  const { cart, add, clear, qtyOfProduct } = useCart();
+  const [picking, setPicking] = useState(null);
 
   const { data: store, isLoading } = useQuery({ queryKey: ["store", id], queryFn: () => base44.entities.Store.get(id) });
   const { data: products = [] } = useQuery({
@@ -20,20 +22,24 @@ export default function StorePage() {
   if (isLoading) return <div className="h-80 bg-muted animate-pulse" />;
   if (!store || store.status !== "approved") return <p className="text-center py-24 text-muted-foreground">Loja não encontrada.</p>;
 
-  const handleAdd = (product) => {
+  const sameStoreOrConfirm = () => {
     if (cart.store && cart.store.id !== store.id) {
-      if (!window.confirm(`Seu carrinho tem itens de ${cart.store.name}. Deseja esvaziá-lo e começar um novo pedido aqui?`)) return;
+      if (!window.confirm(`Seu carrinho tem itens de ${cart.store.name}. Deseja esvaziá-lo e começar um novo pedido aqui?`)) return false;
       clear();
     }
-    add(store, product);
+    return true;
   };
+  const handleAdd = (product) => {
+    if (hasOptions(product)) { setPicking(product); return; }
+    if (sameStoreOrConfirm()) add(store, product);
+  };
+  const confirmOptions = (option) => { if (sameStoreOrConfirm()) add(store, picking, option); };
 
   const groups = products.reduce((acc, p) => {
     const key = p.category || "Produtos";
     (acc[key] = acc[key] || []).push(p);
     return acc;
   }, {});
-  const qtyOf = (pid) => cart.store?.id === store.id ? cart.items.find((i) => i.product_id === pid)?.quantity : 0;
 
   return (
     <div className="pb-24">
@@ -45,13 +51,14 @@ export default function StorePage() {
             <h2 className="font-display text-2xl mb-2">{name}</h2>
             <div>
               {items.map((p) => (
-                <ProductRow key={p.id} product={p} disabled={!store.is_open} inCart={qtyOf(p.id)} onAdd={() => handleAdd(p)} />
+                <ProductRow key={p.id} product={p} disabled={!store.is_open} inCart={qtyOfProduct(store.id, p.id)} onAdd={() => handleAdd(p)} />
               ))}
             </div>
           </section>
         ))}
       </div>
       <CartBar storeId={store.id} />
+      <ProductOptions product={picking} open={!!picking} onOpenChange={(o) => !o && setPicking(null)} onConfirm={confirmOptions} />
     </div>
   );
 }
