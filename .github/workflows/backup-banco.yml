@@ -1,8 +1,15 @@
 # Backup diário do banco do Supabase (o plano gratuito não tem backup automático).
-# Como ativar: no GitHub, Settings → Secrets and variables → Actions → New repository secret
-#   Nome: SUPABASE_DB_URL
-#   Valor: a "Connection string" do Supabase (Connect → Direct → Session pooler), com a senha do banco.
-# Os backups ficam em Actions → (execução) → Artifacts, guardados por 30 dias. Repositório deve ser PRIVADO.
+#
+# Como ativar (uma vez):
+#   1. No GitHub: Settings → Secrets and variables → Actions → New repository secret
+#        Nome:  SUPABASE_DB_URL
+#        Valor: a connection string do Supabase (botão Connect → Session pooler), com a senha do banco.
+#   2. O repositório PRECISA ser privado (quem lê o repositório consegue baixar os backups).
+#   3. Actions → "Backup diário do banco" → Run workflow, para testar na hora.
+#
+# Método oficial do Supabase (supabase db dump): papéis, estrutura COM as permissões e dados.
+# Se falhar, abre (ou comenta) uma issue "Backup do banco falhou" — o GitHub avisa por e-mail.
+# Como restaurar: docs/RESTAURAR.md. Fotos (Storage) não entram neste backup: veja a mesma página.
 name: Backup diário do banco
 
 on:
@@ -10,31 +17,70 @@ on:
     - cron: "0 7 * * *"   # todo dia às 7h UTC (3h em Sidrolândia)
   workflow_dispatch: {}    # botão "Run workflow" para fazer um backup na hora
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   backup:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Conferir se o segredo existe
         env:
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          if [ -z "$DB_URL" ]; then echo "Cadastre o segredo SUPABASE_DB_URL (veja o topo deste arquivo)."; exit 1; fi
+          if [ -z "$DB_URL" ]; then echo "::error::Cadastre o segredo SUPABASE_DB_URL (veja o topo deste arquivo)."; exit 1; fi
 
-      - name: Gerar o backup (estrutura + dados)
+      - name: Instalar o Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.120.0
+
+      - name: Gerar o backup (papéis, estrutura com permissões, dados)
         env:
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          mkdir -p backup
+          set -euo pipefail
           STAMP=$(date -u +%Y-%m-%d)
-          docker run --rm -e DB_URL="$DB_URL" -v "$PWD/backup:/out" postgres:17 \
-            bash -c 'pg_dump "$DB_URL" --no-owner --no-privileges --schema=public --schema=auth --schema=storage -Fc -f /out/vizinhomarket.dump'
-          mv backup/vizinhomarket.dump "backup/vizinhomarket-$STAMP.dump"
-          ls -lh backup
+          DIR="backup/vizinhomarket-$STAMP"
+          mkdir -p "$DIR"
+          supabase db dump --db-url "$DB_URL" -f "$DIR/roles.sql" --role-only
+          supabase db dump --db-url "$DB_URL" -f "$DIR/schema.sql"
+          supabase db dump --db-url "$DB_URL" -f "$DIR/data.sql" --use-copy --data-only \
+            -x "storage.buckets_vectors" -x "storage.vector_indexes"
+          ls -l "$DIR"
 
-      - name: Guardar o backup
+      - name: Conferir se o backup está completo
+        run: |
+          set -euo pipefail
+          DIR=$(ls -d backup/vizinhomarket-*)
+          [ -e "$DIR/roles.sql" ] || { echo "::error::roles.sql não foi gerado"; exit 1; }   # pode vir curto: o projeto não tem papéis próprios
+          for f in schema.sql data.sql; do
+            [ -s "$DIR/$f" ] || { echo "::error::$f veio vazio"; exit 1; }
+          done
+          grep -q "create table" -i "$DIR/schema.sql"        || { echo "::error::schema.sql sem tabelas"; exit 1; }
+          grep -qi "grant select" "$DIR/schema.sql"           || { echo "::error::schema.sql sem permissões (GRANT)"; exit 1; }
+          grep -qi "row level security" "$DIR/schema.sql"     || { echo "::error::schema.sql sem regras de acesso (RLS)"; exit 1; }
+          grep -Eq 'COPY "?public"?\."?orders"?' "$DIR/data.sql" || { echo "::error::data.sql sem a tabela de pedidos"; exit 1; }
+          (cd "$DIR" && sha256sum *.sql > SHA256SUMS && cat SHA256SUMS)
+
+      - name: Guardar o backup (30 dias)
         uses: actions/upload-artifact@v4
         with:
           name: backup-banco-${{ github.run_id }}
-          path: backup/*.dump
+          path: backup/
           retention-days: 30
+          if-no-files-found: error
+
+      - name: Avisar a falha (issue)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          TITLE="Backup do banco falhou"
+          N=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          MSG="O backup de $(date -u +%d/%m/%Y) falhou. Veja o erro em: $RUN_URL"
+          if [ -n "$N" ]; then gh issue comment "$N" --repo "$GITHUB_REPOSITORY" --body "$MSG"
+          else gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$MSG"$'\n\nFeche esta issue quando o backup voltar a funcionar.'; fi
