@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { FULFILLMENT } from "@/lib/constants";
+import { FULFILLMENT, FULFILLMENT_CHOICES } from "@/lib/constants";
 
 const F = ({ label, children }) => <label className="block"><span className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-semibold">{label}</span><div className="mt-2">{children}</div></label>;
 
@@ -74,7 +74,7 @@ export default function StoreSettings({ store, onSaved }) {
       </div>
       <F label="Modos de entrega">
         <div className="flex flex-wrap gap-2">
-          {Object.entries(FULFILLMENT).map(([k, l]) => (
+          {Object.entries(FULFILLMENT).filter(([k]) => FULFILLMENT_CHOICES.includes(k) || modes.includes(k)).map(([k, l]) => (
             <button type="button" key={k} onClick={() => toggleMode(k)} className={`h-10 px-4 rounded-full border text-sm transition ${modes.includes(k) ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}>{l}</button>
           ))}
         </div>

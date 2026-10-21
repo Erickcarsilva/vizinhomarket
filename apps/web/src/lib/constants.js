@@ -49,6 +49,9 @@ export const FULFILLMENT = {
   retirada: "Retirada no local",
 };
 
+// Modos que o comerciante pode escolher no piloto. "plataforma" volta quando o app do entregador existir.
+export const FULFILLMENT_CHOICES = ["loja", "retirada"];
+
 export const PAYMENT = { pix: "Pix", cartao: "Cartão na maquininha", dinheiro: "Dinheiro" };
 
 export const brl = (v) => (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

@@ -14,17 +14,17 @@ const TOPICS = [
   {
     title: "Para lojistas",
     items: [
-      { q: "Como cadastro minha loja?", a: "Acesse 'Cadastre sua loja', preencha os dados e aguarde a aprovação. Sem mensalidade: você só paga quando vende." },
-      { q: "Vocês cobram comissão por venda?", a: "Sim, só sobre os pedidos concluídos pelo app: 7,99% na maioria das categorias, sem mensalidade e sem taxa de adesão." },
-      { q: "Como adiciono produtos?", a: "Na área do lojista, use 'Gerenciar produtos' para criar, editar e definir disponibilidade dos itens do seu catálogo." },
+      { q: "Como cadastro minha loja?", a: "Entre no Painel do Comerciante, toque em 'Cadastrar loja', preencha os dados e aguarde a aprovação. Sem mensalidade: você só paga quando vende." },
+      { q: "Vocês cobram comissão por venda?", a: "Sim, só sobre os pedidos concluídos pelo app: sem mensalidade e sem taxa de adesão. O percentual é informado na aprovação da loja." },
+      { q: "Como adiciono produtos?", a: "No Painel do Comerciante, em 'Cardápio e preços', você cria, edita, muda preços e pausa os itens do seu catálogo." },
       { q: "Como pago a comissão?", a: "A comissão de cada pedido entregue aparece em 'Comissões e faturas'. No fim do período você recebe a fatura com o total." },
     ],
   },
   {
     title: "Pagamentos e entregas",
     items: [
-      { q: "Quem faz a entrega?", a: "Depende da loja: entrega própria, entrega pela plataforma ou retirada. As opções disponíveis aparecem no checkout." },
-      { q: "Como recebo os pagamentos?", a: "Direto do cliente, no momento da entrega ou retirada. A plataforma não intermediia o dinheiro." },
+      { q: "Quem faz a entrega?", a: "Depende da loja: entrega feita pela própria loja ou retirada no local. As opções disponíveis aparecem no checkout." },
+      { q: "Como recebo os pagamentos?", a: "Direto do cliente, no momento da entrega ou retirada. A plataforma não intermedeia o dinheiro." },
       { q: "Tem pedido mínimo?", a: "Algumas lojas definem um valor mínimo, que aparece no carrinho caso o subtotal seja inferior." },
     ],
   },

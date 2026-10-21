@@ -37,9 +37,9 @@ export default function Sobre() {
       <section className="mt-14">
         <h2 className="font-display text-2xl mb-4">Como funcionamos</h2>
         <ol className="space-y-4 text-muted-foreground">
-          <li><strong className="text-foreground">1. Lojista se cadastra</strong> e passa por 30 dias de teste gratuito, sem comissão por venda.</li>
+          <li><strong className="text-foreground">1. Lojista se cadastra</strong> e, depois de aprovado, monta o catálogo. Sem mensalidade: paga só uma comissão sobre os pedidos entregues.</li>
           <li><strong className="text-foreground">2. O cliente navega pela vitrine</strong>, escolhe a loja e monta o pedido pelo catálogo.</li>
-          <li><strong className="text-foreground">3. A loja recebe e prepara</strong>, e o pedido é entregue, retirado ou enviado pela plataforma.</li>
+          <li><strong className="text-foreground">3. A loja recebe e prepara</strong>, e o pedido é entregue pela loja ou retirado no local.</li>
           <li><strong className="text-foreground">4. O pagamento é combinado direto</strong> — Pix, cartão na maquininha ou dinheiro na entrega.</li>
         </ol>
       </section>
