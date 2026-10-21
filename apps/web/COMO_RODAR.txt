@@ -1,0 +1,15 @@
+VizinhoMarket — como rodar no seu computador
+
+São 3 produtos no mesmo código. Cada um roda numa porta:
+  App do Cliente ............ npm.cmd run dev            → http://localhost:5173
+  Painel do Comerciante ..... npm.cmd run dev:parceiro   → http://localhost:5174
+  Painel Admin .............. npm.cmd run dev:admin      → http://localhost:5175
+
+Para rodar os 3 ao mesmo tempo, abra 3 terminais no VS Code (botão + do terminal)
+e rode um comando em cada um, sempre dentro da pasta apps\web.
+
+Primeira vez (ou depois de trocar a pasta do código):  npm.cmd install
+O arquivo .env.local (dados do Supabase) fica em apps\web e vale para os 3.
+
+Para gerar os sites (Netlify):
+  npm.cmd run build   → cria dist\cliente, dist\parceiro e dist\admin

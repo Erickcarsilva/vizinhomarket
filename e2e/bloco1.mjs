@@ -5,7 +5,10 @@
 import { chromium } from 'playwright';
 import pg from 'pg';
 
-const APP = 'http://localhost:4173';
+const CLI = 'http://localhost:4173';   // app do cliente
+const PAR = 'http://localhost:4174';   // painel do comerciante
+const ADM = 'http://localhost:4175';   // painel admin
+const APP = CLI;
 const shots = process.argv[2] || '.';
 const results = [];
 const check = (name, pass, detail = '') => { results.push({ name, pass, detail }); console.log(`${pass ? 'PASSOU' : 'FALHOU'}  ${name}${detail ? '  →  ' + detail : ''}`); };
@@ -24,11 +27,18 @@ async function person(name) {
   page.on('console', (m) => { if (m.type() === 'error' && !/realtime|websocket|WebSocket|ERR_CONNECTION_REFUSED|ERR_NAME_NOT_RESOLVED|fonts\.g|teste-e2e/i.test(m.text())) errors.push(`${name} console: ${m.text().slice(0, 200)}`); });
   return page;
 }
-async function register(page, email) {
-  await page.goto(`${APP}/register`);
+async function register(page, email, base = CLI) {
+  await page.goto(`${base}/register`);
   await page.fill('input[type=email]', email);
   for (const p of await page.locator('input[type=password]').all()) await p.fill('SenhaForte123!');
   await page.getByRole('checkbox').first().click();
+  await page.click('button[type=submit]');
+  await page.waitForTimeout(1500);
+}
+async function signIn(page, base, email) {
+  await page.goto(`${base}/login`);
+  await page.fill('input[type=email]', email);
+  await page.fill('input[type=password]', 'SenhaForte123!');
   await page.click('button[type=submit]');
   await page.waitForTimeout(1500);
 }
@@ -37,8 +47,8 @@ const shot = (page, n) => page.screenshot({ path: `${shots}/b1-${n}.png`, fullPa
 try {
   // ---------- Preparação: loja aprovada com chave Pix
   const dono = await person('lojista');
-  await register(dono, 'dono@marmitaria.test');
-  await dono.goto(`${APP}/cadastrar-loja`);
+  await register(dono, 'dono@marmitaria.test', PAR);
+  await dono.goto(`${PAR}/cadastrar-loja`);
   await dono.waitForSelector('input[placeholder="Nome da loja"]');
   await dono.fill('input[placeholder="Nome da loja"]', 'Marmitaria Bloco Um');
   await dono.fill('input[placeholder="Responsável (nome completo)"]', 'Dona Teste');
@@ -55,7 +65,7 @@ try {
   await db.query("update stores set status = 'approved', approved_at = now() where id = $1", [st.id]);
 
   // ---------- Lojista cadastra produto com tamanhos e adicionais pela tela
-  await dono.goto(`${APP}/gerenciar-produtos`);
+  await dono.goto(`${PAR}/cardapio`);
   await dono.waitForTimeout(1500);
   await dono.getByRole('button', { name: /Novo produto/ }).click();
   await dono.fill('input[placeholder="Nome"]', 'Marmita');
@@ -112,7 +122,7 @@ try {
   await shot(cli, '04-pedido-pix');
 
   // ---------- Lojista vê o adicional e o alerta
-  await dono.goto(`${APP}/lojista`);
+  await dono.goto(`${PAR}/`);
   await dono.waitForTimeout(2000);
   check('Painel do lojista pede para ativar os alertas', await dono.getByText('Toque aqui para ativar os alertas').isVisible());
   check('Lojista vê o adicional no pedido (cozinha não erra)', await dono.getByText('+ Bacon').first().isVisible());
@@ -154,7 +164,8 @@ try {
   const adm = await person('admin');
   await register(adm, 'admin@vizinho.test');
   await db.query("insert into user_roles (user_id, role) select id, 'admin' from auth.users where email = 'admin@vizinho.test'");
-  await adm.goto(`${APP}/admin?aba=registros`);
+  await signIn(adm, ADM, 'admin@vizinho.test');
+  await adm.goto(`${ADM}/registros`);
   await adm.waitForTimeout(2000);
   check('Admin vê o erro no painel', await adm.getByText('teste-e2e: erro de propósito').isVisible());
 

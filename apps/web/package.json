@@ -4,12 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --mode cliente",
+    "dev:cliente": "vite --mode cliente",
+    "dev:parceiro": "vite --mode parceiro",
+    "dev:admin": "vite --mode admin",
+    "build": "npm run build:cliente && npm run build:parceiro && npm run build:admin",
+    "build:cliente": "vite build --mode cliente --outDir dist/cliente --emptyOutDir",
+    "build:parceiro": "vite build --mode parceiro --outDir dist/parceiro --emptyOutDir",
+    "build:admin": "vite build --mode admin --outDir dist/admin --emptyOutDir",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "typecheck": "tsc -p ./jsconfig.json"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^17.0.0",

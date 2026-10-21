@@ -9,23 +9,17 @@ import {
   Heart,
   User as UserIcon,
   Store,
-  Package,
-  BarChart3,
-  Wallet,
-  Settings,
-  Shield,
   LogOut,
   LogIn,
   UserPlus,
   HelpCircle,
   MessageCircle,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/AuthContext";
-import { base44 } from "@/api/base44Client";
 import Brand from "@/components/layout/Brand";
 import { APP_VERSION } from "@/lib/version";
+import { URLS } from "@/lib/appConfig";
 
 function NavLink({ to, icon: Icon, label, onClick }) {
   return (
@@ -49,22 +43,13 @@ function GroupLabel({ children }) {
 }
 
 export default function MobileMenu() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   useEffect(() => {
     setOpen(false);
   }, [loc.pathname]);
 
-  // Detecta se o usuário possui lojas (limit 1 — chamada leve) só quando o
-  // menu está aberto, para não carregar dados em todas as páginas.
-  const { data: myStores = [] } = useQuery({
-    queryKey: ["my-stores", user?.id],
-    queryFn: () => base44.entities.Store.filter({ created_by_id: user.id }, "-created_date", 1),
-    enabled: !!user && open,
-  });
-  const hasStores = myStores.length > 0;
-  const isAdmin = user?.role === "admin";
   const close = () => setOpen(false);
 
   return (
@@ -104,33 +89,11 @@ export default function MobileMenu() {
               </>
             )}
 
-            {isAuthenticated && hasStores && (
-              <>
-                <GroupLabel>Minha loja</GroupLabel>
-                <NavLink to="/lojista" icon={Store} label="Painel da loja" onClick={close} />
-                <NavLink to="/gerenciar-produtos" icon={Package} label="Produtos" onClick={close} />
-                <NavLink to="/relatorios" icon={BarChart3} label="Relatórios" onClick={close} />
-                <NavLink to="/financeiro" icon={Wallet} label="Comissões" onClick={close} />
-                <NavLink to="/editar-perfil" icon={Settings} label="Perfil da loja" onClick={close} />
-              </>
-            )}
-
-            {isAdmin && (
-              <>
-                <GroupLabel>Administração</GroupLabel>
-                <NavLink to="/admin" icon={Shield} label="Painel administrativo" onClick={close} />
-                <NavLink to="/admin?aba=lojas" icon={Store} label="Lojas" onClick={close} />
-                <NavLink to="/admin?aba=pedidos" icon={ShoppingBag} label="Todos os pedidos" onClick={close} />
-                <NavLink to="/admin?aba=comissoes" icon={Wallet} label="Comissões e faturas" onClick={close} />
-              </>
-            )}
-
-            {!hasStores && (
-              <>
-                <GroupLabel>Para comerciantes</GroupLabel>
-                <NavLink to="/cadastrar-loja" icon={Store} label="Cadastre sua loja" onClick={close} />
-              </>
-            )}
+            <GroupLabel>Para comerciantes</GroupLabel>
+            <a href={URLS.parceiro} className="flex items-center gap-3 min-h-[44px] px-2 py-2 rounded-xl hover:bg-secondary transition-colors text-[15px] font-medium">
+              <Store className="w-5 h-5 text-muted-foreground shrink-0" />
+              <span>Venda no VizinhoMarket</span>
+            </a>
 
             <GroupLabel>Ajuda</GroupLabel>
             <NavLink to="/faq" icon={HelpCircle} label="Dúvidas" onClick={close} />

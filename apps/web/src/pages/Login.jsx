@@ -11,6 +11,7 @@ import GoogleIcon from "@/components/GoogleIcon";
 // Só aparece quando o login com Google estiver configurado no Supabase (VITE_GOOGLE_LOGIN=1).
 const GOOGLE_ENABLED = import.meta.env.VITE_GOOGLE_LOGIN === "1";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { APP } from "@/lib/appConfig";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -42,7 +43,7 @@ export default function Login() {
       icon={LogIn}
       title="Bem-vindo de volta"
       subtitle="Acesse sua conta"
-      footer={
+      footer={APP === "admin" ? <>Acesso só para administradores.</> : (
         <>
           Não tem conta?{" "}
           <Link
@@ -52,7 +53,7 @@ export default function Login() {
             Criar conta
           </Link>
         </>
-      }
+      )}
     >
       {GOOGLE_ENABLED && (
         <>

@@ -5,7 +5,10 @@
 import { chromium } from 'playwright';
 import pg from 'pg';
 
-const APP = 'http://localhost:4173';
+const CLI = 'http://localhost:4173';   // app do cliente
+const PAR = 'http://localhost:4174';   // painel do comerciante
+const ADM = 'http://localhost:4175';   // painel admin
+const APP = CLI;
 const API = 'http://localhost:54321';
 const shots = process.argv[2] || '.';
 const results = [];
@@ -37,8 +40,8 @@ async function person(name) {
   page.on('dialog', (d) => d.accept());
   return page;
 }
-async function register(page, email) {
-  await page.goto(`${APP}/register`);
+async function register(page, email, base = CLI) {
+  await page.goto(`${base}/register`);
   await page.fill('input[type=email]', email);
   for (const p of await page.locator('input[type=password]').all()) await p.fill('SenhaForte123!');
   await page.getByRole('checkbox').first().click();
@@ -46,6 +49,13 @@ async function register(page, email) {
   await page.waitForTimeout(1500);
 }
 const uid = async (email) => (await one('select id from auth.users where email = $1', [email])).id;
+async function signIn(page, base, email) {
+  await page.goto(`${base}/login`);
+  await page.fill('input[type=email]', email);
+  await page.fill('input[type=password]', 'SenhaForte123!');
+  await page.click('button[type=submit]');
+  await page.waitForTimeout(1500);
+}
 const shot = (page, n) => page.screenshot({ path: `${shots}/adm-${n}.png`, fullPage: true });
 const row = (page, text) => page.locator('div.p-4', { hasText: text }).first();
 
@@ -63,24 +73,24 @@ try {
   const adm = await person('admin');
   await register(adm, 'erick@vizinho.test');
   await db.query("insert into user_roles (user_id, role) select id, 'admin' from auth.users where email = 'erick@vizinho.test'");
+  await signIn(adm, ADM, 'erick@vizinho.test');
 
   const cli = await person('cliente');
   await register(cli, 'ana@cliente.test');
   const cliId = await uid('ana@cliente.test');
 
   // ---------- Quem não é admin não entra
-  await cli.goto(`${APP}/admin`);
-  await cli.waitForTimeout(1500);
-  check('Cliente não consegue abrir o painel admin', !(await cli.getByText('Painel do VizinhoMarket').isVisible()));
+  await signIn(cli, ADM, 'ana@cliente.test');
+  check('Cliente não consegue abrir o painel admin', await cli.getByText('Acesso restrito').isVisible() && !(await cli.getByText('Visão geral').first().isVisible()));
 
   // ---------- Lojas: aprovar e comissão
-  await adm.goto(`${APP}/admin`);
+  await adm.goto(`${ADM}/`);
   await adm.waitForTimeout(2000);
   check('Visão geral avisa que há loja aguardando aprovação', await adm.getByText('loja(s) aguardando aprovação').isVisible());
   await shot(adm, '01-visao');
   await adm.getByText('loja(s) aguardando aprovação').click();
   await adm.waitForTimeout(1500);
-  check('Aviso leva para a aba Lojas', adm.url().includes('aba=lojas'));
+  check('Aviso leva para a seção Lojas', adm.url().endsWith('/lojas'));
   await row(adm, 'Lanches do Zé').getByRole('button', { name: 'Aprovar' }).click();
   await adm.waitForTimeout(1500);
   check('Admin aprova a loja pelo painel', (await one('select status from stores where id = $1', [storeId])).status === 'approved');
@@ -103,7 +113,7 @@ try {
   const c2 = await one('select code from orders where id = $1', [o2]);
   check('Pedido usa a comissão negociada (6% de R$ 40 = R$ 2,40)', c1.commission_amount === '2.40', JSON.stringify(c1));
 
-  await adm.goto(`${APP}/admin?aba=pedidos`);
+  await adm.goto(`${ADM}/pedidos`);
   await adm.waitForTimeout(1500);
   check('Aba Pedidos mostra o pedido em andamento', await adm.getByText(c2.code, { exact: false }).first().isVisible());
   await adm.getByRole('button', { name: 'Entregues' }).click();
@@ -120,7 +130,7 @@ try {
   await shot(adm, '03-pedidos');
 
   // ---------- Comissões e faturas
-  await adm.goto(`${APP}/admin?aba=comissoes`);
+  await adm.goto(`${ADM}/comissoes`);
   await adm.waitForTimeout(1200);
   const now = new Date();
   const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -136,7 +146,7 @@ try {
   check('Admin marca a fatura como paga', (await one('select status from invoices where id = $1', [inv.id])).status === 'paid');
 
   // ---------- Usuários
-  await adm.goto(`${APP}/admin?aba=usuarios`);
+  await adm.goto(`${ADM}/usuarios`);
   await adm.waitForTimeout(1500);
   await adm.fill('input[placeholder="Buscar por e-mail, nome ou telefone"]', 'ana@');
   await adm.getByRole('button', { name: 'Buscar' }).click();
@@ -163,7 +173,7 @@ try {
 
   // ---------- Entregadores
   await db.query("insert into couriers (user_id, city_id, vehicle, plate, document) values ($1, $2, 'moto', 'ABC1D23', '12345678909')", [cliId, city]);
-  await adm.goto(`${APP}/admin?aba=entregadores`);
+  await adm.goto(`${ADM}/entregadores`);
   await adm.waitForTimeout(1500);
   check('Entregador pendente aparece com placa', await adm.getByText('placa ABC1D23', { exact: false }).isVisible());
   await adm.getByRole('button', { name: 'Aprovar' }).click();
@@ -171,7 +181,7 @@ try {
   check('Admin aprova o entregador', (await one('select status from couriers where user_id = $1', [cliId])).status === 'approved');
 
   // ---------- Configurações
-  await adm.goto(`${APP}/admin?aba=config`);
+  await adm.goto(`${ADM}/config`);
   await adm.waitForTimeout(1500);
   const geral = adm.locator('div', { has: adm.getByRole('heading', { name: 'Geral' }) }).last();
   const inputs = geral.locator('input');
@@ -190,12 +200,16 @@ try {
   await shot(adm, '06-config');
 
   // ---------- Histórico
-  await adm.goto(`${APP}/admin?aba=registros`);
+  await adm.goto(`${ADM}/registros`);
   await adm.waitForTimeout(1500);
   check('Histórico registra as ações do admin', await adm.getByText('Bloqueou usuário').first().isVisible() && await adm.getByText('Mudou situação da fatura').first().isVisible());
-  await adm.goto(`${APP}/admin`);
+  await adm.goto(`${ADM}/`);
   await adm.waitForTimeout(2000);
-  check('Versão do app aparece na tela', await adm.getByText(/v\. 21\/10\/2026/).isVisible());
+  await adm.getByRole('button', { name: 'Abrir menu' }).click();
+  await adm.waitForTimeout(600);
+  check('Versão aparece no menu do painel', await adm.getByText(/Versão 21\/10\/2026/).last().isVisible());
+  await adm.keyboard.press('Escape');
+  check('Painel admin não oferece cadastro aberto', await (async () => { const p = await person('visitante'); await p.goto(`${ADM}/login`); await p.waitForTimeout(800); return !(await p.getByText('Criar conta').isVisible()); })());
 } catch (e) {
   check('Roteiro completo sem travar', false, e.message.split('\n').slice(0, 3).join(' / '));
   for (const [n, p] of pages) { await p.screenshot({ path: `${shots}/adm-falha-${n}.png`, fullPage: true }).catch(() => {}); console.log('url', n, p.url()); }

@@ -4,3 +4,6 @@ node_modules
 *.log
 dist
 !.env.example
+!.env.cliente
+!.env.parceiro
+!.env.admin

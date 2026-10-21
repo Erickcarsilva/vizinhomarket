@@ -185,5 +185,28 @@ O build compila, mas o app não roda fora do Base44 sem `VITE_BASE44_APP_ID`: lo
 - O nome da categoria difere entre a tela ("Alimentação") e o banco ("Restaurantes e lanches"). Padronizar.
 - O bloqueio de usuário altera auth.users.banned_until. Confirmar no Supabase real que o login é recusado.
 
+## Separação em 3 produtos (21/10/2026)
+
+### Decisão (Erick)
+- O App do Cliente é só para comprar.
+- A área do comerciante e a área do admin são **sites (painéis)**, não apps. Cada um tem endereço, login e menu próprios.
+- O app do entregador fica para depois.
+
+### Feito
+- O mesmo código gera 3 sites (`--mode cliente|parceiro|admin`), cada um só com as suas telas:
+  - **Cliente**, porta 5173: vitrine, loja, carrinho, pedidos, perfil e favoritos. Os endereços antigos de lojista e admin levam para os painéis.
+  - **Parceiro**, porta 5174: menu lateral com Pedidos (alarme em todas as telas), Entregas, Pedidos entregues, Cardápio e preços, Comissões e faturas, Relatórios, Minha loja e Alertas. Quem ainda não tem loja vai direto para o cadastro.
+  - **Admin**, porta 5175: menu lateral com as 8 seções. Não tem cadastro aberto; quem não é admin vê "Acesso restrito".
+- Cada site tem título e manifesto próprios. Links entre eles ficam em lib/appConfig.js: produção em vizinhomarket-teste, vizinhomarket-parceiro e vizinhomarket-admin .netlify.app.
+- Removidos: App.jsx, Partner.jsx, ManageProducts.jsx, Finance.jsx, Driver.jsx, AdminPanel.jsx.
+
+### Testes (os 3 sites rodando ao mesmo tempo)
+| Teste | Resultado |
+|---|---|
+| Banco | 139/139 |
+| e2e pedido completo (cliente + parceiro + admin) | 19/19 |
+| e2e Bloco 1 | 22/22 |
+| e2e painel admin | 28/28 |
+
 ## Próxima tarefa recomendada
 Erick: criar o projeto `vizinhomarket-teste` no Supabase (plano Free, São Paulo) e conversar com a primeira loja piloto. Claude: aplicar as migrações no projeto de teste (com aprovação), repetir o teste ponta a ponta contra o Supabase real (e-mail, tempo real, imagens) e preparar o build Android (Capacitor).

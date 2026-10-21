@@ -502,6 +502,15 @@ const account = {
   },
 };
 
+// ---------------------------------------------------------------- painel do comerciante
+const partner = {
+  async listInvoices(storeId) {
+    const { data, error } = await supabase.from("invoices").select("id, period_start, period_end, orders_count, gross_amount, commission_total, status, paid_at").eq("store_id", storeId).order("period_start", { ascending: false });
+    fail(error);
+    return data.map((r) => ({ ...r, gross_amount: Number(r.gross_amount), commission_total: Number(r.commission_total) }));
+  },
+};
+
 // ---------------------------------------------------------------- administração
 const rpc = async (fn, args = {}) => { const { data, error } = await supabase.rpc(fn, args); fail(error); return data; };
 const admin = {
@@ -603,6 +612,7 @@ export const base44 = {
   entities: { Store, Product, Order, StoreReferral },
   auth,
   account,
+  partner,
   admin,
   integrations,
   app: { async getPublicSettings() { return {}; } },

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import { Loader2, Check } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
@@ -35,7 +34,7 @@ export default function RegisterStore() {
         <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground mx-auto flex items-center justify-center"><Check /></div>
         <h1 className="font-display text-4xl mt-6">Cadastro enviado</h1>
         <p className="text-muted-foreground mt-3">Assim que for aprovada, sua loja aparece no app. Enquanto isso, já pode montar seu catálogo.</p>
-        <Link to="/lojista" className="inline-block mt-8 h-12 leading-[3rem] px-8 rounded-full bg-primary text-primary-foreground font-semibold">Ir para a área do lojista</Link>
+        <a href="/" className="inline-block mt-8 h-12 leading-[3rem] px-8 rounded-full bg-primary text-primary-foreground font-semibold">Ir para o painel</a>
       </div>
     );
   }
