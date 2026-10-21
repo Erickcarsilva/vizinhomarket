@@ -1,4 +1,7 @@
--- VizinhoMarket — banco completo (instalação nova). Gerado em 20/10/2026 a partir de supabase/migrations.
+-- VizinhoMarket — banco COMPLETO (instalação do zero), já com o Bloco 1. Gerado em 20/10/2026.
+-- Colar no SQL Editor do Supabase e clicar em Run.
+
+-- PARTE 1 (tudo ou nada)
 begin;
 
 -- ================= migrations/202610140001_base.sql =================
@@ -1440,14 +1443,13 @@ grant execute on function public.order_payment_info(uuid), public.delete_my_acco
 grant execute on function public.log_client_error(text, text, text, text, text) to anon, authenticated;
 -- expire_stale_orders: só o agendador (pg_cron) e o admin pelo SQL Editor.
 
--- ================= migrations/202610200002_supabase_platform_agendamentos.sql =================
--- VizinhoMarket — agendamentos que só existem no Supabase (pg_cron). Não roda nos testes locais.
+commit;
+
+-- PARTE 2: agendamentos (pg_cron). Se der erro aqui, a Parte 1 já está salva:
+-- ative 'pg_cron' em Database → Extensions e rode só estas 3 linhas de novo.
 create extension if not exists pg_cron;
-
--- A cada minuto: cancela pedidos que a loja não aceitou dentro do tempo limite (padrão 15 min).
 select cron.schedule('vm-expira-pedidos', '* * * * *', $$select public.expire_stale_orders()$$);
-
--- Todo dia às 4h (UTC): apaga registros de erro com mais de 30 dias.
 select cron.schedule('vm-limpa-erros', '0 4 * * *', $$delete from public.client_errors where created_at < now() - interval '30 days'$$);
 
-commit;
+-- Conferência: tabelas = 28, categorias = 9, funcoes_bloco1 = 4, agendamentos = 2
+select (select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE') as tabelas, (select count(*) from public.categories) as categorias, (select count(*) from pg_proc where proname in ('order_payment_info','expire_stale_orders','delete_my_account','log_client_error')) as funcoes_bloco1, (select count(*) from cron.job where jobname like 'vm-%') as agendamentos;
