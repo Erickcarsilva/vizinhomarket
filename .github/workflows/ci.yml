@@ -23,6 +23,8 @@ jobs:
           node-version: 22
       - name: Testes do banco
         run: npm ci && npm run test:db
+      - name: Arquivos de instalação em dia com as migrações
+        run: node supabase/deploy/gerar.mjs && git diff --exit-code supabase/deploy
       - name: Lint e build dos 3 produtos
         working-directory: apps/web
         env:
