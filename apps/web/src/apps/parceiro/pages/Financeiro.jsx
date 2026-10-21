@@ -1,8 +1,7 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { useStoreOrders } from "@/lib/useStoreOrders";
 import TrialCard from "@/components/partner/TrialCard";
 import { brl } from "@/lib/constants";
 
@@ -11,10 +10,16 @@ const month = (d) => new Date(`${d}T12:00:00`).toLocaleDateString("pt-BR", { mon
 
 export default function Financeiro() {
   const { store } = useOutletContext();
-  const { orders } = useStoreOrders(store?.id);
+  const list = useInfiniteQuery({
+    queryKey: ["orders", store?.id, "commission-list"],
+    queryFn: ({ pageParam = 0 }) => base44.partner.listPage({ storeId: store.id, status: "DELIVERED", page: pageParam }),
+    getNextPageParam: (last, all) => (last.hasMore ? all.length : undefined),
+    initialPageParam: 0,
+    enabled: !!store,
+  });
   const { data: invoices = [] } = useQuery({ queryKey: ["my-invoices", store?.id], queryFn: () => base44.partner.listInvoices(store.id), enabled: !!store });
   if (!store) return null;
-  const delivered = orders.filter((o) => o.status === "DELIVERED");
+  const delivered = (list.data?.pages || []).flatMap((p) => p.rows);
   return (
     <div className="max-w-5xl mx-auto px-5 py-8 space-y-8">
       <div>
@@ -22,7 +27,7 @@ export default function Financeiro() {
         <h1 className="font-display text-4xl mt-2">Comissões e faturas</h1>
         <p className="text-sm text-muted-foreground mt-2">Sem mensalidade: você paga só a comissão dos pedidos entregues. No fim do mês, a fatura chega pelo WhatsApp e é paga por Pix.</p>
       </div>
-      <TrialCard store={store} orders={orders} />
+      <TrialCard store={store} />
 
       <section className="space-y-3">
         <h2 className="font-display text-2xl">Faturas</h2>
@@ -52,18 +57,23 @@ export default function Financeiro() {
               <tr><th className="text-left font-medium px-4 py-3">Data</th><th className="text-left font-medium px-4 py-3">Pedido</th><th className="text-right font-medium px-4 py-3">Venda</th><th className="text-right font-medium px-4 py-3">Comissão</th></tr>
             </thead>
             <tbody>
-              {delivered.slice(0, 100).map((o) => (
+              {delivered.map((o) => (
                 <tr key={o.id} className="border-t border-border">
-                  <td className="px-4 py-3">{new Date(o.created_date).toLocaleDateString("pt-BR")}</td>
+                  <td className="px-4 py-3">{new Date(o.delivered_at || o.created_date).toLocaleDateString("pt-BR")}</td>
                   <td className="px-4 py-3">{o.code}</td>
                   <td className="px-4 py-3 text-right">{brl(o.subtotal)}</td>
                   <td className="px-4 py-3 text-right">{brl(o.commission_amount)}</td>
                 </tr>
               ))}
-              {delivered.length === 0 && <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">Nenhum pedido entregue ainda.</td></tr>}
+              {!list.isLoading && delivered.length === 0 && <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">Nenhum pedido entregue ainda.</td></tr>}
             </tbody>
           </table>
         </div>
+        {list.hasNextPage && (
+          <button type="button" onClick={() => list.fetchNextPage()} disabled={list.isFetchingNextPage} className="w-full h-11 rounded-full border border-border text-sm font-semibold hover:bg-secondary disabled:opacity-50">
+            {list.isFetchingNextPage ? "Carregando…" : "Carregar mais"}
+          </button>
+        )}
       </section>
     </div>
   );

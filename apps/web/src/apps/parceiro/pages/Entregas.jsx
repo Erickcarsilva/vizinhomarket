@@ -1,6 +1,6 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
-import { useStoreOrders } from "@/lib/useStoreOrders";
+import { useStoreOrders, useTodayFinished } from "@/lib/useStoreOrders";
 import OrderCard from "@/components/partner/OrderCard";
 
 const Col = ({ title, hint, list, onChanged }) => (
@@ -19,9 +19,10 @@ const Col = ({ title, hint, list, onChanged }) => (
 export default function Entregas() {
   const { store } = useOutletContext();
   const { orders, refresh } = useStoreOrders(store?.id);
+  const finishedToday = useTodayFinished(store?.id);
   if (!store) return null;
   const delivery = orders.filter((o) => o.fulfillment !== "retirada");
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const deliveredToday = finishedToday.filter((o) => o.status === "DELIVERED" && o.fulfillment !== "retirada");
   const pickups = orders.filter((o) => o.fulfillment === "retirada" && o.status === "READY");
   return (
     <div className="max-w-6xl mx-auto px-5 py-8 space-y-8">
@@ -33,7 +34,7 @@ export default function Entregas() {
       <div className="grid lg:grid-cols-3 gap-6">
         <Col title="Prontos para sair" list={delivery.filter((o) => o.status === "READY")} onChanged={refresh} />
         <Col title="A caminho" hint="Confirme com o código quando o cliente receber." list={delivery.filter((o) => o.status === "IN_TRANSIT")} onChanged={refresh} />
-        <Col title="Entregues hoje" list={delivery.filter((o) => o.status === "DELIVERED" && new Date(o.delivered_at || o.created_date) >= today)} onChanged={refresh} />
+        <Col title="Entregues hoje" list={deliveredToday} onChanged={refresh} />
       </div>
       {pickups.length > 0 && <Col title="Esperando retirada no balcão" list={pickups} onChanged={refresh} />}
     </div>

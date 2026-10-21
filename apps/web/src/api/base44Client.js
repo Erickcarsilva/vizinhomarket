@@ -503,7 +503,49 @@ const account = {
 };
 
 // ---------------------------------------------------------------- painel do comerciante
+const ACTIVE = "(DELIVERED,CANCELLED)";
 const partner = {
+  // Totais calculados no servidor (corretos para qualquer quantidade de pedidos)
+  summary: async (storeId, from, to) => {
+    const { data, error } = await supabase.rpc("store_summary", { p_store_id: storeId, p_from: from, p_to: to });
+    fail(error);
+    const n = (k) => Number(data?.[k] || 0);
+    return { orders: n("orders"), delivered: n("delivered"), cancelled: n("cancelled"), auto_cancelled: n("auto_cancelled"), open: n("open"),
+      sales: n("sales"), total: n("total"), commission: n("commission"), avg_ticket: n("avg_ticket"), avg_accept_min: data?.avg_accept_min == null ? null : Number(data.avg_accept_min) };
+  },
+  async daily(storeId, from, to) {
+    const { data, error } = await supabase.rpc("store_daily", { p_store_id: storeId, p_from: from, p_to: to });
+    fail(error);
+    return data.map((d) => ({ day: d.day, delivered: Number(d.delivered), total: Number(d.total), commission: Number(d.commission) }));
+  },
+  async topProducts(storeId, from, to, limit = 5) {
+    const { data, error } = await supabase.rpc("store_top_products", { p_store_id: storeId, p_from: from, p_to: to, p_limit: limit });
+    fail(error);
+    return data.map((r) => ({ name: r.name, quantity: Number(r.quantity), revenue: Number(r.revenue) }));
+  },
+  // Pedidos em andamento (os que exigem ação): poucos por natureza, sem corte de histórico.
+  async activeOrders(storeId) {
+    const { data, error } = await supabase.from("orders").select(ORDER_SELECT).eq("store_id", storeId).not("status", "in", ACTIVE).order("created_at", { ascending: false }).limit(500);
+    fail(error);
+    return data.map(orderFromRow);
+  },
+  // Concluídos/cancelados desde uma data (ex.: hoje), mais recentes primeiro.
+  async finishedSince(storeId, since, limit = 300) {
+    const { data, error } = await supabase.from("orders").select(ORDER_SELECT).eq("store_id", storeId).in("status", ["DELIVERED", "CANCELLED"])
+      .or(`created_at.gte.${since},delivered_at.gte.${since},cancelled_at.gte.${since}`).order("created_at", { ascending: false }).limit(limit);
+    fail(error);
+    return data.map(orderFromRow);
+  },
+  // Histórico paginado. Entregues filtram pela data da entrega (igual aos totais e à fatura).
+  async listPage({ storeId, status, from, to, page = 0, pageSize = 50 }) {
+    const dateCol = status === "DELIVERED" ? "delivered_at" : "created_at";
+    let q = supabase.from("orders").select(ORDER_SELECT).eq("store_id", storeId).eq("status", status);
+    if (from) q = q.gte(dateCol, from);
+    if (to) q = q.lt(dateCol, to);
+    const { data, error } = await q.order(dateCol, { ascending: false }).range(page * pageSize, page * pageSize + pageSize);
+    fail(error);
+    return { rows: data.slice(0, pageSize).map(orderFromRow), hasMore: data.length > pageSize };
+  },
   async listInvoices(storeId) {
     const { data, error } = await supabase.from("invoices").select("id, period_start, period_end, orders_count, gross_amount, commission_total, status, paid_at").eq("store_id", storeId).order("period_start", { ascending: false });
     fail(error);
@@ -528,15 +570,15 @@ const admin = {
     fail(error);
     return Object.fromEntries(data.map((r) => [r.store_id, r]));
   },
-  async listOrders({ status, storeId, from, limit = 300 } = {}) {
+  async listOrders({ status, storeId, from, page = 0, pageSize = 50 } = {}) {
     let q = supabase.from("orders").select(ORDER_SELECT);
     if (status === "open") q = q.not("status", "in", "(DELIVERED,CANCELLED)");
     else if (status) q = q.eq("status", status);
     if (storeId) q = q.eq("store_id", storeId);
     if (from) q = q.gte("created_at", from);
-    const { data, error } = await q.order("created_at", { ascending: false }).limit(limit);
+    const { data, error } = await q.order("created_at", { ascending: false }).range(page * pageSize, page * pageSize + pageSize);
     fail(error);
-    return data.map(orderFromRow);
+    return { rows: data.slice(0, pageSize).map(orderFromRow), hasMore: data.length > pageSize };
   },
   cancelOrder: (orderId, reason) => rpc("cancel_order", { p_order_id: orderId, p_reason: reason }),
   generateInvoices: (start, end) => rpc("admin_generate_invoices", { p_period_start: start, p_period_end: end }),

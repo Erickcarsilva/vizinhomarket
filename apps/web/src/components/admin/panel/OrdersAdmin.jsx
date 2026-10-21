@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, MessageCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { brl, STATUS, FULFILLMENT, PAYMENT } from "@/lib/constants";
@@ -16,13 +16,16 @@ export default function OrdersAdmin() {
   const [open, setOpen] = useState(null);
   const [reason, setReason] = useState("");
   const { data: stores = [] } = useQuery({ queryKey: ["admin-stores"], queryFn: () => base44.entities.Store.list("name", 1000) });
-  const { data: orders = [], isLoading } = useQuery({
+  const list = useInfiniteQuery({
     queryKey: ["admin-orders", status, period, storeId],
-    queryFn: () => base44.admin.listOrders({ status: status === "todos" ? null : status, storeId: storeId || null, from: since[period]()?.toISOString() }),
+    queryFn: ({ pageParam = 0 }) => base44.admin.listOrders({ status: status === "todos" ? null : status, storeId: storeId || null, from: since[period]()?.toISOString(), page: pageParam }),
+    getNextPageParam: (last, all) => (last.hasMore ? all.length : undefined),
+    initialPageParam: 0,
     refetchInterval: 20000,
   });
+  const orders = (list.data?.pages || []).flatMap((p) => p.rows);
+  const isLoading = list.isLoading;
   const { busy, error, run } = useAction(() => qc.invalidateQueries({ queryKey: ["admin-orders"] }));
-  const total = orders.filter((o) => o.status === "DELIVERED").reduce((s, o) => s + o.total, 0);
 
   return (
     <div className="space-y-4">
@@ -34,7 +37,7 @@ export default function OrdersAdmin() {
           {stores.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </div>
-      <p className="text-sm text-muted-foreground">{orders.length} pedido(s){total ? ` · ${brl(total)} entregue` : ""}</p>
+      <p className="text-sm text-muted-foreground">{orders.length}{list.hasNextPage ? "+" : ""} pedido(s) nesta lista. Totais do período estão na Visão geral.</p>
       <ErrorLine error={error} />
       {isLoading ? <Empty>Carregando…</Empty> : orders.length === 0 ? <Empty>Nenhum pedido com esses filtros.</Empty> : (
         <Card className="divide-y divide-border">
@@ -80,6 +83,7 @@ export default function OrdersAdmin() {
           })}
         </Card>
       )}
+      {list.hasNextPage && <Btn className="w-full justify-center h-11" busy={list.isFetchingNextPage} onClick={() => list.fetchNextPage()}>Carregar mais</Btn>}
     </div>
   );
 }

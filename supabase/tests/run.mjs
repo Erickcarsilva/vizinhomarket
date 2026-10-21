@@ -481,6 +481,67 @@ await ok('Lojista não vê fatura de outra loja', async () => eq((await q('selec
 await as(custA);
 await fails('Cliente não marca fatura como paga', async () => { await su(); const [{ id }] = await q('select id from public.invoices limit 1'); await as(custA); return q("select public.admin_set_invoice_status($1, 'void')", [id]); }, 'administrador');
 
+// ---------- 14. Totais do comerciante no servidor (21/10) ----------
+await su();
+// 1.200 pedidos entregues + 150 cancelados na loja B, espalhados nos últimos 60 dias
+await q(`insert into public.orders (code, city_id, store_id, customer_id, status, fulfillment, payment_method, customer_name, customer_phone,
+           subtotal, delivery_fee, total, commission_rate, commission_amount, idempotency_key, created_at, accepted_at, delivered_at)
+         select 'VOL-' || g, $1, $2, $3, 'DELIVERED', 'store_delivery', 'pix', 'Cliente Volume', '67900000000',
+                10 + (g % 7), 5, 15 + (g % 7), 0.08, round((10 + (g % 7)) * 0.08, 2), 'volume-' || g,
+                now() - (g % 60) * interval '1 day' - interval '1 hour', now() - (g % 60) * interval '1 day' - interval '58 minutes',
+                now() - (g % 60) * interval '1 day' - interval '30 minutes'
+         from generate_series(1, 1200) g`, [city, storeB, custA.id]);
+await q(`insert into public.orders (code, city_id, store_id, customer_id, status, fulfillment, payment_method, customer_name, customer_phone,
+           subtotal, delivery_fee, total, commission_rate, commission_amount, idempotency_key, created_at, cancel_reason)
+         select 'VOLC-' || g, $1, $2, $3, 'CANCELLED', 'store_delivery', 'pix', 'Cliente Volume', '67900000000', 20, 5, 25, 0.08, 1.6,
+                'volume-c-' || g, now() - (g % 60) * interval '1 day', case when g % 3 = 0 then 'A loja não respondeu a tempo. Nenhum valor foi cobrado.' else 'outro' end
+         from generate_series(1, 150) g`, [city, storeB, custA.id]);
+await q(`insert into public.order_items (order_id, product_id, name, unit, unit_price, quantity, line_total)
+         select o.id, null, case when o.code like '%1' then 'X-Bacon' else 'X-Salada' end, 'un', o.subtotal, 1, o.subtotal
+         from public.orders o where o.code like 'VOL-%'`);
+const range = ["now() - interval '30 days'", 'now() + interval \'1 minute\''];
+const [ref] = await q(`select count(*) filter (where status='DELIVERED' and delivered_at >= ${range[0]}) entregues,
+    sum(subtotal) filter (where status='DELIVERED' and delivered_at >= ${range[0]}) vendas,
+    sum(commission_amount) filter (where status='DELIVERED' and delivered_at >= ${range[0]}) comissao,
+    count(*) filter (where status='CANCELLED' and created_at >= ${range[0]}) cancelados
+  from public.orders where store_id = $1`, [storeB]);
+await as(ownerB);
+await ok('Resumo do servidor bate com a soma direta no banco (mais de 500 pedidos)', async () => {
+  const [{ r }] = await q(`select public.store_summary($1, ${range[0]}, ${range[1]}) r`, [storeB]);
+  eq(r.delivered, ref.entregues); eq(Number(r.sales).toFixed(2), Number(ref.vendas).toFixed(2));
+  eq(Number(r.commission).toFixed(2), Number(ref.comissao).toFixed(2)); return eq(r.cancelled, ref.cancelados);
+});
+await ok('Período maior que 1.000 pedidos também bate (60 dias)', async () => {
+  const [{ r }] = await q("select public.store_summary($1, now() - interval '61 days', now() + interval '1 minute') r", [storeB]);
+  return eq(r.delivered, 1200 + Number((await q("select count(*) c from public.orders where store_id = $1 and status = 'DELIVERED' and code not like 'VOL-%'", [storeB]))[0].c));
+});
+await ok('Cancelamentos automáticos contados à parte', async () => {
+  const [{ r }] = await q("select public.store_summary($1, now() - interval '61 days', now() + interval '1 minute') r", [storeB]);
+  return eq(r.auto_cancelled, 50);
+});
+await ok('Vendas por dia somam o mesmo total do resumo', async () => {
+  const rows = await q(`select * from public.store_daily($1, ${range[0]}, ${range[1]})`, [storeB]);
+  const [{ r }] = await q(`select public.store_summary($1, ${range[0]}, ${range[1]}) r`, [storeB]);
+  return eq(rows.reduce((t, d) => t + Number(d.delivered), 0), r.delivered);
+});
+await ok('Produtos mais vendidos calculados no servidor', async () => {
+  const rows = await q(`select * from public.store_top_products($1, now() - interval '61 days', now() + interval '1 minute', 5)`, [storeB]);
+  return eq(rows[0].name, 'X-Salada') && eq(Number(rows[0].quantity) + Number(rows[1].quantity) >= 1200, true);
+});
+await as(ownerA);
+await ok('Dono de outra loja recebe zero no resumo da loja B', async () => {
+  const [{ r }] = await q("select public.store_summary($1, now() - interval '61 days', now() + interval '1 minute') r", [storeB]);
+  return eq(r.delivered, 0) && eq(Number(r.commission), 0);
+});
+await ok('Dono de outra loja não vê os produtos da loja B', async () => eq((await q("select * from public.store_top_products($1, now() - interval '61 days', now(), 5)", [storeB])).length, 0));
+await as(null);
+await fails('Visitante não chama o resumo', () => q("select public.store_summary($1, now() - interval '1 day', now())", [storeB]), 'permission denied');
+await as(admin);
+await ok('Admin vê o resumo de qualquer loja', async () => {
+  const [{ r }] = await q(`select public.store_summary($1, ${range[0]}, ${range[1]}) r`, [storeB]);
+  return eq(r.delivered, ref.entregues);
+});
+
 // ---------- Relatório ----------
 const passed = results.filter(r => r.pass).length;
 for (const r of results) console.log(`${r.pass ? 'PASSOU' : 'FALHOU'}  ${r.name}${r.pass ? '' : '  →  ' + r.detail}`);

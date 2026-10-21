@@ -12,39 +12,35 @@ const PERIODS = [
   { id: "30", label: "30 dias" },
   { id: "all", label: "Tudo" },
 ];
+const fmtDay = (iso) => { const [, m, d] = iso.split("-"); return `${Number(d)}/${Number(m)}`; };
 
+// Relatórios calculados no servidor (store_summary, store_daily, store_top_products): corretos com qualquer volume.
 export default function Reports() {
   const { stores, store, pickStore, isLoading } = usePartnerStore();
   const [period, setPeriod] = useState("30");
-  const { data: orders = [] } = useQuery({
-    queryKey: ["orders", store?.id],
-    queryFn: () => base44.entities.Order.filter({ store_id: store.id }, "-created_date", 1000),
-    enabled: !!store,
-  });
+  const range = useMemo(() => ({
+    from: period === "all" ? "2020-01-01T00:00:00Z" : new Date(Date.now() - Number(period) * 864e5).toISOString(),
+    to: new Date(Date.now() + 60000).toISOString(),
+  }), [period]);
+  const enabled = !!store;
+  const { data: sum } = useQuery({ queryKey: ["orders", store?.id, "report-sum", range.from], queryFn: () => base44.partner.summary(store.id, range.from, range.to), enabled });
+  const { data: days = [] } = useQuery({ queryKey: ["orders", store?.id, "report-daily", range.from], queryFn: () => base44.partner.daily(store.id, range.from, range.to), enabled });
+  const { data: top = [] } = useQuery({ queryKey: ["orders", store?.id, "report-top", range.from], queryFn: () => base44.partner.topProducts(store.id, range.from, range.to, 5), enabled });
 
   const { daily, cumulative, topProducts, kpis } = useMemo(() => {
-    const since = period === "all" ? 0 : Date.now() - Number(period) * 86400000;
-    const list = orders.filter((o) => new Date(o.created_date).getTime() >= since);
-    const valid = list.filter((o) => o.status !== "CANCELLED");
-    const byDay = {};
-    valid.forEach((o) => { const d = new Date(o.created_date); const key = d.toISOString().slice(0, 10); byDay[key] = (byDay[key] || 0) + (o.total || 0); });
-    const daily = Object.keys(byDay).sort().map((k) => { const d = new Date(k); return { label: `${d.getDate()}/${d.getMonth() + 1}`, value: Math.round(byDay[k] * 100) / 100 }; });
+    const daily = days.map((d) => ({ label: fmtDay(d.day), value: Math.round(d.total * 100) / 100 }));
     let acc = 0;
     const cumulative = daily.map((d) => { acc += d.value; return { label: d.label, value: Math.round(acc * 100) / 100 }; });
-    const prod = {};
-    valid.forEach((o) => (o.items || []).forEach((it) => { const n = it.name || "—"; prod[n] = prod[n] || { name: n, qty: 0, revenue: 0 }; prod[n].qty += it.quantity || 0; prod[n].revenue += (it.price || 0) * (it.quantity || 0); }));
-    const topProducts = Object.values(prod).sort((a, b) => b.qty - a.qty).slice(0, 5);
-    const revenue = valid.reduce((s, o) => s + (o.total || 0), 0);
-    const delivered = valid.filter((o) => o.status === "DELIVERED");
-    const kpis = { revenue, orders: valid.length, ticket: delivered.length ? revenue / delivered.length : 0, cancelled: list.filter((o) => o.status === "CANCELLED").length };
+    const topProducts = top.map((p) => ({ name: p.name, qty: p.quantity, revenue: p.revenue }));
+    const kpis = { revenue: sum?.total ?? 0, orders: sum?.orders ?? 0, ticket: sum?.avg_ticket ?? 0, cancelled: sum?.cancelled ?? 0 };
     return { daily, cumulative, topProducts, kpis };
-  }, [orders, period]);
+  }, [days, top, sum]);
 
   if (isLoading) return <div className="max-w-6xl mx-auto px-5 py-24 text-center"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" /></div>;
   if (stores.length === 0) return <NoStore />;
 
   const stats = [
-    ["Faturamento", brl(kpis.revenue)],
+    ["Faturamento (entregues)", brl(kpis.revenue)],
     ["Pedidos", kpis.orders],
     ["Ticket médio", brl(kpis.ticket)],
     ["Cancelados", kpis.cancelled],

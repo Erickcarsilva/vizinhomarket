@@ -1,15 +1,15 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
-import { useStoreOrders } from "@/lib/useStoreOrders";
+import { useStoreOrders, useTodayFinished } from "@/lib/useStoreOrders";
 import OrdersBoard from "@/components/partner/OrdersBoard";
 import TrialCard from "@/components/partner/TrialCard";
 
 export default function Pedidos() {
   const { store } = useOutletContext();
-  const { orders, refresh, isLoading } = useStoreOrders(store?.id);
+  const { orders: active, refresh, isLoading } = useStoreOrders(store?.id);
+  const finishedToday = useTodayFinished(store?.id);
   if (!store) return null;
-  const active = orders.filter((o) => !["DELIVERED", "CANCELLED"].includes(o.status));
-  const waiting = orders.filter((o) => o.status === "CREATED").length;
+  const waiting = active.filter((o) => o.status === "CREATED").length;
   return (
     <div className="max-w-6xl mx-auto px-5 py-8 space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -21,8 +21,8 @@ export default function Pedidos() {
           {waiting ? `${waiting} esperando aceite` : "Nenhum pedido esperando"}
         </p>
       </div>
-      {isLoading ? <div className="h-40 rounded-2xl bg-muted animate-pulse" /> : <OrdersBoard orders={active.concat(orders.filter((o) => ["DELIVERED", "CANCELLED"].includes(o.status)).slice(0, 10))} onChanged={refresh} />}
-      <TrialCard store={store} orders={orders} />
+      {isLoading ? <div className="h-40 rounded-2xl bg-muted animate-pulse" /> : <OrdersBoard orders={active.concat(finishedToday.slice(0, 10))} onChanged={refresh} />}
+      <TrialCard store={store} />
     </div>
   );
 }
