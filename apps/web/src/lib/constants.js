@@ -1,9 +1,9 @@
-import { UtensilsCrossed, ShoppingBasket, PawPrint, Wrench, ShoppingBag, Pill, Wine, Smartphone } from "lucide-react";
+import { UtensilsCrossed, ShoppingBasket, PawPrint, Wrench, ShoppingBag, Wine, Smartphone } from "lucide-react";
 
+// Farmácia fica fora do piloto (regras sanitárias). Ver migração 202610210003.
 export const CATEGORIES = [
   { id: "alimentacao", label: "Alimentação", icon: UtensilsCrossed },
   { id: "mercado", label: "Mercado", icon: ShoppingBasket },
-  { id: "farmacia", label: "Farmácia", icon: Pill },
   { id: "pet", label: "Pet", icon: PawPrint },
   { id: "bebidas", label: "Bebidas", icon: Wine },
   { id: "autopecas", label: "Autopeças", icon: Wrench },

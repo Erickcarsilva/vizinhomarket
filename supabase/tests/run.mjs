@@ -542,6 +542,13 @@ await ok('Admin vê o resumo de qualquer loja', async () => {
   return eq(r.delivered, ref.entregues);
 });
 
+// ---------- 15. Farmácia fora do piloto (21/10) ----------
+await as(ownerA);
+await ok('Farmácia não aparece para quem usa o app', async () => eq((await q("select count(*) c from public.categories where slug = 'farmacia'"))[0].c, 0));
+await fails('Cadastro de loja na categoria Farmácia é recusado', () => q("select public.register_store('Drogaria X', $1, $2, 'Dono', '67999990000', '111.444.777-35')", [cat.farmacia, city]), 'Categoria inválida');
+await as(admin);
+await ok('Admin ainda vê a categoria (inativa) para reativar no futuro', async () => eq((await q("select active from public.categories where slug = 'farmacia'"))[0].active, false));
+
 // ---------- Relatório ----------
 const passed = results.filter(r => r.pass).length;
 for (const r of results) console.log(`${r.pass ? 'PASSOU' : 'FALHOU'}  ${r.name}${r.pass ? '' : '  →  ' + r.detail}`);

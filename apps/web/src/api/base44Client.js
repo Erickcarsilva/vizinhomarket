@@ -144,7 +144,8 @@ const Store = {
     return storeFromRow(data);
   },
   async create(d) {
-    const cat = (await categories()).find((c) => c.slug === d.category) || (await categories())[0];
+    const cat = (await categories()).find((c) => c.slug === d.category);
+    if (!cat) throw new Error("Escolha uma categoria válida");
     const city = await defaultCity();
     const { data: id, error } = await supabase.rpc("register_store", {
       p_name: d.name, p_category_id: cat.id, p_city_id: city.id,
