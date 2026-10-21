@@ -1,0 +1,189 @@
+// Teste ponta a ponta das telas que ainda não tinham cobertura, com volume de pedidos acima do antigo limite de 500:
+// Painel do Comerciante — Histórico (totais e "Carregar mais"), Entregas, Relatórios, Comissões, resumo do mês;
+// App do Cliente — Busca, Favoritos e Indique uma loja.
+// Uso: node telas.mjs <pasta para prints>   (rodar depois de reset.sh)
+import { chromium } from 'playwright';
+import pg from 'pg';
+import { CLI, PAR, PG, launchOptions } from './config.mjs';
+
+const shots = process.argv[2] || '.';
+const results = [];
+const check = (name, pass, detail = '') => { results.push({ name, pass, detail }); console.log(`${pass ? 'PASSOU' : 'FALHOU'}  ${name}${detail ? '  →  ' + detail : ''}`); };
+const db = new pg.Client(PG);
+await db.connect();
+const one = async (sql, p = []) => (await db.query(sql, p)).rows[0];
+const brl = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const norm = (s) => (s || '').replace(/\s/g, ' ').trim();
+
+const browser = await chromium.launch(launchOptions);
+const errors = [];
+async function person(name) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'pt-BR', timezoneId: 'America/Campo_Grande' });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => errors.push(`${name}: ${e.message}`));
+  page.on('console', (m) => { if (m.type() === 'error' && !/realtime|websocket|WebSocket|ERR_CONNECTION_REFUSED|ERR_NAME_NOT_RESOLVED|fonts\.g/i.test(m.text())) errors.push(`${name} console: ${m.text().slice(0, 200)}`); });
+  return page;
+}
+async function register(page, email, base) {
+  await page.goto(`${base}/register`);
+  await page.fill('input[type=email]', email);
+  for (const p of await page.locator('input[type=password]').all()) await p.fill('SenhaForte123!');
+  const terms = page.getByRole('checkbox').first();
+  if (await terms.count()) await terms.click();
+  await page.click('button[type=submit]');
+  await page.waitForTimeout(800);
+  const otp = page.locator('input[autocomplete="one-time-code"], [data-input-otp] input, input[inputmode="numeric"]').first();
+  if (await otp.count()) {
+    await otp.click(); await page.keyboard.type('123456');
+    const verify = page.getByRole('button', { name: /verificar|confirmar|continuar/i }).first();
+    if (await verify.count()) await verify.click();
+  }
+  await page.waitForTimeout(1200);
+}
+const shot = (page, n) => page.screenshot({ path: `${shots}/${n}.png`, fullPage: true });
+const textOf = async (page, sel) => norm(await page.locator(sel).first().textContent({ timeout: 10000 }));
+// espera o número sair do "…" (carregando)
+async function settled(page, sel) {
+  await page.waitForFunction((s) => { const el = document.querySelector(s); return el && !/…/.test(el.textContent); }, sel, { timeout: 15000 });
+  return textOf(page, sel);
+}
+
+try {
+  // ---------- Preparação: comerciante e cliente pelas telas; loja e 600+ pedidos direto no banco
+  const dono = await person('comerciante');
+  await register(dono, 'dono@telas.test', PAR);
+  const cli = await person('cliente');
+  await register(cli, 'cliente@telas.test', CLI);
+  const owner = await one("select id from auth.users where email = 'dono@telas.test'");
+  const cust = await one("select id from auth.users where email = 'cliente@telas.test'");
+  const { id: city } = await one("select id from cities where slug = 'sidrolandia-ms'");
+  const { id: cat } = await one("select id from categories where slug = 'alimentacao'");
+  const { id: store } = await one(`insert into stores (city_id, category_id, name, slug, created_by, status, accepts_store_delivery, accepts_pickup)
+    values ($1, $2, 'Padaria Volume', 'padaria-volume', $3, 'approved', true, true) returning id`, [city, cat, owner.id]);
+  await db.query("insert into store_members (store_id, user_id, role) values ($1, $2, 'owner')", [store, owner.id]);
+  await db.query("insert into store_private (store_id, document, owner_name, owner_phone) values ($1, '11144477735', 'Dono Volume', '67999990000')", [store]);
+  await db.query("insert into user_roles (user_id, role) values ($1, 'partner') on conflict do nothing", [owner.id]);
+  await db.query("insert into store_hours (store_id, weekday, opens, closes) select $1, d, '00:00', '23:59' from generate_series(0, 6) d", [store]);
+  const { id: pao } = await one("insert into products (store_id, name, price, stock) values ($1, 'Pão de queijo recheado', 6.5, 1000) returning id", [store]);
+  await db.query("insert into products (store_id, name, price, stock) values ($1, 'Café coado', 4, 1000)", [store]);
+  const cols = `code, city_id, store_id, customer_id, status, fulfillment, payment_method, customer_name, customer_phone,
+                subtotal, delivery_fee, total, commission_rate, commission_amount, idempotency_key, created_at, accepted_at, delivered_at`;
+  // 620 entregues nos últimos 6 dias (sem contar hoje), 3 entregues hoje, 40 cancelados, 1 pronto, 2 a caminho
+  await db.query(`insert into orders (${cols})
+    select 'VT-' || g, $1, $2, $3, 'DELIVERED', 'store_delivery', 'pix', 'Cliente Volume', '67900000000',
+           10 + (g % 9), 5, 15 + (g % 9), 0.08, round((10 + (g % 9)) * 0.08, 2), 'telas-v-' || g,
+           now() - (1 + g % 6) * interval '1 day' - interval '2 hours', now() - (1 + g % 6) * interval '1 day' - interval '115 minutes',
+           now() - (1 + g % 6) * interval '1 day' - interval '1 hour'
+    from generate_series(1, 620) g`, [city, store, cust.id]);
+  await db.query(`insert into orders (${cols})
+    select 'VH-' || g, $1, $2, $3, 'DELIVERED', 'store_delivery', 'cash', 'Cliente Hoje', '67900000000', 20, 5, 25, 0.08, 1.6, 'telas-h-' || g,
+           now() - interval '20 minutes', now() - interval '18 minutes', now() - interval '2 minutes'
+    from generate_series(1, 3) g`, [city, store, cust.id]);
+  await db.query(`insert into orders (code, city_id, store_id, customer_id, status, fulfillment, payment_method, customer_name, customer_phone,
+                  subtotal, delivery_fee, total, commission_rate, commission_amount, idempotency_key, created_at, cancel_reason)
+    select 'VC-' || g, $1, $2, $3, 'CANCELLED', 'store_delivery', 'pix', 'Cliente Volume', '67900000000', 20, 5, 25, 0.08, 1.6,
+           'telas-c-' || g, now() - (1 + g % 6) * interval '1 day', 'Cliente desistiu'
+    from generate_series(1, 40) g`, [city, store, cust.id]);
+  await db.query(`insert into orders (code, city_id, store_id, customer_id, status, fulfillment, payment_method, customer_name, customer_phone,
+                  subtotal, delivery_fee, total, commission_rate, commission_amount, idempotency_key, created_at, accepted_at)
+    select 'VA-' || g, $1, $2, $3, (case when g = 1 then 'READY' else 'IN_TRANSIT' end)::order_status, 'store_delivery', 'pix', 'Cliente Ativo', '67900000000',
+           12, 5, 17, 0.08, 0.96, 'telas-a-' || g, now() - interval '30 minutes', now() - interval '28 minutes'
+    from generate_series(1, 3) g`, [city, store, cust.id]);
+  await db.query(`insert into order_items (order_id, product_id, name, unit, unit_price, quantity, line_total)
+    select o.id, $1, 'Pão de queijo recheado', 'un', o.subtotal, 1, o.subtotal from orders o where o.store_id = $2`, [pao, store]);
+  const ref7 = await one(`select count(*)::int n, sum(subtotal) vendas, sum(commission_amount) comissao from orders
+    where store_id = $1 and status = 'DELIVERED' and delivered_at >= now() - interval '7 days'`, [store]);
+  const ref30 = await one("select sum(total) total from orders where store_id = $1 and status = 'DELIVERED' and delivered_at >= now() - interval '30 days'", [store]);
+  const refMes = await one(`select count(*)::int n from orders where store_id = $1
+    and created_at >= (date_trunc('month', now() at time zone 'America/Campo_Grande') at time zone 'America/Campo_Grande')`, [store]);
+  check('Banco de teste com mais de 500 pedidos entregues na loja', ref7.n > 500, `${ref7.n} entregues em 7 dias`);
+
+  // ---------- Comerciante: Histórico
+  await dono.goto(`${PAR}/login`);
+  await dono.fill('input[type=email]', 'dono@telas.test');
+  await dono.fill('input[type=password]', 'SenhaForte123!');
+  await dono.click('button[type=submit]');
+  await dono.waitForTimeout(1500);
+  await dono.goto(`${PAR}/historico`);
+  const entregues = await settled(dono, '[data-total="Entregues"]');
+  check('Histórico: total de entregues (7 dias) igual ao banco, acima de 500', entregues === String(ref7.n), `tela ${entregues} · banco ${ref7.n}`);
+  const vendas = await settled(dono, '[data-total="Vendas"]');
+  check('Histórico: vendas iguais ao banco', vendas === norm(brl(ref7.vendas)), `tela ${vendas} · banco ${brl(ref7.vendas)}`);
+  const comissao = await settled(dono, '[data-total="Comissão"]');
+  check('Histórico: comissão igual ao banco', comissao === norm(brl(ref7.comissao)), `tela ${comissao} · banco ${brl(ref7.comissao)}`);
+  await dono.waitForSelector('[data-order-row]');
+  const first = await dono.locator('[data-order-row]').count();
+  await dono.getByRole('button', { name: 'Carregar mais' }).click();
+  await dono.waitForFunction((n) => document.querySelectorAll('[data-order-row]').length > n, first, { timeout: 10000 });
+  const second = await dono.locator('[data-order-row]').count();
+  check('Histórico: lista em páginas de 50 e "Carregar mais" traz a próxima', first === 50 && second === 100, `${first} → ${second}`);
+  await shot(dono, 'telas-01-historico');
+
+  // ---------- Comerciante: Entregas
+  await dono.goto(`${PAR}/entregas`);
+  await dono.waitForTimeout(2500);
+  const hoje = await textOf(dono, '[data-count="Entregues hoje"]');
+  const caminho = await textOf(dono, '[data-count="A caminho"]');
+  const prontos = await textOf(dono, '[data-count="Prontos para sair"]');
+  check('Entregas: entregues hoje, a caminho e prontos batem com o banco', hoje === '3' && caminho === '2' && prontos === '1', `hoje ${hoje} · a caminho ${caminho} · prontos ${prontos}`);
+  await shot(dono, 'telas-02-entregas');
+
+  // ---------- Comerciante: Relatórios (30 dias)
+  await dono.goto(`${PAR}/relatorios`);
+  const fat = await settled(dono, '[data-stat="Faturamento (entregues)"]');
+  check('Relatórios: faturamento de 30 dias igual ao banco', fat === norm(brl(ref30.total)), `tela ${fat} · banco ${brl(ref30.total)}`);
+  check('Relatórios: produto mais vendido aparece', await dono.getByText('Pão de queijo recheado').first().isVisible());
+  await shot(dono, 'telas-03-relatorios');
+
+  // ---------- Comerciante: Comissões e resumo do mês
+  await dono.goto(`${PAR}/financeiro`);
+  await dono.waitForSelector('[data-commission-row]', { timeout: 10000 });
+  const comRows = await dono.locator('[data-commission-row]').count();
+  check('Comissões: lista paginada (50) com "Carregar mais"', comRows === 50 && await dono.getByRole('button', { name: 'Carregar mais' }).isVisible(), `${comRows} linhas`);
+  const mes = await settled(dono, '[data-stat="Pedidos no mês"]');
+  check('Resumo do mês: pedidos no mês igual ao banco', mes === String(refMes.n), `tela ${mes} · banco ${refMes.n}`);
+  await shot(dono, 'telas-04-financeiro');
+
+  // ---------- Cliente: Busca
+  await cli.goto(`${CLI}/busca`);
+  await cli.fill('input[placeholder="Buscar por loja ou produto..."]', 'pão de queijo');
+  await cli.waitForTimeout(1500);
+  check('Busca: encontra o produto pelo nome', await cli.getByText('Pão de queijo recheado').first().isVisible());
+  await cli.fill('input[placeholder="Buscar por loja ou produto..."]', 'padaria volume');
+  await cli.waitForTimeout(800);
+  check('Busca: encontra a loja pelo nome', await cli.getByText('Padaria Volume').first().isVisible());
+  await shot(cli, 'telas-05-busca');
+
+  // ---------- Cliente: Favoritos
+  await cli.goto(`${CLI}/loja/${store}`);
+  await cli.waitForTimeout(2000);
+  await cli.getByRole('button', { name: 'Favoritar' }).first().click();
+  await cli.goto(`${CLI}/favoritos`);
+  await cli.waitForTimeout(2000);
+  check('Favoritos: produto favoritado aparece na lista', await cli.getByText(/Pão de queijo recheado|Café coado/).first().isVisible());
+  await cli.getByRole('button', { name: 'Remover dos favoritos' }).first().click();
+  await cli.waitForTimeout(500);
+  check('Favoritos: remover tira da lista', (await cli.getByRole('button', { name: 'Remover dos favoritos' }).count()) === 0);
+  await shot(cli, 'telas-06-favoritos');
+
+  // ---------- Cliente: Indique uma loja
+  await cli.goto(`${CLI}/indique-loja`);
+  await cli.fill('input[placeholder="Ex.: Padaria do Bairro"]', 'Oficina do Zé');
+  await cli.fill('input[placeholder="WhatsApp, telefone ou e-mail"]', '67999997777');
+  await cli.getByRole('button', { name: /Enviar indicação/ }).click();
+  await cli.waitForTimeout(1500);
+  const indic = await one("select store_name, contact from store_referrals where store_name = 'Oficina do Zé'");
+  check('Indique loja: indicação gravada e tela de agradecimento', !!indic && await cli.getByText('Obrigado pela indicação!').isVisible(), JSON.stringify(indic));
+  await shot(cli, 'telas-07-indique');
+
+  check('Nenhum erro de JavaScript nas telas', errors.length === 0, errors.slice(0, 3).join(' | '));
+} catch (e) {
+  check('Roteiro completo sem travar', false, e.message.split('\n')[0]);
+  if (errors.length) console.log('erros:', errors.slice(0, 5).join(' | '));
+} finally {
+  await browser.close();
+  await db.end();
+  const passed = results.filter((r) => r.pass).length;
+  console.log(`\n${passed}/${results.length} verificações passaram`);
+  process.exit(passed === results.length ? 0 : 1);
+}

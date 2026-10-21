@@ -6,6 +6,7 @@ import http from 'node:http';
 import { spawn } from 'node:child_process';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
+import { PG } from './config.mjs';
 
 const SECRET = 'segredo-de-teste-local-com-mais-de-32-caracteres';
 const PGRST_PORT = 3001;
@@ -13,10 +14,10 @@ const PORT = 54321;
 
 export const anonKey = jwt.sign({ role: 'anon', iss: 'vm-e2e' }, SECRET, { expiresIn: '10y' });
 
-const pgrst = spawn(process.argv[2], [], {
+const pgrst = spawn(process.argv[2] || process.env.VM_POSTGREST || 'postgrest', [], {
   env: {
     ...process.env,
-    PGRST_DB_URI: 'postgres://authenticator:authpass@localhost:54329/vm',
+    PGRST_DB_URI: `postgres://authenticator:authpass@${PG.host}:${PG.port}/${PG.database}`,
     PGRST_DB_SCHEMAS: 'public',
     PGRST_DB_ANON_ROLE: 'anon',
     PGRST_JWT_SECRET: SECRET,
@@ -27,7 +28,7 @@ const pgrst = spawn(process.argv[2], [], {
 });
 process.on('exit', () => pgrst.kill());
 
-const db = new pg.Pool({ host: 'localhost', port: 54329, user: 'postgres', password: 'postgres', database: 'vm' });
+const db = new pg.Pool(PG);
 const users = new Map(); // email -> { id, password, data }
 
 const userObj = (u, email) => ({

@@ -15,12 +15,19 @@ export default function IndiqueLoja() {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const valid = form.store_name.trim() && form.contact.trim();
 
+  const [error, setError] = useState("");
   const submit = async (e) => {
     e.preventDefault();
     setSending(true);
-    await base44.entities.StoreReferral.create(form);
-    setSending(false);
-    setDone(true);
+    setError("");
+    try {
+      await base44.entities.StoreReferral.create(form);
+      setDone(true);
+    } catch (err) {
+      setError(/login|auth|JWT/i.test(err?.message || "") ? "Entre na sua conta para enviar a indicação." : "Não foi possível enviar agora. Tente de novo em instantes.");
+    } finally {
+      setSending(false);
+    }
   };
 
   if (done) {
@@ -81,6 +88,7 @@ export default function IndiqueLoja() {
       <button disabled={!valid || sending} className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition">
         {sending && <Loader2 className="w-4 h-4 animate-spin" />} Enviar indicação
       </button>
+      {error && <p role="alert" className="text-sm text-destructive text-center">{error}</p>}
     </form>
   );
 }

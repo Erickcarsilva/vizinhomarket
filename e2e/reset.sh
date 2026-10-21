@@ -1,4 +1,5 @@
 #!/bin/bash
+# Atalho do ambiente de desenvolvimento em /srv/vm-e2e. Em outro computador ou no GitHub, use rodar-todos.sh (ver README.md).
 # Prepara o ambiente de teste ponta a ponta: Postgres, banco zerado, API simulada e app.
 cd /srv/vm-e2e
 PGBIN=/srv/vm-e2e/node_modules/@embedded-postgres/linux-x64/native/bin

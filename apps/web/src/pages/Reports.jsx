@@ -39,11 +39,12 @@ export default function Reports() {
   if (isLoading) return <div className="max-w-6xl mx-auto px-5 py-24 text-center"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" /></div>;
   if (stores.length === 0) return <NoStore />;
 
+  // "…" enquanto o servidor calcula, para não mostrar R$ 0,00 por engano
   const stats = [
-    ["Faturamento (entregues)", brl(kpis.revenue)],
-    ["Pedidos", kpis.orders],
-    ["Ticket médio", brl(kpis.ticket)],
-    ["Cancelados", kpis.cancelled],
+    ["Faturamento (entregues)", sum ? brl(kpis.revenue) : "…"],
+    ["Pedidos", sum ? kpis.orders : "…"],
+    ["Ticket médio", sum ? brl(kpis.ticket) : "…"],
+    ["Cancelados", sum ? kpis.cancelled : "…"],
   ];
 
   return (
@@ -66,7 +67,7 @@ export default function Reports() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map(([label, value]) => (
           <div key={label} className="bg-card border border-border rounded-2xl p-5">
-            <p className="font-display text-3xl">{value}</p>
+            <p className="font-display text-3xl" data-stat={label}>{value}</p>
             <p className="text-xs text-muted-foreground mt-1">{label}</p>
           </div>
         ))}

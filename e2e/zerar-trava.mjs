@@ -1,11 +1,12 @@
 // Confere as 3 travas do script perigoso/00_zerar_banco_teste.sql no banco LOCAL de teste (porta 54329).
 // Depois rode reset.sh para reinstalar o banco local.
 import pg from 'pg';
+import { PG } from './config.mjs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-const root = process.env.VM_REPO || '/home/claude/vizinhomarket';
+const root = process.env.VM_REPO || new URL('..', import.meta.url).pathname;
 const base = readFileSync(join(root, 'supabase/deploy/perigoso/00_zerar_banco_teste.sql'), 'utf8');
-const c = new pg.Client({ host: 'localhost', port: Number(process.env.VM_PG_PORT || 54329), user: 'postgres', password: 'postgres', database: 'vm' });
+const c = new pg.Client(PG);
 await c.connect();
 const results = [];
 const check = async (name, fn) => { try { await fn(); results.push([true, name]); } catch (e) { results.push([false, name, e.message]); } };

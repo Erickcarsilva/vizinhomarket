@@ -7,3 +7,6 @@ dist
 !.env.cliente
 !.env.parceiro
 !.env.admin
+
+# saídas dos testes ponta a ponta
+e2e/prints/

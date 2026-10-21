@@ -7,7 +7,7 @@ const Col = ({ title, hint, list, onChanged }) => (
   <section className="space-y-3">
     <div className="flex items-baseline justify-between">
       <h2 className="font-display text-2xl">{title}</h2>
-      <span className="text-sm text-muted-foreground">{list.length}</span>
+      <span className="text-sm text-muted-foreground" data-count={title}>{list.length}</span>
     </div>
     {hint && <p className="text-xs text-muted-foreground -mt-2">{hint}</p>}
     {list.length === 0 ? <p className="text-sm text-muted-foreground rounded-2xl border border-dashed border-border p-6 text-center">Nada por aqui.</p>

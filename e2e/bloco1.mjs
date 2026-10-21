@@ -4,19 +4,17 @@
 // Uso: node bloco1.mjs <pasta para prints>   (rodar depois de reset.sh)
 import { chromium } from 'playwright';
 import pg from 'pg';
+import { CLI, PAR, ADM, PG, launchOptions } from './config.mjs';
 
-const CLI = 'http://localhost:4173';   // app do cliente
-const PAR = 'http://localhost:4174';   // painel do comerciante
-const ADM = 'http://localhost:4175';   // painel admin
 const APP = CLI;
 const shots = process.argv[2] || '.';
 const results = [];
 const check = (name, pass, detail = '') => { results.push({ name, pass, detail }); console.log(`${pass ? 'PASSOU' : 'FALHOU'}  ${name}${detail ? '  →  ' + detail : ''}`); };
-const db = new pg.Client({ host: 'localhost', port: 54329, user: 'postgres', password: 'postgres', database: 'vm' });
+const db = new pg.Client(PG);
 await db.connect();
 const one = async (sql, p = []) => (await db.query(sql, p)).rows[0];
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-proxy-server'] });
+const browser = await chromium.launch(launchOptions);
 const errors = [];
 const pages = [];
 async function person(name) {

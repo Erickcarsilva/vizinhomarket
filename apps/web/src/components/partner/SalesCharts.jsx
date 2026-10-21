@@ -11,7 +11,7 @@ export default function SalesCharts({ daily, cumulative }) {
           <BarChart data={daily} margin={{ left: -16, right: 8, top: 10 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
             <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `R$${v}`} />
+            <YAxis width={72} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `R$ ${Number(v).toLocaleString("pt-BR")}`} />
             <Tooltip formatter={(v) => brl(v)} labelStyle={{ fontSize: 12 }} contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))" }} />
             <Bar dataKey="value" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
           </BarChart>
@@ -29,7 +29,7 @@ export default function SalesCharts({ daily, cumulative }) {
             </defs>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
             <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `R$${v}`} />
+            <YAxis width={72} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `R$ ${Number(v).toLocaleString("pt-BR")}`} />
             <Tooltip formatter={(v) => brl(v)} contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))" }} />
             <Area type="monotone" dataKey="value" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#cumFill)" />
           </AreaChart>

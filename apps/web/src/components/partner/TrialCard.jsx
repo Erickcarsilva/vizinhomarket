@@ -12,10 +12,10 @@ export default function TrialCard({ store }) {
   }, []);
   const { data: s, isLoading } = useStoreSummary(store?.id, from, to);
   const stats = [
-    ["Pedidos no mês", s?.orders ?? 0],
-    ["Vendas entregues", brl(s?.sales ?? 0)],
-    ["Comissão do mês", brl(s?.commission ?? 0)],
-    ["Cancelados", s?.cancelled ?? 0],
+    ["Pedidos no mês", s ? s.orders : "…"],
+    ["Vendas entregues", s ? brl(s.sales) : "…"],
+    ["Comissão do mês", s ? brl(s.commission) : "…"],
+    ["Cancelados", s ? s.cancelled : "…"],
   ];
 
   return (

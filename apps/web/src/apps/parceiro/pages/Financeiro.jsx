@@ -58,7 +58,7 @@ export default function Financeiro() {
             </thead>
             <tbody>
               {delivered.map((o) => (
-                <tr key={o.id} className="border-t border-border">
+                <tr key={o.id} className="border-t border-border" data-commission-row>
                   <td className="px-4 py-3">{new Date(o.delivered_at || o.created_date).toLocaleDateString("pt-BR")}</td>
                   <td className="px-4 py-3">{o.code}</td>
                   <td className="px-4 py-3 text-right">{brl(o.subtotal)}</td>

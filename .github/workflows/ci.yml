@@ -1,0 +1,94 @@
+# Verificação automática a cada envio (push) e pull request.
+# 1) testes do banco (regras de segurança e de negócio), lint, build dos 3 produtos e auditoria de pacotes;
+# 2) testes ponta a ponta pelas telas, com Postgres 17 + PostgREST (o mesmo motor do Supabase) e Chromium.
+# Não usa nenhum segredo e não acessa o Supabase real.
+name: Verificação
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  banco-e-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Testes do banco
+        run: npm ci && npm run test:db
+      - name: Lint e build dos 3 produtos
+        working-directory: apps/web
+        env:
+          VITE_SUPABASE_URL: https://exemplo.supabase.co
+          VITE_SUPABASE_ANON_KEY: chave-de-exemplo
+        run: |
+          npm ci
+          npx eslint src --quiet
+          npm run build
+      - name: Pacotes que vão para o navegador sem vulnerabilidades
+        working-directory: apps/web
+        run: npm audit --omit=dev
+
+  ponta-a-ponta:
+    needs: banco-e-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      VM_PG_HOST: localhost
+      VM_PG_PORT: "54329"
+      VM_POSTGREST: ${{ github.workspace }}/.bin/postgrest
+      VM_E2E_OUT: ${{ github.workspace }}/.e2e-dist
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar PostgREST 12.2.3
+        run: |
+          mkdir -p .bin
+          curl -fsSL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz | tar -xJ -C .bin
+          .bin/postgrest --version
+      - name: Dependências
+        run: |
+          (cd e2e && npm ci && npx playwright install --with-deps chromium)
+          (cd apps/web && npm ci)
+      - name: Banco e API de teste (para obter a chave de teste)
+        run: |
+          node e2e/apply.mjs .
+          nohup node e2e/server.mjs "$VM_POSTGREST" > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:54321/anon-key && break; sleep 1; done
+          echo "VITE_SUPABASE_ANON_KEY=$(curl -s localhost:54321/anon-key | node -e 'process.stdin.on("data",d=>console.log(JSON.parse(d).anonKey))')" >> "$GITHUB_ENV"
+          pkill -f "e2e/server.mjs" || true
+      - name: Gerar os 3 sites de teste
+        env:
+          VITE_SUPABASE_URL: http://localhost:54321
+        run: bash e2e/build-e2e.sh
+      - name: Servir os 3 sites (4173, 4174, 4175)
+        working-directory: apps/web
+        run: |
+          for m in cliente parceiro admin; do nohup npx vite preview --mode $m --outDir "$VM_E2E_OUT/dist-$m" > "preview-$m.log" 2>&1 & done
+          for p in 4173 4174 4175; do for i in $(seq 1 30); do curl -sf localhost:$p >/dev/null && break; sleep 1; done; done
+      - name: Testes ponta a ponta
+        run: bash e2e/rodar-todos.sh e2e/prints
+      - name: Guardar prints e registros
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prints-ponta-a-ponta
+          path: e2e/prints/
+          retention-days: 7
