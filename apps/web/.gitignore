@@ -1,6 +1,10 @@
 #env
 .env
 .env.*
+# Arquivos de modo dos 3 produtos: não têm segredo (só nome e título) e são necessários para o build
+!.env.cliente
+!.env.parceiro
+!.env.admin
 
 # Logs
 /logs
