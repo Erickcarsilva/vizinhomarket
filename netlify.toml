@@ -1,0 +1,12 @@
+# Netlify: os 3 sites usam este mesmo arquivo. A única diferença entre eles é a variável PRODUTO,
+# cadastrada em cada site (Site configuration → Environment variables):
+#   site do cliente      → PRODUTO = cliente
+#   site do comerciante  → PRODUTO = parceiro
+#   site do admin        → PRODUTO = admin
+[build]
+  base = "apps/web"
+  command = "npm run build:netlify"
+  publish = "dist/site"
+
+[build.environment]
+  NODE_VERSION = "22"

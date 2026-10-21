@@ -29,7 +29,7 @@ restart_api
 node "$HERE/zerar-trava.mjs" > "$SHOTS/zerar-trava.txt" 2>&1; rc=$?
 grep -E "FALHOU|verificações" "$SHOTS/zerar-trava.txt" || tail -5 "$SHOTS/zerar-trava.txt"
 [ $rc = 0 ] || status=1
-if git -C "$REPO" rev-parse --verify -q master >/dev/null; then
+if git -C "$REPO" rev-parse --verify -q 9924fd3 >/dev/null; then
   echo "== arquivos de instalação (supabase/deploy)"
   node "$HERE/validar-deploy.mjs" > "$SHOTS/validar-deploy.txt" 2>&1; rc=$?
   grep -E "FALHOU|verificações" "$SHOTS/validar-deploy.txt" || tail -5 "$SHOTS/validar-deploy.txt"

@@ -1,14 +1,14 @@
 import { UtensilsCrossed, ShoppingBasket, PawPrint, Wrench, ShoppingBag, Wine, Smartphone } from "lucide-react";
 
-// Farmácia fica fora do piloto (regras sanitárias). Ver migração 202610210003.
+// Nomes iguais aos do banco (tabela categories). Farmácia fica fora do piloto (regras sanitárias). Ver migração 202610210003.
 export const CATEGORIES = [
-  { id: "alimentacao", label: "Alimentação", icon: UtensilsCrossed },
+  { id: "alimentacao", label: "Restaurantes e lanches", icon: UtensilsCrossed },
   { id: "mercado", label: "Mercado", icon: ShoppingBasket },
-  { id: "pet", label: "Pet", icon: PawPrint },
+  { id: "pet", label: "Pet shop", icon: PawPrint },
   { id: "bebidas", label: "Bebidas", icon: Wine },
   { id: "autopecas", label: "Autopeças", icon: Wrench },
   { id: "eletronicos", label: "Eletrônicos", icon: Smartphone },
-  { id: "lojas", label: "Lojas", icon: ShoppingBag },
+  { id: "lojas", label: "Lojas e variedades", icon: ShoppingBag },
 ];
 export const categoryLabel = (id) => CATEGORIES.find((c) => c.id === id)?.label || id;
 

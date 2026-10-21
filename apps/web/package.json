@@ -12,6 +12,7 @@
     "build:cliente": "vite build --mode cliente --outDir dist/cliente --emptyOutDir",
     "build:parceiro": "vite build --mode parceiro --outDir dist/parceiro --emptyOutDir",
     "build:admin": "vite build --mode admin --outDir dist/admin --emptyOutDir",
+    "build:netlify": "vite build --mode ${PRODUTO:-cliente} --outDir dist/site --emptyOutDir",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json"

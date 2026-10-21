@@ -1,7 +1,7 @@
 // Confere os arquivos de instalação (supabase/deploy) num Postgres LOCAL, com imitações mínimas do Supabase
 // (área storage e publicação de tempo real). Não toca no Supabase real. O pg_cron (Parte 2) não é rodado aqui.
 //   1. banco completo do zero;
-//   2. banco como estava no 03 (versão do master) + atualização 04;
+//   2. banco como estava no 03 (commit 9924fd3) + atualização 04;
 //   3. rodar o 04 duas vezes: a segunda falha inteira, sem gravar nada pela metade.
 import pg from 'pg';
 import { readFileSync } from 'node:fs';
@@ -46,10 +46,10 @@ catch (e) { check('Banco completo instala do zero', false, e.message); }
 await c.end();
 
 c = await fresh('deploy_04');
-const antigo = execSync('git show master:supabase/deploy/vizinhomarket_banco_completo.sql', { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 });
+const antigo = execSync(`git show ${process.env.VM_BASE_03 || '9924fd3'}:supabase/deploy/vizinhomarket_banco_completo.sql`, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 });
 await c.query(part1(antigo));
 const antes = (await c.query(conf)).rows[0];
-check('Banco como estava no 03 (master) não tem os totais', antes.funcoes_totais === 0 && antes.farmacia_ativa === true, JSON.stringify(antes));
+check('Banco como estava no 03 (commit 9924fd3) não tem os totais', antes.funcoes_totais === 0 && antes.farmacia_ativa === true, JSON.stringify(antes));
 try { await c.query(dep('04_atualizacao_totais_farmacia.sql')); const r = (await c.query(conf)).rows[0]; check('Atualização 04 aplicada sobre o 03', expected(r) && r.politicas === antes.politicas, JSON.stringify(r)); }
 catch (e) { check('Atualização 04 aplicada sobre o 03', false, e.message); }
 let segunda = null;
