@@ -409,6 +409,78 @@ await ok('Cliente não lê os erros', async () => eq((await q('select count(*) c
 await as(admin);
 await ok('Admin lê os erros registrados', async () => eq((await q('select message from public.client_errors'))[0].message, 'Erro de teste'));
 
+// ---------- 13. Painel administrativo (21/10) ----------
+await as(custA);
+await fails('Cliente não lista usuários', () => q('select * from public.admin_list_users()'), 'administrador');
+await fails('Cliente não gera faturas', () => q("select public.admin_generate_invoices('2026-01-01', '2026-12-31')"), 'administrador');
+await fails('Cliente não vê o resumo do admin', () => q('select public.admin_overview()'), 'administrador');
+await as(ownerA);
+await fails('Lojista não bloqueia usuário', () => q('select public.admin_set_user_banned($1, true)', [custB.id]), 'administrador');
+await fails('Lojista não vira admin sozinho', () => q('select public.admin_set_admin($1, true)', [ownerA.id]), 'administrador');
+await as(admin);
+await ok('Admin lista usuários com e-mail e papel', async () => {
+  const rows = await q("select * from public.admin_list_users('admin')");
+  return eq(rows[0].email, 'admin@teste.local') && eq(rows[0].roles.includes('admin'), true);
+});
+await ok('Admin vê quem é dono de loja', async () => eq((await q("select owns_store from public.admin_list_users('donoA')"))[0].owns_store, true));
+await ok('Admin bloqueia e desbloqueia usuário', async () => {
+  await q('select public.admin_set_user_banned($1, true, $2)', [custB.id, 'teste']);
+  eq((await q("select banned from public.admin_list_users('clienteB')"))[0].banned, true);
+  await q('select public.admin_set_user_banned($1, false)', [custB.id]);
+  return eq((await q("select banned from public.admin_list_users('clienteB')"))[0].banned, false);
+});
+await fails('Admin não bloqueia a si mesmo', () => q('select public.admin_set_user_banned($1, true)', [admin.id]), 'própria conta');
+await fails('Admin não tira o próprio acesso', () => q('select public.admin_set_admin($1, false)', [admin.id]), 'próprio acesso');
+await ok('Admin dá e tira acesso de admin de outra pessoa', async () => {
+  await q('select public.admin_set_admin($1, true)', [ownerB.id]);
+  eq((await q("select count(*) c from public.user_roles where user_id = $1 and role = 'admin'", [ownerB.id]))[0].c, 1);
+  await q('select public.admin_set_admin($1, false)', [ownerB.id]);
+  return eq((await q("select count(*) c from public.user_roles where user_id = $1 and role = 'admin'", [ownerB.id]))[0].c, 0);
+});
+await ok('Admin lista entregadores com a situação', async () => (await q('select * from public.admin_list_couriers()')).some((r) => r.status === 'pending'));
+await ok('Ação do admin fica no registro de auditoria', async () => Number((await q("select count(*) c from public.audit_log where action in ('ban_user','unban_user','grant_admin','revoke_admin')"))[0].c) >= 4);
+await ok('Resumo do admin calcula no servidor', async () => {
+  const [{ r }] = await q("select public.admin_overview('2000-01-01', now() + interval '1 day') r");
+  return Number(r.orders) > 0 && Number(r.delivered) > 0 && r.stores_approved >= 1;
+});
+await ok('Admin gera faturas do período só com pedidos entregues', async () => {
+  const n = (await q("select public.admin_generate_invoices('2000-01-01', (now() + interval '1 day')::date) n"))[0].n;
+  const [inv] = await q('select orders_count, commission_total from public.invoices where store_id = $1', [storeA]);
+  const [real] = await q("select count(*) c, sum(commission_amount) s from public.orders where store_id = $1 and status = 'DELIVERED'", [storeA]);
+  eq(inv.orders_count, real.c); eq(inv.commission_total, real.s); return n >= 1;
+});
+await ok('Gerar de novo não duplica a fatura', async () => {
+  await q("select public.admin_generate_invoices('2000-01-01', (now() + interval '1 day')::date)");
+  return eq((await q('select count(*) c from public.invoices where store_id = $1', [storeA]))[0].c, 1);
+});
+await ok('Admin marca a fatura como paga', async () => {
+  const [{ id }] = await q('select id from public.invoices where store_id = $1', [storeA]);
+  await q("select public.admin_set_invoice_status($1, 'paid')", [id]);
+  const [i] = await q('select status, paid_at from public.invoices where id = $1', [id]);
+  return eq(i.status, 'paid') && i.paid_at !== null;
+});
+await ok('Fatura paga não é alterada ao gerar de novo', async () => {
+  await q("select public.admin_generate_invoices('2000-01-01', (now() + interval '1 day')::date)");
+  return eq((await q('select status from public.invoices where store_id = $1', [storeA]))[0].status, 'paid');
+});
+await ok('Admin vê a comissão negociada e a efetiva de cada loja', async () => {
+  const [r] = await q('select * from public.admin_store_rates() where store_id = $1', [storeA]);
+  return eq(r.negotiated, '0.0700') && eq(r.effective, '0.0700');
+});
+await ok('Admin volta a loja para a comissão padrão', async () => {
+  await q('select public.admin_set_store_commission($1, null)', [storeA]);
+  const [r] = await q('select * from public.admin_store_rates() where store_id = $1', [storeA]);
+  eq(r.negotiated, null); await q('select public.admin_set_store_commission($1, 0.07)', [storeA]); return true;
+});
+await fails('Comissão acima de 50% é recusada', () => q('select public.admin_set_store_commission($1, 0.9)', [storeA]), 'entre 0');
+await as(ownerA);
+await fails('Lojista não chama a lista de comissões', () => q('select * from public.admin_store_rates()'), 'administrador');
+await ok('Lojista vê a própria fatura', async () => eq((await q('select count(*) c from public.invoices where store_id = $1', [storeA]))[0].c, 1));
+await as(ownerB);
+await ok('Lojista não vê fatura de outra loja', async () => eq((await q('select count(*) c from public.invoices where store_id = $1', [storeA]))[0].c, 0));
+await as(custA);
+await fails('Cliente não marca fatura como paga', async () => { await su(); const [{ id }] = await q('select id from public.invoices limit 1'); await as(custA); return q("select public.admin_set_invoice_status($1, 'void')", [id]); }, 'administrador');
+
 // ---------- Relatório ----------
 const passed = results.filter(r => r.pass).length;
 for (const r of results) console.log(`${r.pass ? 'PASSOU' : 'FALHOU'}  ${r.name}${r.pass ? '' : '  →  ' + r.detail}`);

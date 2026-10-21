@@ -1,3 +1,4 @@
+import { APP_VERSION } from "@/lib/version";
 import React from "react";
 import { Link, Outlet } from "react-router-dom";
 import { ShoppingBag, LogIn, LogOut, Search } from "lucide-react";
@@ -52,7 +53,7 @@ export default function Layout() {
       <main className="flex-1"><Outlet /></main>
       <footer className="border-t border-border/60 mt-16">
         <div className="max-w-6xl mx-auto px-5 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p><Brand size="sm" className="text-foreground" /> · Sidrolândia/MS</p>
+          <p><Brand size="sm" className="text-foreground" /> · Sidrolândia/MS <span className="opacity-60">· v. {APP_VERSION.split(" · ")[0]}</span></p>
           <div className="flex gap-4">
             <Link to="/termos-uso" className="hover:text-foreground transition-colors">Termos</Link>
             <Link to="/privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>

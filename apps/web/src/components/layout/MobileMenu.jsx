@@ -25,6 +25,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import Brand from "@/components/layout/Brand";
+import { APP_VERSION } from "@/lib/version";
 
 function NavLink({ to, icon: Icon, label, onClick }) {
   return (
@@ -117,8 +118,10 @@ export default function MobileMenu() {
             {isAdmin && (
               <>
                 <GroupLabel>Administração</GroupLabel>
-                <NavLink to="/admin-dashboard" icon={Shield} label="Painel administrativo" onClick={close} />
-                <NavLink to="/admin" icon={Shield} label="Operação" onClick={close} />
+                <NavLink to="/admin" icon={Shield} label="Painel administrativo" onClick={close} />
+                <NavLink to="/admin?aba=lojas" icon={Store} label="Lojas" onClick={close} />
+                <NavLink to="/admin?aba=pedidos" icon={ShoppingBag} label="Todos os pedidos" onClick={close} />
+                <NavLink to="/admin?aba=comissoes" icon={Wallet} label="Comissões e faturas" onClick={close} />
               </>
             )}
 
@@ -146,6 +149,7 @@ export default function MobileMenu() {
                 </button>
               </div>
             )}
+            <p className="px-2 pt-6 pb-2 text-[11px] text-muted-foreground">Versão {APP_VERSION}</p>
           </nav>
         </SheetContent>
       </Sheet>

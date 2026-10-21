@@ -20,7 +20,7 @@ import Checkout from '@/pages/Checkout';
 import OrderTracking from '@/pages/OrderTracking';
 import MyOrders from '@/pages/MyOrders';
 import Partner from '@/pages/Partner';
-import Admin from '@/pages/Admin';
+import AdminPanel from '@/pages/AdminPanel';
 import RegisterStore from '@/pages/RegisterStore';
 import Driver from '@/pages/Driver';
 import Terms from '@/pages/Terms';
@@ -41,7 +41,6 @@ import IndiqueLoja from '@/pages/IndiqueLoja';
 import Busca from '@/pages/Busca';
 import Avaliacoes from '@/pages/Avaliacoes';
 import Notificacoes from '@/pages/Notificacoes';
-import AdminDashboard from '@/pages/AdminDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -120,8 +119,8 @@ const AuthenticatedApp = () => {
           <Route path="/perfil" element={<Profile />} />
         </Route>
         <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} allowedRoles={["admin"]} />}>
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/admin-dashboard" element={<Navigate to="/admin" replace />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

@@ -154,7 +154,7 @@ try {
   const adm = await person('admin');
   await register(adm, 'admin@vizinho.test');
   await db.query("insert into user_roles (user_id, role) select id, 'admin' from auth.users where email = 'admin@vizinho.test'");
-  await adm.goto(`${APP}/admin-dashboard`);
+  await adm.goto(`${APP}/admin?aba=registros`);
   await adm.waitForTimeout(2000);
   check('Admin vê o erro no painel', await adm.getByText('teste-e2e: erro de propósito').isVisible());
 

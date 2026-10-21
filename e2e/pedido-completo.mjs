@@ -67,7 +67,7 @@ try {
   const admin = await person('admin');
   await register(admin, 'erick@vizinhomarket.test');
   await db.query("insert into user_roles (user_id, role) select id, 'admin' from auth.users where email = 'erick@vizinhomarket.test'");
-  await admin.goto(`${APP}/admin`);
+  await admin.goto(`${APP}/admin?aba=lojas`);
   await admin.waitForTimeout(1500);
   await admin.getByRole('button', { name: 'Aprovar' }).first().click();
   await admin.waitForTimeout(1500);

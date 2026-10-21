@@ -157,5 +157,33 @@ O build compila, mas o app não roda fora do Base44 sem `VITE_BASE44_APP_ID`: lo
 - pg_cron ativado.
 - Notificação e tela acesa no Android.
 
+## Bloco 2, parte 1 — Painel administrativo (21/10/2026)
+
+### Feito
+- Painel único em /admin com 8 abas. O antigo /admin-dashboard redireciona para lá.
+  - **Visão geral:** números do período e avisos de pendências.
+  - **Lojas:** aprovar, suspender e reativar; ver dados privados; comissão negociada; WhatsApp do dono.
+  - **Pedidos:** filtros, detalhes, cancelamento com motivo e WhatsApp do cliente.
+  - **Usuários:** busca, bloqueio e permissão de admin.
+  - **Entregadores:** aprovar e suspender cadastros.
+  - **Comissões:** faturas do mês, marcar como paga, anular e enviar cobrança pelo WhatsApp.
+  - **Configurações:** comissão padrão, comissão por categoria, tempo limite e Pix da plataforma.
+  - **Erros e histórico.**
+- Funções novas no banco: admin_list_users, admin_set_user_banned, admin_set_admin, admin_list_couriers, admin_generate_invoices, admin_set_invoice_status, admin_overview, admin_store_rates e admin_set_store_commission. Toda ação do admin fica no audit_log.
+- Versão do app aparece no menu e no rodapé (lib/version.js), e os arquivos de entrega passam a ter a versão no nome.
+
+### Testes
+| Teste | Resultado |
+|---|---|
+| Bateria do banco | 139/139 |
+| e2e pedido completo | 19/19 |
+| e2e Bloco 1 | 22/22 |
+| e2e painel admin (e2e/admin.mjs) | 27/27 |
+| 03_atualizacao_bloco2_admin.sql aplicado sobre o banco de 20/10 | OK |
+
+### Pendências observadas
+- O nome da categoria difere entre a tela ("Alimentação") e o banco ("Restaurantes e lanches"). Padronizar.
+- O bloqueio de usuário altera auth.users.banned_until. Confirmar no Supabase real que o login é recusado.
+
 ## Próxima tarefa recomendada
 Erick: criar o projeto `vizinhomarket-teste` no Supabase (plano Free, São Paulo) e conversar com a primeira loja piloto. Claude: aplicar as migrações no projeto de teste (com aprovação), repetir o teste ponta a ponta contra o Supabase real (e-mail, tempo real, imagens) e preparar o build Android (Capacitor).

@@ -66,6 +66,9 @@ async function auth(req, res, path) {
     if (grant === 'password') {
       const u = users.get(b.email);
       if (!u || u.password !== b.password) return authErr(res, 'Invalid login credentials');
+      const { rows: [ban] } = await db.query('select banned_until > now() as banned from auth.users where id = $1', [u.id]);
+      if (ban?.banned) return authErr(res, 'User is banned', 400);
+      await db.query('update auth.users set last_sign_in_at = now() where id = $1', [u.id]);
       return send(res, 200, session(b.email));
     }
     if (grant === 'refresh_token') return send(res, 200, session(String(b.refresh_token).slice(2)));
