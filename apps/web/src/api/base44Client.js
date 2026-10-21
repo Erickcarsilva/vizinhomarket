@@ -253,6 +253,18 @@ const Product = {
     fail(error);
     return data.map(productFromRow);
   },
+  // Busca no servidor por nome ou descrição (o navegador não baixa mais o catálogo inteiro).
+  async search(term, limit = 40) {
+    const clean = String(term || "").replace(/[,()*%\\:."']/g, " ").trim().slice(0, 60);
+    if (clean.length < 2) return [];
+    const like = `*${clean.replace(/\s+/g, "*")}*`;
+    const { data, error } = await supabase.from("products").select(PRODUCT_SELECT)
+      .is("deleted_at", null).eq("available", true)
+      .or(`name.ilike.${like},description.ilike.${like}`)
+      .order("name").limit(limit);
+    fail(error);
+    return data.map(productFromRow);
+  },
   async get(id) {
     const { data, error } = await supabase.from("products").select(PRODUCT_SELECT).eq("id", id).single();
     fail(error, "Produto não encontrado");

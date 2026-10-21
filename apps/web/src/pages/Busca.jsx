@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -10,16 +10,22 @@ import { Image } from "@/components/ui/image";
 export default function Busca() {
   const [q, setQ] = useState("");
   const { data: stores = [], isLoading } = useQuery({ queryKey: ["stores", "approved"], queryFn: () => base44.entities.Store.filter({ status: "approved" }, "-rating", 200) });
-  const { data: products = [] } = useQuery({ queryKey: ["products", "all"], queryFn: () => base44.entities.Product.filter({ available: true }, "-created_date", 1000) });
+  // Produtos: busca no servidor, 300 ms depois que a pessoa para de digitar.
+  const [typed, setTyped] = useState("");
+  useEffect(() => { const id = setTimeout(() => setTyped(q.trim()), 300); return () => clearTimeout(id); }, [q]);
+  const { data: products = [], isFetching: searching } = useQuery({
+    queryKey: ["products", "search", typed.toLowerCase()],
+    queryFn: () => base44.entities.Product.search(typed),
+    enabled: typed.length >= 2,
+  });
 
   const active = stores.filter(isStoreListable);
   const term = q.trim().toLowerCase();
   const storeResults = term
     ? active.filter((s) => s.name.toLowerCase().includes(term) || (s.description || "").toLowerCase().includes(term))
     : active;
-  const productResults = term
-    ? products.filter((p) => p.name.toLowerCase().includes(term) || (p.description || "").toLowerCase().includes(term))
-    : [];
+  const listable = new Set(active.map((s) => s.id));
+  const productResults = typed.length >= 2 ? products.filter((p) => listable.has(p.store_id)) : [];
 
   return (
     <div className="max-w-6xl mx-auto px-5 py-12">
@@ -58,8 +64,10 @@ export default function Busca() {
 
       {term && (
         <section className="mt-14">
-          <h2 className="font-display text-2xl mb-5">Produtos ({productResults.length})</h2>
-          {productResults.length === 0 ? (
+          <h2 className="font-display text-2xl mb-5">Produtos ({searching ? "…" : productResults.length})</h2>
+          {searching && productResults.length === 0 ? (
+            <p className="text-muted-foreground">Buscando…</p>
+          ) : productResults.length === 0 ? (
             <p className="text-muted-foreground">Nenhum produto encontrado para "{q}".</p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
