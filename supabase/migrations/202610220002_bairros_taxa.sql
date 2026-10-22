@@ -40,8 +40,8 @@ create function public.store_set_delivery_zones(p_store_id uuid, p_zones jsonb) 
 language plpgsql security definer set search_path = public as $$
 declare v_city uuid; n int;
 begin
-  if not (public.is_store_member(p_store_id) or public.is_admin()) then
-    raise exception 'Sem permissão para esta loja' using errcode = '42501';
+  if not (public.is_store_owner(p_store_id) or public.is_admin()) then
+    raise exception 'Só o dono da loja altera as taxas (sem permissão para esta loja)' using errcode = '42501';
   end if;
   if jsonb_typeof(coalesce(p_zones, '[]'::jsonb)) <> 'array' then raise exception 'Lista de bairros inválida'; end if;
   select city_id into v_city from public.stores where id = p_store_id;

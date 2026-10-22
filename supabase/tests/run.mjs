@@ -597,6 +597,33 @@ await ok('Admin desativa um bairro (some para quem usa o app)', async () => {
   return eq(n, 0);
 });
 
+// ---------- 18. Atendentes da loja (22/10) ----------
+await as(ownerA);
+await ok('Dono vê a equipe da loja (dono + atendente)', async () => eq((await q('select role from public.store_list_members($1)', [storeA])).map((r) => r.role).join(','), 'owner,staff'));
+await ok('Dono convida atendente pelo e-mail (maiúsculas não importam)', async () => {
+  const id = (await q("select public.store_add_staff($1, ' ClienteB@Teste.Local ') id", [storeA]))[0].id;
+  return eq(id, custB.id);
+});
+await fails('Convite repetido é recusado', () => q("select public.store_add_staff($1, 'clienteB@teste.local')", [storeA]), 'já faz parte');
+await fails('E-mail sem conta é recusado com orientação', () => q("select public.store_add_staff($1, 'ninguem@teste.local')", [storeA]), 'criar a conta');
+await as(staffA);
+await fails('Atendente não convida ninguém', () => q("select public.store_add_staff($1, 'clienteC@teste.local')", [storeA]), 'Só o dono');
+await fails('Atendente não vê a lista da equipe', () => q('select * from public.store_list_members($1)', [storeA]), 'Só o dono');
+await ok('Atendente pode pausar e reabrir a loja', async () => {
+  await q('update public.stores set is_paused = true where id = $1', [storeA]);
+  await q('update public.stores set is_paused = false where id = $1', [storeA]);
+  return true;
+});
+await fails('Atendente não muda a taxa de entrega da loja', () => q('update public.stores set delivery_fee_default = delivery_fee_default + 1 where id = $1', [storeA]), 'Só o dono');
+await fails('Atendente não muda as taxas por bairro', () => q("select public.store_set_delivery_zones($1, '[]'::jsonb)", [storeA]), 'Só o dono');
+await ok('Atendente ainda pausa um produto do cardápio', async () => { await q('update public.products set available = false where id = $1', [pB1]); await q('update public.products set available = true where id = $1', [pB1]); return true; });
+await as(custB);
+await ok('Novo atendente passa a ver a loja no painel', async () => eq((await q('select count(*) c from public.store_members where user_id = $1 and store_id = $2', [custB.id, storeA]))[0].c, 1));
+await ok('Atendente pode sair da equipe por conta própria', async () => { await q('select public.store_remove_staff($1, $2)', [storeA, custB.id]); return true; });
+await as(ownerA);
+await fails('O dono não pode ser removido da equipe', () => q('select public.store_remove_staff($1, $2)', [storeA, ownerA.id]), 'dono não pode');
+await ok('Dono continua mudando os dados da loja', async () => { await q('update public.stores set min_order = 0 where id = $1', [storeA]); return true; });
+
 // ---------- Relatório ----------
 const passed = results.filter(r => r.pass).length;
 for (const r of results) console.log(`${r.pass ? 'PASSOU' : 'FALHOU'}  ${r.name}${r.pass ? '' : '  →  ' + r.detail}`);

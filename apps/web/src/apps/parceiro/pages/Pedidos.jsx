@@ -5,7 +5,7 @@ import OrdersBoard from "@/components/partner/OrdersBoard";
 import TrialCard from "@/components/partner/TrialCard";
 
 export default function Pedidos() {
-  const { store } = useOutletContext();
+  const { store, isOwner } = useOutletContext();
   const { orders: active, refresh, isLoading } = useStoreOrders(store?.id);
   const finishedToday = useTodayFinished(store?.id);
   if (!store) return null;
@@ -22,7 +22,7 @@ export default function Pedidos() {
         </p>
       </div>
       {isLoading ? <div className="h-40 rounded-2xl bg-muted animate-pulse" /> : <OrdersBoard orders={active.concat(finishedToday.slice(0, 10))} onChanged={refresh} />}
-      <TrialCard store={store} />
+      {isOwner && <TrialCard store={store} />}
     </div>
   );
 }

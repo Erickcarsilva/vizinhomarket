@@ -20,6 +20,7 @@ import Historico from "./pages/Historico";
 import Cardapio from "./pages/Cardapio";
 import Financeiro from "./pages/Financeiro";
 import Loja from "./pages/Loja";
+import Equipe from "./pages/Equipe";
 
 // Painel do Comerciante (site): pedidos, entregas, cardápio, comissões e dados da loja.
 export default function ParceiroApp() {
@@ -42,6 +43,7 @@ export default function ParceiroApp() {
             <Route path="/relatorios" element={<Reports />} />
             <Route path="/loja" element={<Loja />} />
             <Route path="/loja/aparencia" element={<EditStoreProfile />} />
+            <Route path="/equipe" element={<Equipe />} />
             <Route path="/alertas" element={<Notificacoes />} />
             <Route path="/cadastrar-loja" element={<RegisterStore />} />
             {/* endereços antigos */}

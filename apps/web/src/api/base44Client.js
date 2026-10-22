@@ -544,6 +544,22 @@ const account = {
 // ---------------------------------------------------------------- painel do comerciante
 const ACTIVE = "(DELIVERED,CANCELLED)";
 const partner = {
+  // Lojas em que a pessoa é dona ou atendente, com o papel dela em cada uma.
+  async myStores() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data, error } = await supabase.from("store_members").select(`role, store:stores(${STORE_SELECT})`).eq("user_id", user.id);
+    fail(error);
+    return data.filter((m) => m.store).map((m) => ({ ...storeFromRow(m.store), my_role: m.role }))
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  },
+  async members(storeId) {
+    const { data, error } = await supabase.rpc("store_list_members", { p_store_id: storeId });
+    fail(error);
+    return data;
+  },
+  async addStaff(storeId, email) { fail((await supabase.rpc("store_add_staff", { p_store_id: storeId, p_email: email })).error); },
+  async removeStaff(storeId, userId) { fail((await supabase.rpc("store_remove_staff", { p_store_id: storeId, p_user_id: userId })).error); },
   zones: (storeId) => storeZones(storeId),
   async setZones(storeId, zones) {
     const { data, error } = await supabase.rpc("store_set_delivery_zones", { p_store_id: storeId, p_zones: zones });

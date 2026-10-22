@@ -202,6 +202,33 @@ try {
   check('Indique loja: indicação gravada e tela de agradecimento', !!indic && await cli.getByText('Obrigado pela indicação!').isVisible(), JSON.stringify(indic));
   await shot(cli, 'telas-07-indique');
 
+  // ---------- Equipe: dono convida atendente; atendente vê só pedidos, entregas e cardápio
+  const atend = await person('atendente');
+  await register(atend, 'atendente@telas.test', PAR);
+  dono.on('dialog', (d) => d.accept());
+  await dono.goto(`${PAR}/equipe`);
+  await dono.waitForSelector('input[placeholder="e-mail do atendente"]', { timeout: 10000 });
+  await dono.fill('input[placeholder="e-mail do atendente"]', 'atendente@telas.test');
+  await dono.getByRole('button', { name: 'Convidar' }).click();
+  await dono.getByText('atendente@telas.test agora é atendente da loja.').waitFor({ timeout: 10000 }).catch(() => {});
+  const mem = await one("select m.role from store_members m join auth.users u on u.id = m.user_id where u.email = 'atendente@telas.test' and m.store_id = $1", [store]);
+  check('Dono convida atendente pela tela Equipe', mem?.role === 'staff' && await dono.locator('[data-member="atendente@telas.test"]').isVisible(), JSON.stringify(mem));
+  await shot(dono, 'telas-07b-equipe');
+  await atend.goto(`${PAR}/`);
+  await atend.waitForTimeout(2500);
+  const menu = await atend.locator('nav').first().innerText();
+  check('Atendente entra no painel da loja e vê só Pedidos, Entregas, Cardápio e Alertas',
+    menu.includes('Pedidos') && menu.includes('Cardápio') && !menu.includes('Comissões') && !menu.includes('Relatórios') && !menu.includes('Minha loja') && !menu.includes('Equipe'), menu.replace(/\n/g, ' | '));
+  await atend.goto(`${PAR}/financeiro`);
+  await atend.waitForTimeout(1500);
+  check('Atendente que abre Comissões volta para Pedidos', new URL(atend.url()).pathname === '/');
+  await shot(atend, 'telas-07c-atendente');
+  await dono.goto(`${PAR}/equipe`);
+  await dono.waitForSelector('[data-member="atendente@telas.test"]', { timeout: 10000 });
+  await dono.getByRole('button', { name: 'Remover atendente@telas.test' }).click();
+  await dono.waitForTimeout(1500);
+  check('Dono remove o atendente', !(await one("select 1 x from store_members m join auth.users u on u.id = m.user_id where u.email = 'atendente@telas.test'")));
+
   // ---------- Taxa por bairro: comerciante define, cliente escolhe o bairro no pedido
   const bairros = {};
   for (const n of ['Centro', 'Jardim Pindorama', 'Vila Nova']) bairros[n] = (await one('insert into neighborhoods (city_id, name) values ($1, $2) returning id', [city, n])).id;

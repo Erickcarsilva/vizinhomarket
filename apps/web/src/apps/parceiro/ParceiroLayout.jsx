@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { ClipboardList, Bike, History, UtensilsCrossed, Wallet, BarChart3, Store, Bell, LogOut, Menu, Plus } from "lucide-react";
+import { ClipboardList, Bike, History, UtensilsCrossed, Wallet, BarChart3, Store, Bell, LogOut, Menu, Plus, Users } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/AuthContext";
 import { usePartnerStore } from "@/lib/usePartnerStore";
@@ -9,18 +9,21 @@ import NewOrderAlert from "@/components/partner/NewOrderAlert";
 import Brand from "@/components/layout/Brand";
 import { APP_VERSION } from "@/lib/version";
 
+// O último campo marca o que só o dono vê (o atendente cuida de pedidos, entregas e cardápio).
 const NAV = [
   ["/", "Pedidos", ClipboardList, "orders"],
   ["/entregas", "Entregas", Bike, "deliveries"],
-  ["/historico", "Pedidos entregues", History],
+  ["/historico", "Pedidos entregues", History, null, true],
   ["/cardapio", "Cardápio e preços", UtensilsCrossed],
-  ["/financeiro", "Comissões e faturas", Wallet],
-  ["/relatorios", "Relatórios", BarChart3],
-  ["/loja", "Minha loja", Store],
+  ["/financeiro", "Comissões e faturas", Wallet, null, true],
+  ["/relatorios", "Relatórios", BarChart3, null, true],
+  ["/loja", "Minha loja", Store, null, true],
+  ["/equipe", "Equipe", Users, null, true],
   ["/alertas", "Alertas", Bell],
 ];
+export const OWNER_ONLY = NAV.filter((n) => n[4]).map((n) => n[0]);
 
-function Sidebar({ store, stores, pickStore, counts, onNavigate }) {
+function Sidebar({ store, stores, pickStore, counts, onNavigate, isOwner }) {
   const { user, logout } = useAuth();
   return (
     <div className="flex flex-col h-full">
@@ -34,12 +37,13 @@ function Sidebar({ store, stores, pickStore, counts, onNavigate }) {
         ) : (
           <p className="mt-4 font-semibold truncate">{store?.name}</p>
         )}
+        {!isOwner && store && <p className="mt-1 text-xs text-muted-foreground">Você é atendente desta loja</p>}
         {store && store.status !== "approved" && (
           <p className="mt-2 text-xs rounded-lg bg-amber-100 text-amber-800 px-2 py-1">{store.status === "pending" ? "Aguardando aprovação do VizinhoMarket" : "Loja suspensa: fale com o suporte"}</p>
         )}
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        {NAV.map(([to, label, Icon, countKey]) => (
+        {NAV.filter((n) => isOwner || !n[4]).map(([to, label, Icon, countKey]) => (
           <NavLink key={to} to={to} end={to === "/"} onClick={onNavigate}
             className={({ isActive }) => `flex items-center gap-3 min-h-[44px] px-3 rounded-xl text-[15px] font-medium transition ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}>
             <Icon className="w-5 h-5 shrink-0" />
@@ -61,7 +65,7 @@ function Sidebar({ store, stores, pickStore, counts, onNavigate }) {
 }
 
 export default function ParceiroLayout() {
-  const { stores, store, pickStore, isLoading } = usePartnerStore();
+  const { stores, store, pickStore, isLoading, isOwner } = usePartnerStore();
   const { orders, ready } = useStoreOrders(store?.id);
   const [open, setOpen] = useState(false);
   const loc = useLocation();
@@ -76,7 +80,9 @@ export default function ParceiroLayout() {
     orders: orders.filter((o) => o.status === "CREATED").length,
     deliveries: orders.filter((o) => ["READY", "IN_TRANSIT"].includes(o.status) && o.fulfillment !== "retirada").length,
   };
-  const side = <Sidebar store={store} stores={stores} pickStore={pickStore} counts={counts} onNavigate={() => setOpen(false)} />;
+  const side = <Sidebar store={store} stores={stores} pickStore={pickStore} counts={counts} isOwner={isOwner} onNavigate={() => setOpen(false)} />;
+  // Atendente que abre um endereço só do dono volta para Pedidos.
+  if (store && !isOwner && OWNER_ONLY.some((p) => loc.pathname === p || loc.pathname.startsWith(p + "/"))) return <Navigate to="/" replace />;
 
   return (
     <div className="min-h-screen lg:flex">
@@ -98,7 +104,7 @@ export default function ParceiroLayout() {
             <NewOrderAlert key={store.id} orders={orders} ready={ready} />
           </div>
         )}
-        <main><Outlet context={{ store, stores }} /></main>
+        <main><Outlet context={{ store, stores, isOwner }} /></main>
       </div>
     </div>
   );
