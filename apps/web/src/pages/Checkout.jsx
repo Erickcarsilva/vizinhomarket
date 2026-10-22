@@ -19,11 +19,13 @@ export default function Checkout() {
   const modes = cart.store?.delivery_modes?.length ? cart.store.delivery_modes : ["loja"];
   const { data: profile } = useQuery({ queryKey: ["my-profile"], queryFn: () => base44.account.getProfile() });
   const { data: addresses = [] } = useQuery({ queryKey: ["my-addresses"], queryFn: () => base44.account.listAddresses() });
-  const [form, setForm] = useState({ name: "", phone: "", address: "", fulfillment: modes[0], payment: "pix", change_for: "", notes: "" });
+  // Bairros atendidos pela loja (se ela cadastrou taxa por bairro).
+  const { data: zones = [] } = useQuery({ queryKey: ["zones", cart.store?.id], queryFn: () => base44.geo.storeZones(cart.store.id), enabled: !!cart.store?.id });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", neighborhood_id: "", fulfillment: modes[0], payment: "pix", change_for: "", notes: "" });
   // Preenche com o que está salvo na conta, sem apagar o que a pessoa já digitou.
   useEffect(() => {
     const def = addresses.find((a) => a.is_default) || addresses[0];
-    setForm((f) => ({ ...f, name: f.name || profile?.full_name || "", phone: f.phone || profile?.phone || "", address: f.address || def?.line || "" }));
+    setForm((f) => ({ ...f, name: f.name || profile?.full_name || "", phone: f.phone || profile?.phone || "", address: f.address || def?.line || "", neighborhood_id: f.neighborhood_id || (!f.address && def?.neighborhood_id) || "" }));
   }, [profile, addresses]);
   const [sending, setSending] = useState(false);
   // Uma chave por tentativa de compra: se o clique repetir ou a conexão cair, o servidor devolve o mesmo pedido.
@@ -41,10 +43,12 @@ export default function Checkout() {
   }
 
   const pickup = form.fulfillment === "retirada";
-  const fee = pickup ? 0 : cart.store.delivery_fee;
+  const byZone = !pickup && zones.length > 0;
+  const zone = zones.find((z) => z.neighborhood_id === form.neighborhood_id);
+  const fee = pickup ? 0 : byZone ? (zone?.fee ?? 0) : cart.store.delivery_fee;
   const total = subtotal + fee;
   const belowMin = subtotal < (cart.store.min_order || 0);
-  const valid = form.name && form.phone && (pickup || form.address) && !belowMin;
+  const valid = form.name && form.phone && (pickup || form.address) && (!byZone || zone) && !belowMin;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -54,6 +58,7 @@ export default function Checkout() {
       const order = await base44.entities.Order.create({
         store_id: cart.store.id, idempotency_key: idempotencyKey,
         customer_name: form.name, customer_phone: form.phone, address: pickup ? "" : form.address,
+        neighborhood_id: byZone ? form.neighborhood_id : null,
         fulfillment: form.fulfillment, payment_method: form.payment,
         change_for: form.payment === "dinheiro" && form.change_for ? Number(form.change_for) : undefined,
         notes: form.notes,
@@ -92,8 +97,18 @@ export default function Checkout() {
           </div>
           {!pickup && (
             <div className="space-y-3">
-              <SavedAddresses list={addresses} value={form.address} onPick={(a) => set("address")(a)} />
+              <SavedAddresses list={addresses} value={form.address} onPick={(line) => {
+                const a = addresses.find((x) => x.line === line);
+                setForm((f) => ({ ...f, address: line, neighborhood_id: a?.neighborhood_id || f.neighborhood_id }));
+              }} />
               <Input placeholder="Endereço completo (rua, número, bairro)" value={form.address} onChange={set("address")} className="h-12 rounded-xl" />
+              {byZone && (
+                <select value={form.neighborhood_id} onChange={set("neighborhood_id")} aria-label="Bairro" className="w-full h-12 rounded-xl border border-input bg-card px-3 text-base">
+                  <option value="">Escolha o bairro</option>
+                  {zones.map((z) => <option key={z.neighborhood_id} value={z.neighborhood_id}>{z.name} · entrega {z.fee ? brl(z.fee) : "grátis"}</option>)}
+                </select>
+              )}
+              {byZone && <p className="text-xs text-muted-foreground">A loja entrega só nos bairros da lista.</p>}
             </div>
           )}
           <Textarea placeholder="Observações (opcional)" value={form.notes} onChange={set("notes")} className="rounded-xl" />
@@ -106,7 +121,7 @@ export default function Checkout() {
       </div>
       <aside className="lg:sticky lg:top-24 h-fit bg-card border border-border rounded-2xl p-6 space-y-3">
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>{brl(subtotal)}</span></div>
-        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Entrega</span><span>{fee ? brl(fee) : "Grátis"}</span></div>
+        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Entrega</span><span>{byZone && !zone ? "escolha o bairro" : fee ? brl(fee) : "Grátis"}</span></div>
         <div className="flex justify-between pt-3 border-t border-border"><span className="font-semibold">Total</span><span className="font-display text-2xl">{brl(total)}</span></div>
         {belowMin && <p className="text-sm text-accent">Pedido mínimo: {brl(cart.store.min_order)}</p>}
         {error && <p className="text-sm text-destructive">{error}</p>}

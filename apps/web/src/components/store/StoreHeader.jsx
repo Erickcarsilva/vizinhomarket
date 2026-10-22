@@ -1,7 +1,7 @@
 import React from "react";
 import { Clock, MapPin, Star, Bike } from "lucide-react";
 import { Image } from "@/components/ui/image";
-import { brl, categoryLabel, FULFILLMENT } from "@/lib/constants";
+import { brl, categoryLabel, FULFILLMENT, deliveryFeeLabel } from "@/lib/constants";
 
 export default function StoreHeader({ store }) {
   return (
@@ -24,7 +24,7 @@ export default function StoreHeader({ store }) {
         <div className="flex flex-wrap gap-x-6 gap-y-2 mt-5 text-sm">
           {store.rating && <span className="flex items-center gap-1.5"><Star className="w-4 h-4 fill-accent text-accent" />{store.rating.toFixed(1)}</span>}
           <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" />{store.delivery_time_min || 40} min · {store.opening_hours || "Horário não informado"}</span>
-          <span className="flex items-center gap-1.5"><Bike className="w-4 h-4" />{store.delivery_fee ? brl(store.delivery_fee) : "Grátis"}{store.min_order ? ` · mínimo ${brl(store.min_order)}` : ""}</span>
+          <span className="flex items-center gap-1.5"><Bike className="w-4 h-4" />{deliveryFeeLabel(store)}{store.min_order ? ` · mínimo ${brl(store.min_order)}` : ""}</span>
           {store.address && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{store.address}</span>}
         </div>
         <div className="flex flex-wrap gap-2 mt-4">

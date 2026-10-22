@@ -562,6 +562,41 @@ await fails('Visitante não lê favoritos', () => q('select * from public.favori
 await as(custA);
 await ok('Cliente remove o próprio favorito', async () => { await q('delete from public.favorites where product_id = $1', [pArroz]); return eq((await q('select count(*) c from public.favorites'))[0].c, 0); });
 
+// ---------- 17. Bairros e taxa por bairro (22/10) ----------
+await as(admin);
+let novos;
+await ok('Admin cadastra vários bairros de uma vez (repetidos ignorados)', async () => {
+  novos = (await q("select public.admin_add_neighborhoods($1, array['Jardim Pindorama', '  jardim   pindorama ', 'Vila Nova', 'Centro', 'x']) n", [city]))[0].n;
+  return eq(novos, 2);
+});
+const nb = Object.fromEntries((await q('select name, id from public.neighborhoods where city_id = $1', [city])).map((r) => [r.name, r.id]));
+await as(ownerB);
+await fails('Dono de loja não cadastra bairro', () => q("select public.admin_add_neighborhoods($1, array['Bairro Falso'])", [city]), 'administrador|permission denied');
+await fails('Dono de outra loja não mexe nas taxas da loja A', () => q('select public.store_set_delivery_zones($1, $2::jsonb)', [storeA, JSON.stringify([{ neighborhood_id: nb['Vila Nova'], fee: 1 }])]), 'permissão');
+await as(ownerA);
+await fails('Taxa acima de R$ 100 é recusada', () => q('select public.store_set_delivery_zones($1, $2::jsonb)', [storeA, JSON.stringify([{ neighborhood_id: nb['Vila Nova'], fee: 150 }])]), 'entre R');
+await fails('Bairro inexistente é recusado', () => q('select public.store_set_delivery_zones($1, $2::jsonb)', [storeA, JSON.stringify([{ neighborhood_id: '00000000-0000-0000-0000-000000000099', fee: 3 }])]), 'Bairro inválido');
+await ok('Loja grava as taxas de vários bairros de uma vez', async () => {
+  const n = (await q('select public.store_set_delivery_zones($1, $2::jsonb) n', [storeA, JSON.stringify([{ neighborhood_id: nb['Vila Nova'], fee: 4.5 }, { neighborhood_id: nb['Jardim Pindorama'], fee: 7 }])]))[0].n;
+  return eq(n, 2);
+});
+await as(custA);
+const [{ id: addrVN }] = await q("insert into public.addresses (user_id, line, city_id, neighborhood_id) values ($1, 'Rua Vila Nova, 1', $2, $3) returning id", [custA.id, city, nb['Vila Nova']]);
+const [{ id: addrCt }] = await q("insert into public.addresses (user_id, line, city_id, neighborhood_id) values ($1, 'Rua Centro, 2', $2, $3) returning id", [custA.id, city, nb['Centro']]);
+await ok('Pedido no bairro atendido usa a taxa daquele bairro', async () => {
+  const id = (await createOrder([{ product_id: pArroz, quantity: 1 }], 'chave-bairro-0001', { address: addrVN }))[0].id;
+  return eq((await q('select delivery_fee from public.orders where id = $1', [id]))[0].delivery_fee, '4.50');
+});
+await fails('Pedido em bairro que a loja não atende é recusado', () => createOrder([{ product_id: pArroz, quantity: 1 }], 'chave-bairro-0002', { address: addrCt }), 'não entrega neste bairro');
+await as(ownerA);
+await ok('Lista vazia volta para a taxa única', async () => { await q("select public.store_set_delivery_zones($1, '[]'::jsonb)", [storeA]); return eq((await q('select count(*) c from public.delivery_zones where store_id = $1', [storeA]))[0].c, 0); });
+await as(admin);
+await ok('Admin desativa um bairro (some para quem usa o app)', async () => {
+  await q('select public.admin_set_neighborhood_active($1, false)', [nb['Vila Nova']]);
+  await as(custA); const n = (await q("select count(*) c from public.neighborhoods where name = 'Vila Nova'"))[0].c; await as(admin);
+  return eq(n, 0);
+});
+
 // ---------- Relatório ----------
 const passed = results.filter(r => r.pass).length;
 for (const r of results) console.log(`${r.pass ? 'PASSOU' : 'FALHOU'}  ${r.name}${r.pass ? '' : '  →  ' + r.detail}`);

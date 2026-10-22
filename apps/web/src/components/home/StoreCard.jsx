@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Star, Clock } from "lucide-react";
 import { Image } from "@/components/ui/image";
-import { brl, categoryLabel } from "@/lib/constants";
+import { categoryLabel, deliveryFeeLabel } from "@/lib/constants";
 
 export default function StoreCard({ store }) {
   return (
@@ -23,7 +23,7 @@ export default function StoreCard({ store }) {
           <h3 className="font-display text-xl leading-tight">{store.name}</h3>
           <p className="text-sm text-muted-foreground mt-1 flex items-center gap-3">
             <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{store.delivery_time_min || 40} min</span>
-            <span>{store.delivery_fee ? `Entrega ${brl(store.delivery_fee)}` : "Entrega grátis"}</span>
+            <span>{deliveryFeeLabel(store)}</span>
           </p>
         </div>
         {store.rating && (

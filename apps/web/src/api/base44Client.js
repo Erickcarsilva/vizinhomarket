@@ -55,7 +55,7 @@ async function defaultCity() {
 const STORE_SELECT = "id, city_id, category_id, name, slug, description, logo_url, cover_url, phone_public, address_line, neighborhood_id, " +
   "is_paused, accepts_pickup, accepts_store_delivery, accepts_platform_delivery, delivery_fee_default, min_order, prep_time_min, " +
   "status, rating_avg, rating_count, approved_at, created_by, created_at, updated_at, " +
-  "category:categories(slug, name), city:cities(name, timezone), hours:store_hours(weekday, opens, closes)";
+  "category:categories(slug, name), city:cities(name, timezone), hours:store_hours(weekday, opens, closes), zones:delivery_zones(fee)";
 
 const storeFromRow = (r) => r && ({
   id: r.id,
@@ -75,6 +75,10 @@ const storeFromRow = (r) => r && ({
   is_paused: r.is_paused,
   is_open: !r.is_paused && isOpenNow(r.hours, r.city?.timezone),
   delivery_fee: Number(r.delivery_fee_default) || 0,
+  // Taxa por bairro: se a loja cadastrou bairros, a taxa depende do bairro (mínima e máxima para mostrar na vitrine).
+  delivery_zones: (r.zones || []).length,
+  delivery_fee_min: (r.zones || []).length ? Math.min(...r.zones.map((z) => Number(z.fee))) : null,
+  delivery_fee_max: (r.zones || []).length ? Math.max(...r.zones.map((z) => Number(z.fee))) : null,
   min_order: Number(r.min_order) || 0,
   delivery_time_min: r.prep_time_min,
   delivery_modes: [r.accepts_store_delivery && "loja", r.accepts_platform_delivery && "plataforma", r.accepts_pickup && "retirada"].filter(Boolean),
@@ -317,18 +321,40 @@ const orderFromRow = (r) => {
   };
 };
 
-async function ensureAddress(storeId, line) {
+async function ensureAddress(storeId, line, neighborhoodId = null) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Faça login para continuar");
   const { data: st, error: e1 } = await supabase.from("stores").select("city_id").eq("id", storeId).single();
   fail(e1);
   const clean = String(line || "").trim();
-  const found = await supabase.from("addresses").select("id").eq("user_id", user.id).eq("line", clean).limit(1);
+  const found = await supabase.from("addresses").select("id, neighborhood_id").eq("user_id", user.id).eq("line", clean).limit(1);
   fail(found.error);
-  if (found.data.length) return found.data[0].id;
-  const { data, error } = await supabase.from("addresses").insert({ user_id: user.id, line: clean, city_id: st.city_id }).select("id").single();
+  if (found.data.length) {
+    const a = found.data[0];
+    if (neighborhoodId && a.neighborhood_id !== neighborhoodId) {
+      fail((await supabase.from("addresses").update({ neighborhood_id: neighborhoodId }).eq("id", a.id)).error);
+    }
+    return a.id;
+  }
+  const { data, error } = await supabase.from("addresses")
+    .insert({ user_id: user.id, line: clean, city_id: st.city_id, neighborhood_id: neighborhoodId || null }).select("id").single();
   fail(error);
   return data.id;
+}
+
+// Bairros ativos da cidade (para o cliente escolher e a loja definir a taxa).
+async function neighborhoods(cityId) {
+  const city = cityId ? { id: cityId } : await defaultCity();
+  const { data, error } = await supabase.from("neighborhoods").select("id, name").eq("city_id", city.id).eq("active", true).order("name");
+  fail(error);
+  return data;
+}
+// Bairros atendidos por uma loja, com a taxa de cada um.
+async function storeZones(storeId) {
+  const { data, error } = await supabase.from("delivery_zones").select("neighborhood_id, fee, neighborhood:neighborhoods(name)").eq("store_id", storeId);
+  fail(error);
+  return data.map((z) => ({ neighborhood_id: z.neighborhood_id, fee: Number(z.fee), name: z.neighborhood?.name || "" }))
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 }
 
 const Order = {
@@ -354,7 +380,7 @@ const Order = {
   // O preço, a taxa e o total são calculados no servidor; aqui só vai o que o cliente escolheu.
   async create(d) {
     const pickup = d.fulfillment === "retirada";
-    const addressId = pickup ? null : await ensureAddress(d.store_id, d.address);
+    const addressId = pickup ? null : await ensureAddress(d.store_id, d.address, d.neighborhood_id || null);
     const { data: id, error } = await supabase.rpc("create_order", {
       p_store_id: d.store_id,
       p_items: (d.items || []).map((i) => ({ product_id: i.product_id, variant_id: i.variant_id || null, quantity: i.quantity, addon_ids: i.addon_ids || [] })),
@@ -490,7 +516,7 @@ const account = {
   async listAddresses() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
-    const { data, error } = await supabase.from("addresses").select("id, line, reference, is_default, created_at").eq("user_id", user.id).order("created_at");
+    const { data, error } = await supabase.from("addresses").select("id, line, reference, is_default, created_at, neighborhood_id").eq("user_id", user.id).order("created_at");
     fail(error);
     return data;
   },
@@ -518,6 +544,12 @@ const account = {
 // ---------------------------------------------------------------- painel do comerciante
 const ACTIVE = "(DELIVERED,CANCELLED)";
 const partner = {
+  zones: (storeId) => storeZones(storeId),
+  async setZones(storeId, zones) {
+    const { data, error } = await supabase.rpc("store_set_delivery_zones", { p_store_id: storeId, p_zones: zones });
+    fail(error);
+    return data;
+  },
   // Totais calculados no servidor (corretos para qualquer quantidade de pedidos)
   summary: async (storeId, from, to) => {
     const { data, error } = await supabase.rpc("store_summary", { p_store_id: storeId, p_from: from, p_to: to });
@@ -569,6 +601,19 @@ const partner = {
 // ---------------------------------------------------------------- administração
 const rpc = async (fn, args = {}) => { const { data, error } = await supabase.rpc(fn, args); fail(error); return data; };
 const admin = {
+  async listNeighborhoods() {
+    const city = await defaultCity();
+    const { data, error } = await supabase.from("neighborhoods").select("id, name, active").eq("city_id", city.id).order("name");
+    fail(error);
+    return data;
+  },
+  async addNeighborhoods(names) {
+    const city = await defaultCity();
+    const { data, error } = await supabase.rpc("admin_add_neighborhoods", { p_city_id: city.id, p_names: names });
+    fail(error);
+    return data;
+  },
+  async setNeighborhoodActive(id, active) { fail((await supabase.rpc("admin_set_neighborhood_active", { p_id: id, p_active: active })).error); },
   overview: (from, to) => rpc("admin_overview", { p_from: from, p_to: to }),
   listUsers: (search) => rpc("admin_list_users", { p_search: search || null, p_limit: 300 }),
   setBanned: (userId, banned, reason) => rpc("admin_set_user_banned", { p_user_id: userId, p_banned: banned, p_reason: reason || null }),
@@ -665,6 +710,7 @@ const integrations = {
 
 export const base44 = {
   entities: { Store, Product, Order, StoreReferral },
+  geo: { neighborhoods, storeZones },
   auth,
   account,
   partner,

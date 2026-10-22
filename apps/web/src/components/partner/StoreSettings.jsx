@@ -68,7 +68,7 @@ export default function StoreSettings({ store, onSaved }) {
         <p className="text-xs text-muted-foreground mt-1">Aparece só para o cliente que escolher Pix, na tela do pedido dele.</p>
       </F>
       <div className="grid grid-cols-3 gap-4">
-        <F label="Taxa (R$)"><Input type="number" step="0.01" value={form.delivery_fee ?? ""} onChange={set("delivery_fee")} /></F>
+        <F label="Taxa única (R$)"><Input type="number" step="0.01" value={form.delivery_fee ?? ""} onChange={set("delivery_fee")} /></F>
         <F label="Mínimo (R$)"><Input type="number" step="0.01" value={form.min_order ?? ""} onChange={set("min_order")} /></F>
         <F label="Tempo (min)"><Input type="number" value={form.delivery_time_min ?? ""} onChange={set("delivery_time_min")} /></F>
       </div>

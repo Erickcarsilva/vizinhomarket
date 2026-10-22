@@ -72,3 +72,13 @@ export const isStoreListable = (store) =>
 
 export const MY_ORDERS_KEY = "perto_orders";
 export const getMyOrderIds = () => JSON.parse(localStorage.getItem(MY_ORDERS_KEY) || "[]");
+
+// Texto da taxa de entrega na vitrine: única, ou de/até quando a loja cobra por bairro.
+export const deliveryFeeLabel = (store) => {
+  if (store?.delivery_zones) {
+    const { delivery_fee_min: a, delivery_fee_max: b } = store;
+    if (a === b) return a ? `Entrega ${brl(a)}` : "Entrega grátis";
+    return `Entrega ${a ? brl(a) : "grátis"} a ${brl(b)} (conforme o bairro)`;
+  }
+  return store?.delivery_fee ? `Entrega ${brl(store.delivery_fee)}` : "Entrega grátis";
+};

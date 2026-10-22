@@ -195,6 +195,16 @@ try {
   check('Admin define comissão da categoria Restaurantes (7,5%)', (await one('select rate from commission_rules where category_id = $1', [cat]))?.rate === '0.0750');
   check('Valor errado é recusado com mensagem', await (async () => { await inputs.nth(1).fill('2'); await geral.getByRole('button', { name: 'Salvar' }).click(); await adm.waitForTimeout(800); return adm.getByText('Tempo limite deve ficar entre 5 e 120').isVisible(); })());
   await shot(adm, '06-config');
+  const painel = adm.locator('[data-neighborhoods]');
+  await painel.locator('textarea').fill('Centro\nJardim Pindorama\nVila Nova\ncentro');
+  await painel.getByRole('button', { name: /Cadastrar/ }).click();
+  await adm.waitForTimeout(1500);
+  const nbs = (await db.query('select name, active from neighborhoods order by name')).rows;
+  check('Admin cadastra bairros colando a lista (repetido ignorado)', nbs.length === 3 && await painel.getByText('3 bairro(s) cadastrado(s).').isVisible(), JSON.stringify(nbs));
+  await painel.getByRole('button', { name: 'Vila Nova' }).click();
+  await adm.waitForTimeout(1200);
+  check('Admin desativa um bairro com um clique', (await one("select active from neighborhoods where name = 'Vila Nova'")).active === false);
+  await shot(adm, '06b-bairros');
 
   // ---------- Histórico
   await adm.goto(`${ADM}/registros`);

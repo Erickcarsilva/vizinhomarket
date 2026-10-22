@@ -202,6 +202,44 @@ try {
   check('Indique loja: indicação gravada e tela de agradecimento', !!indic && await cli.getByText('Obrigado pela indicação!').isVisible(), JSON.stringify(indic));
   await shot(cli, 'telas-07-indique');
 
+  // ---------- Taxa por bairro: comerciante define, cliente escolhe o bairro no pedido
+  const bairros = {};
+  for (const n of ['Centro', 'Jardim Pindorama', 'Vila Nova']) bairros[n] = (await one('insert into neighborhoods (city_id, name) values ($1, $2) returning id', [city, n])).id;
+  await dono.goto(`${PAR}/loja`);
+  await dono.waitForSelector('[data-zones]', { timeout: 10000 });
+  await dono.waitForSelector('[data-zone="Vila Nova"]', { timeout: 10000 });
+  await dono.locator('[data-zone="Vila Nova"] input[type=checkbox]').check();
+  await dono.locator('[data-zone="Vila Nova"] input[inputmode=decimal]').fill('6');
+  await dono.locator('[data-zone="Jardim Pindorama"] input[type=checkbox]').check();
+  await dono.locator('[data-zone="Jardim Pindorama"] input[inputmode=decimal]').fill('8,50');
+  await dono.getByRole('button', { name: 'Salvar taxas por bairro' }).click();
+  await dono.getByText('Taxas salvas para 2 bairro(s).').waitFor({ timeout: 10000 }).catch(() => {});
+  const zs = (await db.query('select n.name, z.fee from delivery_zones z join neighborhoods n on n.id = z.neighborhood_id where z.store_id = $1 order by n.name', [store])).rows;
+  check('Comerciante define taxa por bairro na tela (2 bairros)', zs.length === 2 && zs[0].fee === '8.50' && zs[1].fee === '6.00', JSON.stringify(zs));
+  await shot(dono, 'telas-08-taxa-bairro');
+
+  await cli.goto(`${CLI}/busca`);
+  await cli.fill('input[placeholder="Buscar por loja ou produto..."]', 'padaria volume');
+  await cli.waitForTimeout(1500);
+  check('Vitrine mostra a faixa de taxa por bairro', await cli.getByText('Entrega R$ 6,00 a R$ 8,50 (conforme o bairro)').first().isVisible());
+  await cli.goto(`${CLI}/loja/${store}`);
+  await cli.waitForTimeout(1500);
+  await cli.getByRole('button', { name: 'Adicionar' }).first().click();
+  await cli.goto(`${CLI}/carrinho`);
+  await cli.waitForTimeout(1000);
+  await cli.fill('input[placeholder="Nome"]', 'Cliente Bairro');
+  await cli.fill('input[placeholder="WhatsApp / telefone"]', '67988881111');
+  await cli.fill('input[placeholder="Endereço completo (rua, número, bairro)"]', 'Rua das Palmeiras, 10');
+  const pedirAntes = await cli.getByRole('button', { name: /Fazer pedido/ }).isDisabled();
+  const opcoes = await cli.locator('select[aria-label="Bairro"] option').allTextContents();
+  check('Carrinho exige o bairro e só lista os bairros atendidos', pedirAntes && opcoes.length === 3 && !opcoes.some((o) => o.includes('Centro')), opcoes.join(' | '));
+  await cli.selectOption('select[aria-label="Bairro"]', { label: 'Vila Nova · entrega R$ 6,00' });
+  await cli.getByRole('button', { name: /Fazer pedido/ }).click();
+  await cli.waitForURL(/\/pedido\//, { timeout: 10000 }).catch(() => {});
+  const ped = await one("select o.delivery_fee, n.name bairro from orders o left join neighborhoods n on n.id = o.neighborhood_id where o.customer_name = 'Cliente Bairro'");
+  check('Pedido usa a taxa do bairro escolhido (Vila Nova, R$ 6)', ped?.delivery_fee === '6.00' && ped?.bairro === 'Vila Nova', JSON.stringify(ped));
+  await shot(cli, 'telas-09-pedido-bairro');
+
   check('Nenhum erro de JavaScript nas telas', errors.length === 0, errors.slice(0, 3).join(' | '));
 } catch (e) {
   check('Roteiro completo sem travar', false, e.message.split('\n')[0]);

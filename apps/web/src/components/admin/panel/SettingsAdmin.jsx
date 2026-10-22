@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Card, Btn, ErrorLine, useAction, pct } from "./ui";
+import NeighborhoodsAdmin from "./NeighborhoodsAdmin";
 
 const toPct = (r) => (r == null ? "" : String(Math.round(r * 10000) / 100).replace(".", ","));
 const fromPct = (s) => { const v = String(s).replace(",", ".").trim(); return v === "" ? null : Number(v) / 100; };
@@ -78,6 +79,7 @@ export default function SettingsAdmin() {
           ))}
         </div>
       </Card>
+      <NeighborhoodsAdmin />
     </div>
   );
 }

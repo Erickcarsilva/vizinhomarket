@@ -2,6 +2,7 @@ import React from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import StoreSettings from "@/components/partner/StoreSettings";
+import DeliveryZones from "@/components/partner/DeliveryZones";
 
 export default function Loja() {
   const { store } = useOutletContext();
@@ -18,6 +19,7 @@ export default function Loja() {
         <Link to="/loja/aparencia" className="h-10 px-5 rounded-full border border-border text-sm font-semibold flex items-center hover:bg-secondary">Logo e capa</Link>
       </div>
       <StoreSettings key={store.id + (store.updated_date || "")} store={store} onSaved={() => qc.invalidateQueries({ queryKey: ["stores"] })} />
+      <DeliveryZones key={"z" + store.id} store={store} />
     </div>
   );
 }
