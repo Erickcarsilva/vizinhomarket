@@ -18,6 +18,8 @@ export function usePartnerStore() {
       ? (await base44.entities.Store.list("name", 500)).map((s) => ({ ...s, my_role: "owner" }))
       : base44.partner.myStores()),
     enabled: !!user,
+    // Loja em análise: confere a cada minuto, para o menu completo aparecer assim que o admin aprovar.
+    refetchInterval: (q) => ((q.state.data || []).some((s) => s.status === "pending") ? 60_000 : false),
   });
   const store = stores.find((s) => s.id === storeId) || stores[0];
   const pickStore = (id) => { setStoreId(id); try { localStorage.setItem(KEY, id); } catch { /* sem armazenamento */ } };

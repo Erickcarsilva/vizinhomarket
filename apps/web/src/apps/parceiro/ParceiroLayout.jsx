@@ -9,19 +9,22 @@ import NewOrderAlert from "@/components/partner/NewOrderAlert";
 import Brand from "@/components/layout/Brand";
 import { APP_VERSION } from "@/lib/version";
 
-// O último campo marca o que só o dono vê (o atendente cuida de pedidos, entregas e cardápio).
+// Campos: endereço, nome, ícone, contador, só o dono vê (o atendente cuida de pedidos, entregas e cardápio),
+// só depois da aprovação (loja em análise não recebe pedidos: vê só o que precisa para se preparar).
 const NAV = [
-  ["/", "Pedidos", ClipboardList, "orders"],
-  ["/entregas", "Entregas", Bike, "deliveries"],
-  ["/historico", "Pedidos entregues", History, null, true],
+  ["/", "Pedidos", ClipboardList, "orders", false, true],
+  ["/entregas", "Entregas", Bike, "deliveries", false, true],
+  ["/historico", "Pedidos entregues", History, null, true, true],
   ["/cardapio", "Cardápio e preços", UtensilsCrossed],
-  ["/financeiro", "Comissões e faturas", Wallet, null, true],
-  ["/relatorios", "Relatórios", BarChart3, null, true],
+  ["/financeiro", "Comissões e faturas", Wallet, null, true, true],
+  ["/relatorios", "Relatórios", BarChart3, null, true, true],
   ["/loja", "Minha loja", Store, null, true],
   ["/equipe", "Equipe", Users, null, true],
   ["/alertas", "Alertas", Bell],
 ];
 export const OWNER_ONLY = NAV.filter((n) => n[4]).map((n) => n[0]);
+export const APPROVED_ONLY = NAV.filter((n) => n[5]).map((n) => n[0]);
+const matches = (list, path) => list.some((p) => (p === "/" ? path === "/" : path === p || path.startsWith(p + "/")));
 
 function Sidebar({ store, stores, pickStore, counts, onNavigate, isOwner }) {
   const { user, logout } = useAuth();
@@ -39,11 +42,11 @@ function Sidebar({ store, stores, pickStore, counts, onNavigate, isOwner }) {
         )}
         {!isOwner && store && <p className="mt-1 text-xs text-muted-foreground">Você é atendente desta loja</p>}
         {store && store.status !== "approved" && (
-          <p className="mt-2 text-xs rounded-lg bg-amber-100 text-amber-800 px-2 py-1">{store.status === "pending" ? "Aguardando aprovação do VizinhoMarket" : "Loja suspensa: fale com o suporte"}</p>
+          <p data-loja-status={store.status} className="mt-2 text-xs rounded-lg bg-amber-100 text-amber-800 px-2 py-1">{store.status === "pending" ? "Aguardando aprovação do VizinhoMarket" : "Loja suspensa: fale com o suporte"}</p>
         )}
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        {NAV.filter((n) => isOwner || !n[4]).map(([to, label, Icon, countKey]) => (
+        {NAV.filter((n) => (isOwner || !n[4]) && (store?.status !== "pending" || !n[5])).map(([to, label, Icon, countKey]) => (
           <NavLink key={to} to={to} end={to === "/"} onClick={onNavigate}
             className={({ isActive }) => `flex items-center gap-3 min-h-[44px] px-3 rounded-xl text-[15px] font-medium transition ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}>
             <Icon className="w-5 h-5 shrink-0" />
@@ -82,7 +85,10 @@ export default function ParceiroLayout() {
   };
   const side = <Sidebar store={store} stores={stores} pickStore={pickStore} counts={counts} isOwner={isOwner} onNavigate={() => setOpen(false)} />;
   // Atendente que abre um endereço só do dono volta para Pedidos.
-  if (store && !isOwner && OWNER_ONLY.some((p) => loc.pathname === p || loc.pathname.startsWith(p + "/"))) return <Navigate to="/" replace />;
+  const pending = store?.status === "pending";
+  if (store && !isOwner && matches(OWNER_ONLY, loc.pathname)) return <Navigate to={pending ? "/cardapio" : "/"} replace />;
+  // Loja em análise: pedidos e financeiro só aparecem depois da aprovação.
+  if (pending && matches(APPROVED_ONLY, loc.pathname)) return <Navigate to={isOwner ? "/loja" : "/cardapio"} replace />;
 
   return (
     <div className="min-h-screen lg:flex">
@@ -99,7 +105,16 @@ export default function ParceiroLayout() {
             {side}
           </SheetContent>
         </Sheet>
-        {store && (
+        {pending && (
+          <div data-em-analise className="px-5 pt-4 max-w-6xl mx-auto">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 p-4 text-sm">
+              <p className="font-semibold">Sua loja está em análise</p>
+              <p className="mt-1">Enquanto isso, deixe tudo pronto: dados da loja, horários, bairros de entrega e o cardápio com fotos.
+                Ela ainda não aparece para os clientes e não recebe pedidos. Assim que for aprovada, Pedidos e Financeiro aparecem aqui no menu.</p>
+            </div>
+          </div>
+        )}
+        {store && !pending && (
           <div className="px-5 pt-4 max-w-6xl mx-auto">
             <NewOrderAlert key={store.id} orders={orders} ready={ready} />
           </div>

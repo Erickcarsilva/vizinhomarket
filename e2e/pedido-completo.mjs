@@ -69,6 +69,15 @@ try {
   check('Loja cadastrada pela tela fica pendente', st?.status === 'pending', JSON.stringify(st));
   check('Horário digitado virou 7 dias estruturados', Number(st?.horas) === 7);
   check('CPF/CNPJ gravado só em dados privados', st?.document === '11444777000161');
+  await dono.goto(`${PAR}/`);
+  await dono.waitForTimeout(1500);
+  const navPend = await dono.locator('nav').first().innerText();
+  check('Loja em análise: abre em Minha loja, com aviso, sem Pedidos e Financeiro no menu',
+    new URL(dono.url()).pathname === '/loja' && await dono.locator('[data-em-analise]').isVisible() && !/Pedidos|Comissões/.test(navPend) && /Cardápio/.test(navPend),
+    `${new URL(dono.url()).pathname} · ${navPend.replace(/\s+/g, ' ').slice(0, 120)}`);
+  await dono.goto(`${PAR}/financeiro`);
+  await dono.waitForTimeout(800);
+  check('Loja em análise não abre o Financeiro nem pelo endereço', new URL(dono.url()).pathname === '/loja', dono.url());
 
   // ---------- Admin aprova
   const admin = await person('admin');
@@ -81,6 +90,10 @@ try {
   await admin.waitForTimeout(1500);
   await shot(admin, '02-admin-aprovou');
   check('Admin aprova a loja pela tela', (await db.query("select status from stores where name = 'Marmitaria da Ana'")).rows[0].status === 'approved');
+  await dono.goto(`${PAR}/`);
+  await dono.waitForTimeout(1500);
+  check('Depois de aprovada, Pedidos volta ao menu e o aviso some',
+    new URL(dono.url()).pathname === '/' && /Pedidos/.test(await dono.locator('nav').first().innerText()) && !(await dono.locator('[data-em-analise]').count()));
 
   // ---------- Lojista cadastra produto
   await dono.goto(`${PAR}/cardapio`);
