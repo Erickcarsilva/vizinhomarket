@@ -84,3 +84,4 @@ jobs:
           MSG="O backup de $(date -u +%d/%m/%Y) falhou. Veja o erro em: $RUN_URL"
           if [ -n "$N" ]; then gh issue comment "$N" --repo "$GITHUB_REPOSITORY" --body "$MSG"
           else gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$MSG"$'\n\nFeche esta issue quando o backup voltar a funcionar.'; fi
+# ativado em 22/10/2026
