@@ -180,9 +180,16 @@ try {
   await cli.goto(`${CLI}/favoritos`);
   await cli.waitForTimeout(2000);
   check('Favoritos: produto favoritado aparece na lista', await cli.getByText(/Pão de queijo recheado|Café coado/).first().isVisible());
+  const favDb = await one('select count(*)::int n from favorites where user_id = $1', [cust.id]);
+  check('Favoritos: salvo na conta (banco), não só no navegador', favDb.n === 1, JSON.stringify(favDb));
+  await cli.evaluate(() => localStorage.removeItem('perto_favorites'));
+  await cli.reload(); await cli.waitForTimeout(2000);
+  check('Favoritos: aparece de novo depois de limpar o navegador (veio da conta)', await cli.getByText(/Pão de queijo recheado|Café coado/).first().isVisible());
   await cli.getByRole('button', { name: 'Remover dos favoritos' }).first().click();
   await cli.waitForTimeout(500);
   check('Favoritos: remover tira da lista', (await cli.getByRole('button', { name: 'Remover dos favoritos' }).count()) === 0);
+  await cli.waitForTimeout(800);
+  check('Favoritos: remover também apaga da conta', (await one('select count(*)::int n from favorites where user_id = $1', [cust.id])).n === 0);
   await shot(cli, 'telas-06-favoritos');
 
   // ---------- Cliente: Indique uma loja

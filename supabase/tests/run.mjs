@@ -549,6 +549,19 @@ await fails('Cadastro de loja na categoria Farmácia é recusado', () => q("sele
 await as(admin);
 await ok('Admin ainda vê a categoria (inativa) para reativar no futuro', async () => eq((await q("select active from public.categories where slug = 'farmacia'"))[0].active, false));
 
+// ---------- 16. Favoritos na conta (22/10) ----------
+await as(custA);
+await ok('Cliente salva um favorito', async () => { await q('insert into public.favorites (product_id) values ($1)', [pArroz]); return eq((await q('select count(*) c from public.favorites'))[0].c, 1); });
+await fails('Favorito repetido é recusado (sem duplicar)', () => q('insert into public.favorites (product_id) values ($1)', [pArroz]), 'duplicate|unique');
+await fails('Cliente não salva favorito em nome de outra pessoa', () => q('insert into public.favorites (user_id, product_id) values ($1, $2)', [custB.id, pArroz]), 'permission denied');
+await as(custB);
+await ok('Outro cliente não vê os favoritos do primeiro', async () => eq((await q('select count(*) c from public.favorites'))[0].c, 0));
+await ok('Outro cliente não consegue apagar favorito alheio', async () => { await q('delete from public.favorites'); await su(); const n = (await q('select count(*) c from public.favorites'))[0].c; await as(custB); return eq(n, 1); });
+await as(null);
+await fails('Visitante não lê favoritos', () => q('select * from public.favorites'), 'permission denied');
+await as(custA);
+await ok('Cliente remove o próprio favorito', async () => { await q('delete from public.favorites where product_id = $1', [pArroz]); return eq((await q('select count(*) c from public.favorites'))[0].c, 0); });
+
 // ---------- Relatório ----------
 const passed = results.filter(r => r.pass).length;
 for (const r of results) console.log(`${r.pass ? 'PASSOU' : 'FALHOU'}  ${r.name}${r.pass ? '' : '  →  ' + r.detail}`);

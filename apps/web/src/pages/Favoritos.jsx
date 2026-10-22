@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { getFavorites, toggleFavorite } from "@/lib/favorites";
+import { getFavorites, toggleFavorite, syncFavorites } from "@/lib/favorites";
 import { brl } from "@/lib/constants";
 import { Image } from "@/components/ui/image";
 
@@ -10,6 +10,8 @@ export default function Favoritos() {
   const [ids, setIds] = useState(() => getFavorites());
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Traz os favoritos salvos na conta (de outro aparelho, por exemplo).
+  useEffect(() => { syncFavorites().then((list) => setIds(list)).catch(() => {}); }, []);
 
   useEffect(() => {
     let on = true;

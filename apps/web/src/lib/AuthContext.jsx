@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { supabase, isConfigured } from "@/api/supabase";
+import { syncFavorites, clearLocalFavorites } from "@/lib/favorites";
 
 const AuthContext = createContext();
 
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }) => {
       } else {
         setUser(await base44.auth.me());
         setIsAuthenticated(true);
+        syncFavorites().catch(() => {});
       }
     } catch {
       setUser(null);
@@ -36,6 +38,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     checkUserAuth();
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") clearLocalFavorites();
       if (["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED", "TOKEN_REFRESHED"].includes(event)) checkUserAuth();
     });
     return () => sub.subscription.unsubscribe();
