@@ -2,9 +2,7 @@ import React, { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { usePartnerStore } from "@/lib/usePartnerStore";
-import StoreSwitcher from "@/components/partner/StoreSwitcher";
-import NoStore from "@/components/partner/NoStore";
+import { useOutletContext } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Image } from "@/components/ui/image";
@@ -65,10 +63,10 @@ function ProfileForm({ store, onSaved }) {
 }
 
 export default function EditStoreProfile() {
-  const { stores, store, pickStore, isLoading } = usePartnerStore();
+  // A loja vem do menu lateral do painel (um seletor só).
+  const { store } = useOutletContext();
   const qc = useQueryClient();
-  if (isLoading) return <div className="max-w-6xl mx-auto px-5 py-24 text-center"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" /></div>;
-  if (stores.length === 0) return <NoStore />;
+  if (!store) return null;
   return (
     <div className="max-w-3xl mx-auto px-5 py-12 space-y-8">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -76,7 +74,6 @@ export default function EditStoreProfile() {
           <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Perfil da loja</p>
           <h1 className="font-display text-4xl mt-2">Como os clientes te veem</h1>
         </div>
-        <StoreSwitcher stores={stores} store={store} onPick={pickStore} />
       </div>
       {store && <ProfileForm key={store.id + store.updated_date} store={store} onSaved={() => qc.invalidateQueries({ queryKey: ["stores"] })} />}
     </div>

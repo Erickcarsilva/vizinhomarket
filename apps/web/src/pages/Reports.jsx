@@ -1,9 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { usePartnerStore } from "@/lib/usePartnerStore";
-import StoreSwitcher from "@/components/partner/StoreSwitcher";
-import NoStore from "@/components/partner/NoStore";
+import { useOutletContext } from "react-router-dom";
 import SalesCharts from "@/components/partner/SalesCharts";
 import { brl } from "@/lib/constants";
 
@@ -16,7 +14,8 @@ const fmtDay = (iso) => { const [, m, d] = iso.split("-"); return `${Number(d)}/
 
 // Relatórios calculados no servidor (store_summary, store_daily, store_top_products): corretos com qualquer volume.
 export default function Reports() {
-  const { stores, store, pickStore, isLoading } = usePartnerStore();
+  // A loja vem do menu lateral do painel (um seletor só).
+  const { store } = useOutletContext();
   const [period, setPeriod] = useState("30");
   const range = useMemo(() => ({
     from: period === "all" ? "2020-01-01T00:00:00Z" : new Date(Date.now() - Number(period) * 864e5).toISOString(),
@@ -36,8 +35,7 @@ export default function Reports() {
     return { daily, cumulative, topProducts, kpis };
   }, [days, top, sum]);
 
-  if (isLoading) return <div className="max-w-6xl mx-auto px-5 py-24 text-center"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" /></div>;
-  if (stores.length === 0) return <NoStore />;
+  if (!store) return null;
 
   // "…" enquanto o servidor calcula, para não mostrar R$ 0,00 por engano
   const stats = [
@@ -60,7 +58,6 @@ export default function Reports() {
               <button key={p.id} onClick={() => setPeriod(p.id)} className={`h-9 px-4 rounded-full text-sm font-medium transition ${period === p.id ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{p.label}</button>
             ))}
           </div>
-          <StoreSwitcher stores={stores} store={store} onPick={pickStore} />
         </div>
       </div>
 
