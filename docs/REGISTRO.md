@@ -245,5 +245,13 @@ Autorizado por Erick: itens 1 a 8 de uma vez, um commit por item, revisão no fi
 - Contatos reais de suporte (WhatsApp, e-mail, horário) para cadastrar no Netlify.
 - Migrar para o Tailwind 4 depois do piloto (elimina os 8 avisos de ferramentas de build).
 
+## Depois da revisão (21/10/2026, noite)
+- Ramo `correcoes-pre-piloto` juntado ao master (só local, sem push).
+- `netlify.toml`: os 3 sites usam o mesmo arquivo; só muda a variável PRODUTO (cliente, parceiro, admin).
+- Nomes das categorias nas telas iguais aos do banco.
+- Busca de produtos feita no servidor (antes baixava até 1.000 produtos).
+- Entregues: guia "Colocar no ar", rascunhos jurídicos (Termos, Privacidade, Contrato do Lojista) e checklist de lançamento.
+- Testes: banco 151/151; e2e 19/19, 22/22, 28/28, 17/17; travas 4/4; instalação 4/4.
+
 ## Próxima tarefa recomendada
 Erick revisa o relatório de 21/10 e autoriza juntar o ramo `correcoes-pre-piloto` ao principal. Depois: GitHub privado, atualização 04 no Supabase de teste, Netlify com os 3 sites e validação real (calendário no relatório).
