@@ -58,7 +58,7 @@ select (select count(*) from pg_proc where proname in ('store_summary','store_da
 `;
 writeFileSync(join(here, '04_atualizacao_totais_farmacia.sql'), atualizacao);
 
-const novos05 = ['202610220001_favoritos.sql', '202610220002_bairros_taxa.sql', '202610220003_atendentes.sql'];
+const novos05 = ['202610220001_favoritos.sql', '202610220002_bairros_taxa.sql', '202610220003_atendentes.sql', '202610220005_ajustes_seguranca.sql'];
 const at05 = `-- VizinhoMarket — ATUALIZAÇÃO 05: favoritos na conta, bairros com taxa por bairro e atendentes da loja (${hoje}).
 -- Gerado por supabase/deploy/gerar.mjs (não edite à mão).
 -- Colar no SQL Editor do Supabase e clicar em Run. Pré-requisito: atualização 04 já aplicada (funcoes_totais = 3).

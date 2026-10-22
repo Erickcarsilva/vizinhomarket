@@ -1872,6 +1872,14 @@ drop policy zones_write on public.delivery_zones;
 create policy zones_write on public.delivery_zones for all to authenticated
   using (public.is_store_owner(store_id) or public.is_admin()) with check (public.is_store_owner(store_id) or public.is_admin());
 
+-- ================= migrations/202610220005_ajustes_seguranca.sql =================
+-- VizinhoMarket — ajustes apontados pelo verificador de segurança do Supabase (22/10).
+-- Funções sem search_path fixo e uma função de gatilho que não precisa ser chamável pela API.
+alter function public.touch_updated_at() set search_path = public;
+alter function public.forbid_product_store_change() set search_path = public;
+alter function public._slugify(text) set search_path = public;
+revoke execute on function public._stores_staff_guard() from public, anon, authenticated;
+
 commit;
 
 -- PARTE 2: agendamentos (pg_cron). Se der erro aqui, a Parte 1 já está salva:
@@ -1888,7 +1896,7 @@ select cron.schedule('vm-limpa-erros', '0 4 * * *', $$delete from public.client_
 -- Quando entra um pedido, o banco chama a função novo-pedido (supabase/functions/novo-pedido),
 -- que manda o aviso para os aparelhos da equipe da loja. O endereço da função fica em
 -- platform_settings.push_function_url; sem ele, nada é chamado. Falha no aviso nunca impede o pedido.
-create extension if not exists pg_net;
+create extension if not exists pg_net with schema extensions; -- funções ficam no esquema net
 
 create function public._notify_new_order() returns trigger
 language plpgsql security definer set search_path = public as $$

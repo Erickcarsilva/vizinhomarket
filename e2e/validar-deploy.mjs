@@ -66,7 +66,7 @@ const c05 = (await c.query(conf)).rows[0];
 // 06: aviso de pedido novo. pg_net não existe aqui: imitação mínima de net.http_post.
 await c.query(`create schema if not exists net; create or replace function net.http_post(url text, body jsonb default '{}', params jsonb default '{}', headers jsonb default '{}', timeout_milliseconds int default 1000) returns bigint language sql as $f$ select 1::bigint $f$;`);
 try {
-  await c.query(dep('06_aviso_pedido_novo.sql').replace('create extension if not exists pg_net;', ''));
+  await c.query(dep('06_aviso_pedido_novo.sql').replace(/create extension if not exists pg_net[^;]*;/, ''));
   const r = (await c.query(`select exists (select 1 from pg_trigger where tgname = 'orders_notify_new') gatilho, (select value #>> '{}' from platform_settings where key = 'push_function_url') url`)).rows[0];
   check('Atualização 06 cria o gatilho do aviso e o endereço da função', r.gatilho && /\/functions\/v1\/novo-pedido$/.test(r.url || ''), JSON.stringify(r));
 } catch (e) { check('Atualização 06 cria o gatilho do aviso e o endereço da função', false, e.message); }

@@ -7,11 +7,13 @@ import webpush from "npm:web-push@3.6.7";
 import { handleNewOrder } from "./logic.mjs";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
-webpush.setVapidDetails(
-  Deno.env.get("VAPID_SUBJECT") || "mailto:contato@vizinhomarket.app",
-  Deno.env.get("VAPID_PUBLIC_KEY")!,
-  Deno.env.get("VAPID_PRIVATE_KEY")!,
-);
+// As chaves são lidas a cada chamada: assim a função sobe mesmo antes de os segredos serem cadastrados.
+function vapidReady() {
+  const pub = Deno.env.get("VAPID_PUBLIC_KEY"), priv = Deno.env.get("VAPID_PRIVATE_KEY");
+  if (!pub || !priv) return false;
+  webpush.setVapidDetails(Deno.env.get("VAPID_SUBJECT") || "mailto:contato@vizinhomarket.app", pub, priv);
+  return true;
+}
 
 const store = {
   async getOrder(id: string) {
@@ -30,6 +32,7 @@ const store = {
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("use POST", { status: 405 });
+  if (!vapidReady()) return new Response(JSON.stringify({ skipped: "sem_chaves_vapid" }), { status: 503, headers: { "Content-Type": "application/json" } });
   let body: { order_id?: string; record?: { id?: string } } = {};
   try { body = await req.json(); } catch { /* corpo vazio */ }
   const orderId = body.order_id || body.record?.id;

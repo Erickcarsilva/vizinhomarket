@@ -93,7 +93,7 @@ try {
     language plpgsql as $f$ begin
       if url like '%quebrado%' then raise exception 'falha de rede simulada'; end if;
       insert into net._calls values (url, body); return 1; end $f$;`);
-  const mig = readFileSync(join(root, 'supabase/migrations/202610220004_supabase_platform_aviso_pedido.sql'), 'utf8').replace('create extension if not exists pg_net;', '');
+  const mig = readFileSync(join(root, 'supabase/migrations/202610220004_supabase_platform_aviso_pedido.sql'), 'utf8').replace(/create extension if not exists pg_net[^;]*;/, '');
   await db.query(mig);
   const novoPedido = async (n) => (await one(`insert into orders (code, city_id, store_id, customer_id, status, fulfillment, payment_method, customer_name, customer_phone,
       subtotal, delivery_fee, total, commission_rate, commission_amount, idempotency_key)

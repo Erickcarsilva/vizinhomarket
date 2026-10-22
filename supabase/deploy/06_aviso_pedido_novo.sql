@@ -9,7 +9,7 @@ begin;
 -- Quando entra um pedido, o banco chama a função novo-pedido (supabase/functions/novo-pedido),
 -- que manda o aviso para os aparelhos da equipe da loja. O endereço da função fica em
 -- platform_settings.push_function_url; sem ele, nada é chamado. Falha no aviso nunca impede o pedido.
-create extension if not exists pg_net;
+create extension if not exists pg_net with schema extensions; -- funções ficam no esquema net
 
 create function public._notify_new_order() returns trigger
 language plpgsql security definer set search_path = public as $$
