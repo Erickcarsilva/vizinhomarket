@@ -55,6 +55,8 @@ nesta ordem:
    ```
 2. `supabase/migrations/202610190001_supabase_platform.sql` (tempo real, bucket e regras das fotos)
 3. `supabase/migrations/202610200002_supabase_platform_agendamentos.sql` (agendamentos do pg_cron)
+4. `supabase/deploy/06_aviso_pedido_novo.sql`, trocando o código do projeto na última linha (aviso de pedido novo)
+5. GitHub → Actions → "Publicar funções do Supabase" → Run workflow, depois de trocar a variável `SUPABASE_PROJECT_REF`
 
 ### 5. Fotos (Storage) — não estão no backup do banco
 O backup guarda só os endereços das fotos, não os arquivos. Para não perder as fotos:

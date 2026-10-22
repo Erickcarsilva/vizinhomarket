@@ -8,7 +8,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(cd "$HERE/.." && pwd)
 SHOTS=${1:-$HERE/prints}
 mkdir -p "$SHOTS"
-SUITES=${VM_SUITES:-"pedido-completo bloco1 admin telas"}
+SUITES=${VM_SUITES:-"pedido-completo bloco1 admin telas push"}
 status=0
 restart_api() {
   pkill -f "node $HERE/server.mjs" 2>/dev/null; pkill -x postgrest 2>/dev/null; sleep 1

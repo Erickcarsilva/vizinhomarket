@@ -9,7 +9,9 @@ cd "$REPO/apps/web"
 if [ -z "${VITE_SUPABASE_ANON_KEY:-}" ] && [ -f .env.e2e.local ]; then set -a; source .env.e2e.local; set +a; fi
 : "${VITE_SUPABASE_URL:?defina VITE_SUPABASE_URL (ex.: http://localhost:54321)}"
 : "${VITE_SUPABASE_ANON_KEY:?defina VITE_SUPABASE_ANON_KEY (a chave de teste do server.mjs: curl localhost:54321/anon-key)}"
-export VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY
+# Chave pública VAPID de teste (só a pública; o aviso real usa outra, cadastrada no Netlify).
+VITE_VAPID_PUBLIC_KEY=${VITE_VAPID_PUBLIC_KEY:-BD9kKJ7dHwaZI0w9jrAgX83W_ixa0hiAKjOzWG8xOFy8z3Ajqh5lVW-3rUE1UrudFzf-tIZITN9C7AEorY-5qNg}
+export VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY VITE_VAPID_PUBLIC_KEY
 for m in cliente parceiro admin; do
   npx vite build --mode $m --outDir "$OUT/dist-$m" --emptyOutDir 2>&1 | grep -E "built|rror"
 done

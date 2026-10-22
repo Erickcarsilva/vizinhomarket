@@ -202,6 +202,40 @@ try {
   check('Indique loja: indicação gravada e tela de agradecimento', !!indic && await cli.getByText('Obrigado pela indicação!').isVisible(), JSON.stringify(indic));
   await shot(cli, 'telas-07-indique');
 
+  // ---------- Aviso com o painel fechado (Web Push): ligar na tela Alertas e o service worker mostrar o aviso
+  await dono.context().grantPermissions(['notifications'], { origin: PAR });
+  await dono.addInitScript(() => {
+    // O Chromium de teste não alcança o serviço de push do Google: imita só a inscrição.
+    let fake = null;
+    if (window.PushManager) {
+      PushManager.prototype.subscribe = async function () {
+        fake = { endpoint: 'https://push.teste/painel', toJSON() { return { endpoint: this.endpoint, keys: { p256dh: 'p', auth: 'a' } }; }, unsubscribe: async () => { fake = null; return true; } };
+        return fake;
+      };
+      PushManager.prototype.getSubscription = async function () { return fake; };
+    }
+  });
+  await dono.goto(`${PAR}/alertas`);
+  await dono.waitForSelector('[data-push="off"]', { timeout: 10000 });
+  await dono.locator('[data-push="off"]').getByRole('button', { name: 'Ligar' }).click();
+  await dono.waitForSelector('[data-push="on"]', { timeout: 10000 }).catch(() => {});
+  const pt = await one("select t.app, t.token from push_tokens t join auth.users u on u.id = t.user_id where u.email = 'dono@telas.test'");
+  check('Alertas: liga o aviso com o painel fechado e guarda este aparelho na conta', pt?.app === 'partner' && pt.token.includes('push.teste/painel'), JSON.stringify(pt));
+  const cdp = await dono.context().newCDPSession(dono);
+  const regs = [];
+  cdp.on('ServiceWorker.workerRegistrationUpdated', (e) => regs.push(...e.registrations));
+  await cdp.send('ServiceWorker.enable');
+  await dono.waitForTimeout(800);
+  const reg = regs.find((r) => r.scopeURL.startsWith(PAR) && !r.isDeleted);
+  if (reg) await cdp.send('ServiceWorker.deliverPushMessage', { origin: new URL(PAR).origin, registrationId: reg.registrationId, data: JSON.stringify({ title: 'Novo pedido!', body: 'VM-TESTE · Maria · R$ 30,00', tag: 't1', url: '/' }) });
+  await dono.waitForTimeout(1200);
+  const notifs = await dono.evaluate(async () => (await (await navigator.serviceWorker.ready).getNotifications()).map((n) => `${n.title} | ${n.body}`));
+  check('Service worker mostra o aviso quando chega o push', notifs.some((n) => n.startsWith('Novo pedido! | VM-TESTE')), notifs.join(' ; ') || (reg ? 'nenhum aviso' : 'service worker não registrado'));
+  await dono.locator('[data-push="on"]').getByRole('button', { name: 'Desligar' }).click();
+  await dono.waitForSelector('[data-push="off"]', { timeout: 10000 }).catch(() => {});
+  check('Alertas: desligar tira o aparelho da conta', !(await one("select 1 x from push_tokens t join auth.users u on u.id = t.user_id where u.email = 'dono@telas.test'")));
+  await shot(dono, 'telas-07a-alertas');
+
   // ---------- Equipe: dono convida atendente; atendente vê só pedidos, entregas e cardápio
   const atend = await person('atendente');
   await register(atend, 'atendente@telas.test', PAR);

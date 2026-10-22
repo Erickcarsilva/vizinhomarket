@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Bell, BellRing, X } from "lucide-react";
 import { brl } from "@/lib/constants";
+import { enablePush } from "@/lib/push";
 
 // Alerta de pedido novo para o balcão:
 // - bipe que repete a cada 5 s enquanto houver pedido esperando aceite;
@@ -86,7 +87,11 @@ export default function NewOrderAlert({ orders, ready = true }) {
   const arm = async () => {
     beep(); // o toque libera o som no navegador
     setArmed(true);
-    if ("Notification" in window && Notification.permission === "default") { try { await Notification.requestPermission(); } catch { /* ignora */ } }
+    // Também liga o aviso com o painel fechado, quando o aparelho e o site permitem (senão fica só o aviso comum).
+    try {
+      const st = await enablePush();
+      if (st !== "on" && "Notification" in window && Notification.permission === "default") await Notification.requestPermission();
+    } catch { /* sem aviso no aparelho: o alarme da tela continua */ }
   };
 
   const dismiss = (id) => setPending((p) => p.filter((x) => x !== id));

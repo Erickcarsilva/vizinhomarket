@@ -1,0 +1,64 @@
+# Publica as funções do Supabase (pasta supabase/functions) — hoje: novo-pedido (aviso de pedido com o painel fechado).
+# Roda sozinho quando algo em supabase/functions muda no master, ou pelo botão "Run workflow".
+#
+# Como ativar (uma vez), em Settings → Secrets and variables → Actions:
+#   Secrets:   SUPABASE_ACCESS_TOKEN  (Supabase → foto do perfil → Access Tokens → Generate new token)
+#              VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY  (gerados com: npx web-push generate-vapid-keys)
+#   Variables: SUPABASE_PROJECT_REF   (o código do projeto, ex.: ehmgvgzeiqhsjhkzvzsj)
+#              VAPID_SUBJECT          (mailto:seu-email@exemplo.com)
+name: Publicar funções do Supabase
+
+on:
+  push:
+    branches: [master]
+    paths: ["supabase/functions/**"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - name: Conferir configuração
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+        run: |
+          missing=""
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || missing="$missing SUPABASE_ACCESS_TOKEN"
+          [ -n "$PROJECT_REF" ] || missing="$missing SUPABASE_PROJECT_REF(variable)"
+          [ -n "$VAPID_PUBLIC_KEY" ] || missing="$missing VAPID_PUBLIC_KEY"
+          [ -n "$VAPID_PRIVATE_KEY" ] || missing="$missing VAPID_PRIVATE_KEY"
+          if [ -n "$missing" ]; then echo "::warning::Funções não publicadas: falta cadastrar$missing (veja o topo deste arquivo)."; echo "SKIP=1" >> "$GITHUB_ENV"; fi
+
+      - uses: actions/checkout@v6
+        if: env.SKIP != '1'
+
+      - name: Instalar o Supabase CLI
+        if: env.SKIP != '1'
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.120.0
+
+      - name: Segredos da função
+        if: env.SKIP != '1'
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ vars.VAPID_SUBJECT }}
+        run: |
+          supabase secrets set --project-ref "$PROJECT_REF" \
+            VAPID_PUBLIC_KEY="$VAPID_PUBLIC_KEY" VAPID_PRIVATE_KEY="$VAPID_PRIVATE_KEY" \
+            VAPID_SUBJECT="${VAPID_SUBJECT:-mailto:contato@vizinhomarket.app}"
+
+      - name: Publicar novo-pedido
+        if: env.SKIP != '1'
+        # Sem checagem de login: quem chama é o próprio banco (gatilho), e a função confere o pedido no banco
+        # (só avisa pedido existente, ainda não aceito e com menos de 15 minutos).
+        run: supabase functions deploy novo-pedido --project-ref "$PROJECT_REF" --no-verify-jwt --use-api

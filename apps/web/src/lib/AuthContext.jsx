@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { base44 } from "@/api/base44Client";
 import { supabase, isConfigured } from "@/api/supabase";
 import { syncFavorites, clearLocalFavorites } from "@/lib/favorites";
+import { disablePush } from "@/lib/push";
 
 const AuthContext = createContext();
 
@@ -44,7 +45,9 @@ export const AuthProvider = ({ children }) => {
     return () => sub.subscription.unsubscribe();
   }, [checkUserAuth]);
 
-  const logout = (shouldRedirect = true) => {
+  const logout = async (shouldRedirect = true) => {
+    // Para de mandar aviso de pedido para este aparelho (ele pode ser usado por outra pessoa depois).
+    await disablePush().catch(() => {});
     setUser(null);
     setIsAuthenticated(false);
     base44.auth.logout(shouldRedirect ? "/" : undefined);

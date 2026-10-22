@@ -10,6 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const mig = join(here, '..', 'migrations');
 const files = readdirSync(mig).filter((f) => f.endsWith('.sql')).sort();
 const CRON = '202610200002_supabase_platform_agendamentos.sql';
+const AVISO = '202610220004_supabase_platform_aviso_pedido.sql'; // usa pg_net: fica na Parte 2, como o pg_cron
 const read = (f) => readFileSync(join(mig, f), 'utf8').trimEnd();
 const block = (f) => `-- ================= migrations/${f} =================\n${read(f)}\n`;
 const hoje = '22/10/2026';
@@ -21,12 +22,16 @@ const completo = `-- VizinhoMarket — banco COMPLETO (instalação do zero), co
 -- PARTE 1 (tudo ou nada)
 begin;
 
-${files.filter((f) => f !== CRON).map(block).join('\n')}
+${files.filter((f) => f !== CRON && f !== AVISO).map(block).join('\n')}
 commit;
 
 -- PARTE 2: agendamentos (pg_cron). Se der erro aqui, a Parte 1 já está salva:
 -- ative 'pg_cron' em Database → Extensions e rode só estas 3 linhas de novo.
 ${read(CRON).split('\n').filter((l) => !l.startsWith('--')).join('\n').trim()}
+
+-- PARTE 3: aviso de pedido novo com o painel fechado (pg_net). Se der erro, ative 'pg_net' em Database → Extensions
+-- e rode só esta parte de novo. Depois cadastre o endereço da função (veja 06_aviso_pedido_novo.sql).
+${read(AVISO).trim()}
 
 -- Conferência: tabelas = 29, categorias = 9, agendamentos = 2, funcoes_totais = 3, farmacia_ativa = false
 select (select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE') as tabelas,
@@ -69,4 +74,24 @@ select (to_regclass('public.favorites') is not null) as favoritos,
                                                      'store_list_members','store_add_staff','store_remove_staff')) as funcoes_novas;
 `;
 writeFileSync(join(here, '05_atualizacao_favoritos_bairros_equipe.sql'), at05);
-console.log('gerados: vizinhomarket_banco_completo.sql, 04_atualizacao_totais_farmacia.sql, 05_atualizacao_favoritos_bairros_equipe.sql');
+
+// 06: gatilho do aviso + endereço da função no projeto de TESTE (para o de produção, troque o código do projeto).
+const REF = 'ehmgvgzeiqhsjhkzvzsj';
+const at06 = `-- VizinhoMarket — ATUALIZAÇÃO 06: aviso de pedido novo com o painel fechado (${hoje}).
+-- Gerado por supabase/deploy/gerar.mjs (não edite à mão).
+-- Pré-requisitos: 05 aplicado e a função novo-pedido publicada (GitHub → Actions → "Publicar funções do Supabase").
+-- Projeto: ${REF} (vizinhomarket-teste). Para outro projeto, troque o código na linha do endereço, no fim.
+begin;
+
+${block(AVISO)}
+insert into public.platform_settings (key, value)
+values ('push_function_url', '"https://${REF}.supabase.co/functions/v1/novo-pedido"')
+on conflict (key) do update set value = excluded.value;
+commit;
+
+-- Conferência: gatilho = true e endereço preenchido
+select exists (select 1 from pg_trigger where tgname = 'orders_notify_new') as gatilho,
+       (select value #>> '{}' from public.platform_settings where key = 'push_function_url') as endereco;
+`;
+writeFileSync(join(here, '06_aviso_pedido_novo.sql'), at06);
+console.log('gerados: vizinhomarket_banco_completo.sql, 04_atualizacao_totais_farmacia.sql, 05_atualizacao_favoritos_bairros_equipe.sql, 06_aviso_pedido_novo.sql');
