@@ -17,29 +17,44 @@ const F = ({ label, children }) => (
 function ProfileForm({ store, onSaved }) {
   const [form, setForm] = useState(store);
   const [busy, setBusy] = useState(false);
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const [msg, setMsg] = useState(null); // { ok, text }
+  const set = (k) => (e) => { setMsg(null); setForm((f) => ({ ...f, [k]: e.target.value })); };
 
   const upload = async (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
     setBusy(true);
-    const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-    setForm((f) => ({ ...f, [field]: file_url }));
-    setBusy(false);
+    setMsg(null);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+      setForm((f) => ({ ...f, [field]: file_url }));
+      setMsg({ ok: true, text: "Imagem enviada. Clique em Salvar para aplicar." });
+    } catch (err) {
+      setMsg({ ok: false, text: err?.message || "Não foi possível enviar a imagem." });
+    } finally {
+      setBusy(false);
+    }
   };
 
   const save = async (e) => {
     e.preventDefault();
     setBusy(true);
-    await base44.entities.Store.update(store.id, {
-      name: form.name,
-      description: form.description,
-      opening_hours: form.opening_hours,
-      logo_url: form.logo_url,
-      cover_url: form.cover_url,
-    });
-    setBusy(false);
-    onSaved();
+    setMsg(null);
+    try {
+      await base44.entities.Store.update(store.id, {
+        name: form.name,
+        description: form.description,
+        opening_hours: form.opening_hours,
+        logo_url: form.logo_url,
+        cover_url: form.cover_url,
+      });
+      setMsg({ ok: true, text: "Alterações salvas." });
+      onSaved();
+    } catch (err) {
+      setMsg({ ok: false, text: err?.message || "Não foi possível salvar." });
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -58,6 +73,7 @@ function ProfileForm({ store, onSaved }) {
       <button disabled={busy} className="h-12 px-8 rounded-full bg-primary text-primary-foreground font-semibold flex items-center gap-2 disabled:opacity-50">
         {busy && <Loader2 className="w-4 h-4 animate-spin" />} Salvar
       </button>
+      {msg && <p role={msg.ok ? "status" : "alert"} className={`text-sm ${msg.ok ? "text-primary" : "text-destructive"}`}>{msg.text}</p>}
     </form>
   );
 }
@@ -75,7 +91,7 @@ export default function EditStoreProfile() {
           <h1 className="font-display text-4xl mt-2">Como os clientes te veem</h1>
         </div>
       </div>
-      {store && <ProfileForm key={store.id + store.updated_date} store={store} onSaved={() => qc.invalidateQueries({ queryKey: ["stores"] })} />}
+      {store && <ProfileForm key={store.id} store={store} onSaved={() => qc.invalidateQueries({ queryKey: ["stores"] })} />}
     </div>
   );
 }

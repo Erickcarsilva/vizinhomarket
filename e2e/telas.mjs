@@ -144,6 +144,18 @@ try {
   check('Resumo do mês: pedidos no mês igual ao banco', mes === String(refMes.n), `tela ${mes} · banco ${refMes.n}`);
   await shot(dono, 'telas-04-financeiro');
 
+  // ---------- Comerciante: Aparência da loja
+  await dono.goto(`${PAR}/loja/aparencia`);
+  await dono.waitForSelector('textarea[placeholder="Descreva sua loja para os clientes"]', { timeout: 10000 });
+  await dono.fill('textarea[placeholder="Descreva sua loja para os clientes"]', 'Pão de queijo quentinho toda manhã');
+  await dono.getByRole('button', { name: 'Salvar' }).click();
+  await dono.getByText('Alterações salvas.').waitFor({ timeout: 10000 }).catch(() => {});
+  const desc = await one('select description from stores where id = $1', [store]);
+  check('Aparência: descrição salva no banco e aviso de "salvo" na tela',
+    desc.description === 'Pão de queijo quentinho toda manhã' && await dono.getByText('Alterações salvas.').isVisible(), JSON.stringify(desc));
+  check('Aparência: só um seletor de loja (o do menu lateral)', (await dono.locator('select').count()) <= 1);
+  await shot(dono, 'telas-04b-aparencia');
+
   // ---------- Cliente: Busca
   await cli.goto(`${CLI}/busca`);
   await cli.fill('input[placeholder="Buscar por loja ou produto..."]', 'pão de queijo');
