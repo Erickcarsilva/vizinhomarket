@@ -58,4 +58,20 @@ export default [
       "react-hooks/rules-of-hooks": "error",
     },
   },
+  // Camada de dados e utilitários: sem regras de React, mas com a checagem de nomes não definidos
+  // (pega import esquecido antes de virar erro na tela).
+  {
+    files: ["src/api/**/*.js", "src/lib/**/*.{js,jsx}"],
+    languageOptions: {
+      globals: globals.browser,
+      parserOptions: { ecmaVersion: 2022, sourceType: "module", ecmaFeatures: { jsx: true } },
+    },
+    plugins: { "unused-imports": pluginUnusedImports, react: pluginReact },
+    rules: {
+      "no-undef": "error",
+      "react/jsx-uses-vars": "error",
+      "react/jsx-uses-react": "error",
+      "unused-imports/no-unused-imports": "error",
+    },
+  },
 ];
