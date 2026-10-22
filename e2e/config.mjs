@@ -17,4 +17,6 @@ export const PG = {
 // Chromium: VM_CHROMIUM, ou o do ambiente local, ou o que o Playwright instalou (npx playwright install chromium).
 const localChromium = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const executablePath = env.VM_CHROMIUM || (existsSync(localChromium) ? localChromium : undefined);
-export const launchOptions = { ...(executablePath ? { executablePath } : {}), args: ['--no-proxy-server'] };
+// Sem caminho fixo, usa o Chromium completo (channel 'chromium'), não o 'headless shell': o teste do aviso
+// (service worker e notificações) precisa do navegador completo.
+export const launchOptions = { ...(executablePath ? { executablePath } : { channel: 'chromium' }), args: ['--no-proxy-server'] };

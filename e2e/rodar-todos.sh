@@ -22,6 +22,10 @@ for s in $SUITES; do
   restart_api
   node "$HERE/$s.mjs" "$SHOTS" > "$SHOTS/$s.txt" 2>&1; rc=$?
   grep -E "FALHOU|verificações" "$SHOTS/$s.txt" || tail -5 "$SHOTS/$s.txt"
+  # No GitHub, cada falha vira uma anotação visível no resumo da execução.
+  if [ -n "${GITHUB_ACTIONS:-}" ] && [ $rc != 0 ]; then
+    { grep -E "FALHOU" "$SHOTS/$s.txt" || tail -3 "$SHOTS/$s.txt"; } | head -8 | cut -c1-300 | while IFS= read -r l; do echo "::error title=$s::$l"; done
+  fi
   [ $rc = 0 ] || status=1
 done
 echo "== travas do script de zerar"
