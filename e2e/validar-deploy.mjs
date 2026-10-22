@@ -35,13 +35,17 @@ const conf = `select (select count(*) from information_schema.tables where table
   (select count(*) from public.categories)::int categorias,
   (select count(*) from pg_proc where proname in ('store_summary','store_daily','store_top_products'))::int funcoes_totais,
   (select active from public.categories where slug = 'farmacia') farmacia_ativa,
-  (select count(*) from pg_policies where schemaname = 'public')::int politicas`;
+  (select count(*) from pg_policies where schemaname = 'public')::int politicas,
+  (to_regclass('public.favorites') is not null) favoritos,
+  (select count(*) from pg_proc where proname in ('admin_add_neighborhoods','admin_set_neighborhood_active','store_set_delivery_zones',
+     'store_list_members','store_add_staff','store_remove_staff'))::int funcoes_novas`;
 const results = [];
 const check = (n, ok, d = '') => { results.push(ok); console.log(`${ok ? 'PASSOU' : 'FALHOU'}  ${n}${d ? '  →  ' + d : ''}`); };
 const expected = (r) => r.tabelas === 28 && r.categorias === 9 && r.funcoes_totais === 3 && r.farmacia_ativa === false;
+const expected05 = (r) => r.tabelas === 29 && r.categorias === 9 && r.funcoes_totais === 3 && r.farmacia_ativa === false && r.favoritos && r.funcoes_novas === 6;
 
 let c = await fresh('deploy_completo');
-try { await c.query(part1(dep('vizinhomarket_banco_completo.sql'))); const r = (await c.query(conf)).rows[0]; check('Banco completo instala do zero', expected(r), JSON.stringify(r)); }
+try { await c.query(part1(dep('vizinhomarket_banco_completo.sql'))); const r = (await c.query(conf)).rows[0]; check('Banco completo instala do zero', expected05(r), JSON.stringify(r)); }
 catch (e) { check('Banco completo instala do zero', false, e.message); }
 await c.end();
 
@@ -56,6 +60,12 @@ let segunda = null;
 try { await c.query(dep('04_atualizacao_totais_farmacia.sql')); } catch (e) { segunda = e.message; await c.query('rollback').catch(() => {}); }
 const depois = (await c.query(conf)).rows[0];
 check('Rodar o 04 de novo falha sem estragar nada', !!segunda && expected(depois), segunda || 'não falhou');
+try { await c.query(dep('05_atualizacao_favoritos_bairros_equipe.sql')); const r = (await c.query(conf)).rows[0]; check('Atualização 05 aplicada sobre o 04', expected05(r), JSON.stringify(r)); }
+catch (e) { check('Atualização 05 aplicada sobre o 04', false, e.message); }
+const c05 = (await c.query(conf)).rows[0];
+let seg05 = null;
+try { await c.query(dep('05_atualizacao_favoritos_bairros_equipe.sql')); } catch (e) { seg05 = e.message; await c.query('rollback').catch(() => {}); }
+check('Rodar o 05 de novo falha sem estragar nada', !!seg05 && JSON.stringify((await c.query(conf)).rows[0]) === JSON.stringify(c05), seg05 || 'não falhou');
 await c.end();
 for (const d of ['deploy_completo', 'deploy_04']) await admin.query(`drop database if exists ${d} with (force)`);
 await admin.end();

@@ -253,5 +253,19 @@ Autorizado por Erick: itens 1 a 8 de uma vez, um commit por item, revisão no fi
 - Entregues: guia "Colocar no ar", rascunhos jurídicos (Termos, Privacidade, Contrato do Lojista) e checklist de lançamento.
 - Testes: banco 151/151; e2e 19/19, 22/22, 28/28, 17/17; travas 4/4; instalação 4/4.
 
+## Melhorias P2 da auditoria (22/10/2026)
+| Item | O que mudou | Evidência |
+|---|---|---|
+| P2.1 | Um seletor de loja só (menu lateral); Relatórios e Aparência seguem a loja escolhida | e2e telas |
+| P2.2 | Aparência mostra "salvo"/erro; tela coberta por teste | e2e telas |
+| P2.3 | Favoritos salvos na conta (tabela favorites, RLS), sincronizados ao entrar, limpos ao sair | banco seção 16; e2e |
+| P2.4 | Bairros (admin cola a lista), taxa por bairro (comerciante), carrinho exige o bairro atendido | banco seção 17; e2e |
+| P2.5 | Atendentes: dono convida por e-mail; atendente só pedidos/entregas/cardápio; trava no banco | banco seção 18; e2e |
+| P2.6 | base44Client.js dividido em api/data/*; lint checa nomes não definidos em src/api e src/lib | todos os testes |
+
+- SQL para o Supabase: `supabase/deploy/05_atualizacao_favoritos_bairros_equipe.sql` (depois do 04).
+- Testes: banco 182/182; e2e 19/19, 22/22, 30/30, 30/30; travas 4/4; instalação 6/6; backup 9/9.
+- Pendente do Erick: lista oficial de bairros de Sidrolândia (colar em Admin → Configurações → Bairros).
+
 ## Próxima tarefa recomendada
 Erick revisa o relatório de 21/10 e autoriza juntar o ramo `correcoes-pre-piloto` ao principal. Depois: GitHub privado, atualização 04 no Supabase de teste, Netlify com os 3 sites e validação real (calendário no relatório).

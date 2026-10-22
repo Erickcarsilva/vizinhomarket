@@ -214,7 +214,7 @@ try {
   await adm.waitForTimeout(2000);
   await adm.getByRole('button', { name: 'Abrir menu' }).click();
   await adm.waitForTimeout(600);
-  check('Versão aparece no menu do painel', await adm.getByText(/Versão 21\/10\/2026/).last().isVisible());
+  check('Versão aparece no menu do painel', await adm.getByText(/Versão 22\/10\/2026/).last().isVisible());
   await adm.keyboard.press('Escape');
   check('Painel admin não oferece cadastro aberto', await (async () => { const p = await person('visitante'); await p.goto(`${ADM}/login`); await p.waitForTimeout(800); return !(await p.getByText('Criar conta').isVisible()); })());
 } catch (e) {
