@@ -66,7 +66,7 @@ jobs:
           (cd "$DIR" && sha256sum *.sql > SHA256SUMS && cat SHA256SUMS)
 
       - name: Guardar o backup (30 dias)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: backup-banco-${{ github.run_id }}
           path: backup/
