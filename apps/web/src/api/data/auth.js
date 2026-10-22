@@ -1,6 +1,6 @@
 // Login e conta (Supabase Auth).
 import { supabase } from "@/api/supabase";
-import { fail } from "./shared";
+import { fail, translateAuth } from "./shared";
 
 async function me() {
   const { data: { user }, error } = await supabase.auth.getUser();
@@ -23,7 +23,7 @@ export const auth = {
   async isAuthenticated() { const { data } = await supabase.auth.getSession(); return Boolean(data.session); },
   async loginViaEmailPassword(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(/invalid/i.test(error.message) ? "E-mail ou senha inválidos" : error.message);
+    if (error) throw new Error(/invalid login/i.test(error.message) ? "E-mail ou senha inválidos" : translateAuth(error.message));
     return data;
   },
   async loginWithProvider(provider, returnTo = "/") {

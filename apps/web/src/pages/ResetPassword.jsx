@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +9,20 @@ import { Lock, Loader2, AlertTriangle } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 
 export default function ResetPassword() {
-  const [searchParams] = useSearchParams();
-  const resetToken = searchParams.get("token");
+  // O link do e-mail volta com a sessão de recuperação no endereço (#access_token=...); o Supabase a lê sozinho.
+  // "checking" enquanto confere, "ok" com sessão válida, "invalid" para link vencido/usado.
+  const [link, setLink] = useState(() => (/error_code=|error=/.test(window.location.hash) ? "invalid" : "checking"));
+  useEffect(() => {
+    if (link === "invalid") return undefined;
+    let done = false;
+    const ok = () => { if (!done) { done = true; setLink("ok"); } };
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (session && event === "SIGNED_IN")) ok();
+    });
+    supabase.auth.getSession().then(({ data }) => { if (data.session) ok(); });
+    const t = setTimeout(() => { if (!done) setLink("invalid"); }, 4000);
+    return () => { sub.subscription.unsubscribe(); clearTimeout(t); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,8 +38,10 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
-      await base44.auth.resetPassword({ resetToken, newPassword });
-      window.location.href = "/login";
+      if (newPassword.length < 8) throw new Error("A senha precisa ter pelo menos 8 caracteres");
+      await base44.auth.resetPassword({ newPassword });
+      window.history.replaceState(null, "", "/reset-password");
+      window.location.href = "/"; // já entra logado com a senha nova
     } catch (err) {
       setError(err.message || "Falha ao redefinir a senha");
     } finally {
@@ -34,12 +49,20 @@ export default function ResetPassword() {
     }
   };
 
-  if (!resetToken) {
+  if (link === "checking") {
+    return (
+      <AuthLayout icon={Loader2} title="Conferindo o link" subtitle="Só um instante…">
+        <p className="text-sm text-muted-foreground text-center">Abrindo a troca de senha.</p>
+      </AuthLayout>
+    );
+  }
+
+  if (link === "invalid") {
     return (
       <AuthLayout
         icon={AlertTriangle}
         title="Link inválido"
-        subtitle="Este link de redefinição está ausente ou é inválido"
+        subtitle="Este link venceu ou já foi usado"
         footer={
           <Link to="/forgot-password" className="text-primary font-medium hover:underline">
             Solicitar um novo link
@@ -47,7 +70,7 @@ export default function ResetPassword() {
         }
       >
         <p className="text-sm text-foreground text-center">
-          O link utilizado parece incompleto. Solicite um novo e-mail de redefinição de senha.
+          Cada link vale uma vez e por pouco tempo. Peça um novo e use o último e-mail que chegar. Se aparecer "aguarde", espere um minuto antes de pedir de novo.
         </p>
       </AuthLayout>
     );

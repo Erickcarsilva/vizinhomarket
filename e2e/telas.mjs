@@ -4,7 +4,7 @@
 // Uso: node telas.mjs <pasta para prints>   (rodar depois de reset.sh)
 import { chromium } from 'playwright';
 import pg from 'pg';
-import { CLI, PAR, PG, launchOptions } from './config.mjs';
+import { CLI, PAR, API, PG, launchOptions } from './config.mjs';
 
 const shots = process.argv[2] || '.';
 const results = [];
@@ -300,6 +300,22 @@ try {
   const ped = await one("select o.delivery_fee, n.name bairro from orders o left join neighborhoods n on n.id = o.neighborhood_id where o.customer_name = 'Cliente Bairro'");
   check('Pedido usa a taxa do bairro escolhido (Vila Nova, R$ 6)', ped?.delivery_fee === '6.00' && ped?.bairro === 'Vila Nova', JSON.stringify(ped));
   await shot(cli, 'telas-09-pedido-bairro');
+
+  // ---------- Esqueci a senha: o link do e-mail abre a troca de senha (formato do Supabase: #access_token=...)
+  const tok = await (await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'cliente@telas.test', password: 'SenhaForte123!' }) })).json();
+  const rec = await person('recuperacao');
+  await rec.goto(`${PAR}/reset-password#access_token=${tok.access_token}&refresh_token=${tok.refresh_token}&expires_in=3600&expires_at=${tok.expires_at}&token_type=bearer&type=recovery`);
+  await rec.waitForSelector('#password', { timeout: 10000 }).catch(() => {});
+  check('Link de "Esqueci a senha" abre a tela de nova senha', await rec.locator('#password').isVisible());
+  await rec.fill('#password', 'SenhaNova12345');
+  await rec.fill('#confirm', 'SenhaNova12345');
+  await rec.getByRole('button', { name: 'Redefinir senha' }).click();
+  await rec.waitForURL((u) => new URL(u).pathname === '/', { timeout: 10000 }).catch(() => {});
+  const relog = await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'cliente@telas.test', password: 'SenhaNova12345' }) });
+  check('Senha nova vale e a pessoa entra no painel', relog.status === 200 && new URL(rec.url()).pathname === '/', `${relog.status} ${rec.url()}`);
+  const rec2 = await person('link-vencido');
+  await rec2.goto(`${PAR}/reset-password#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired`);
+  check('Link vencido mostra a orientação para pedir outro', await rec2.getByText('Este link venceu ou já foi usado').waitFor({ timeout: 8000 }).then(() => true, () => false));
 
   check('Nenhum erro de JavaScript nas telas', errors.length === 0, errors.slice(0, 3).join(' | '));
 } catch (e) {

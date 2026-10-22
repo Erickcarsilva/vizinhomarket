@@ -6,9 +6,26 @@ import { supabase } from "@/api/supabase";
 // Regras de dinheiro e de status NUNCA são gravadas direto na tabela: vão para as
 // funções do servidor (create_order, advance_order_status, confirm_delivery, ...).
 
+// Mensagens do login (Supabase Auth) vêm em inglês: traduz as que o cliente pode ver.
+const AUTH_PT = [
+  [/only request this after (\d+) seconds?/i, (m) => `Por segurança, aguarde ${m[1]} segundos para pedir de novo.`],
+  [/email rate limit exceeded|over_email_send_rate_limit/i, () => "Muitos e-mails enviados agora. Tente de novo em alguns minutos."],
+  [/invalid login credentials/i, () => "E-mail ou senha incorretos."],
+  [/email not confirmed/i, () => "Confirme o seu e-mail antes de entrar (veja a caixa de entrada e o spam)."],
+  [/user already registered/i, () => "Já existe uma conta com este e-mail. Entre ou use \"Esqueci a senha\"."],
+  [/password should be at least (\d+)/i, (m) => `A senha precisa ter pelo menos ${m[1]} caracteres.`],
+  [/new password should be different/i, () => "A senha nova precisa ser diferente da atual."],
+  [/token has expired|otp_expired|invalid.*otp/i, () => "O código ou link venceu. Peça um novo."],
+  [/user is banned|user_banned/i, () => "Esta conta está bloqueada. Fale com o suporte."],
+];
+export const translateAuth = (msg) => {
+  for (const [re, fn] of AUTH_PT) { const m = String(msg || "").match(re); if (m) return fn(m); }
+  return msg;
+};
+
 export const fail = (error, fallback = "Não foi possível concluir. Tente novamente.") => {
   if (!error) return;
-  const msg = error.message || fallback;
+  const msg = translateAuth(error.message || fallback);
   const e = new Error(/permission denied|row-level security|42501/i.test(msg + (error.code || "")) ? "Você não tem permissão para fazer isso." : msg);
   e.status = error.status || (error.code === "42501" ? 403 : 400);
   e.code = error.code;
