@@ -14,8 +14,9 @@ const AVISO = '202610220004_supabase_platform_aviso_pedido.sql'; // usa pg_net: 
 const read = (f) => readFileSync(join(mig, f), 'utf8').trimEnd();
 const block = (f) => `-- ================= migrations/${f} =================\n${read(f)}\n`;
 const hoje = '22/10/2026';
+const geradoEm = '23/10/2026'; // banco completo e 08
 
-const completo = `-- VizinhoMarket — banco COMPLETO (instalação do zero), com Blocos 1 e 2, totais no servidor, Farmácia inativa, favoritos, bairros e atendentes. Gerado em ${hoje}.
+const completo = `-- VizinhoMarket — banco COMPLETO (instalação do zero), com Blocos 1 e 2, totais no servidor, Farmácia inativa, favoritos, bairros, atendentes e correções de 23/10. Gerado em ${geradoEm}.
 -- Gerado por supabase/deploy/gerar.mjs a partir de supabase/migrations (não edite à mão).
 -- Colar no SQL Editor do Supabase e clicar em Run.
 
@@ -94,4 +95,20 @@ select exists (select 1 from pg_trigger where tgname = 'orders_notify_new') as g
        (select value #>> '{}' from public.platform_settings where key = 'push_function_url') as endereco;
 `;
 writeFileSync(join(here, '06_aviso_pedido_novo.sql'), at06);
-console.log('gerados: vizinhomarket_banco_completo.sql, 04_atualizacao_totais_farmacia.sql, 05_atualizacao_favoritos_bairros_equipe.sql, 06_aviso_pedido_novo.sql');
+// 08: correções do servidor (pedido vazio, preço que mudou, Pix guardado no pedido, idade, faturas).
+const CORR = '202610230001_correcoes_servidor.sql';
+const at08 = `-- VizinhoMarket — ATUALIZAÇÃO 08: correções do servidor (23/10/2026).
+-- Gerado por supabase/deploy/gerar.mjs (não edite à mão).
+-- Pré-requisito: 07 aplicado. Não apaga dados. Pode rodar de novo sem problema. Tudo ou nada: se der erro, nada é gravado.
+begin;
+
+${block(CORR)}
+commit;
+
+-- Conferência: deve mostrar pix_no_pedido = true, idade_com_data = true, entrega_com_documento = true
+select exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'orders' and column_name = 'pix_key') as pix_no_pedido,
+       exists (select 1 from pg_proc where proname = 'confirm_age' and pronargs = 1) as idade_com_data,
+       exists (select 1 from pg_proc where proname = 'confirm_delivery' and pronargs = 3) as entrega_com_documento;
+`;
+writeFileSync(join(here, '08_correcoes_servidor.sql'), at08);
+console.log('gerados: vizinhomarket_banco_completo.sql, 04_atualizacao_totais_farmacia.sql, 05_atualizacao_favoritos_bairros_equipe.sql, 06_aviso_pedido_novo.sql, 08_correcoes_servidor.sql');

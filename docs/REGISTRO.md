@@ -267,5 +267,21 @@ Autorizado por Erick: itens 1 a 8 de uma vez, um commit por item, revisão no fi
 - Testes: banco 182/182; e2e 19/19, 22/22, 30/30, 30/30; travas 4/4; instalação 6/6; backup 9/9.
 - Pendente do Erick: lista oficial de bairros de Sidrolândia (colar em Admin → Configurações → Bairros).
 
+## Correções do servidor (23/10/2026)
+Problemas apontados pelo Erick e reproduzidos no banco de teste antes de corrigir. Migração `202610230001_correcoes_servidor.sql`
+(no Supabase: `supabase/deploy/08_correcoes_servidor.sql`, depois do 07).
+| Problema | Correção | Evidência |
+|---|---|---|
+| Pedido sem itens (lista nula) era criado | Recusado | banco seção 19 |
+| Pedido de R$ 0,00 | Recusado (brinde de R$ 0 junto com item pago continua valendo) | banco seção 19 |
+| Cliente via um total e o servidor cobrava outro, se o preço mudou | `create_order` recebe o total visto; se mudou, recusa (VMPRC) e o carrinho se atualiza | banco 19; e2e pedido-completo |
+| Pix mostrava a chave atual da loja, mesmo em pedido já feito | Chave e recebedor guardados no pedido | banco 19 |
+| Bebidas: o app não tinha onde confirmar a idade; confirmação sem data; entrega sem conferir documento | Data de nascimento (não guardada; só a data da confirmação), produto +18 no cardápio, entrega exige marcar a conferência | banco 19; e2e telas |
+| Faturas com períodos sobrepostos cobravam em dobro | Recusado | banco 19 |
+| Fatura paga podia ser anulada | Paga é definitiva | banco 19 |
+| Chave de pedido repetida em outra loja devolvia pedido antigo | Recusado com mensagem | banco 19 |
+
+- Fora destas correções, por decisão pendente: botão "Pix recebido" para a loja marcar o pagamento.
+
 ## Próxima tarefa recomendada
 Erick revisa o relatório de 21/10 e autoriza juntar o ramo `correcoes-pre-piloto` ao principal. Depois: GitHub privado, atualização 04 no Supabase de teste, Netlify com os 3 sites e validação real (calendário no relatório).

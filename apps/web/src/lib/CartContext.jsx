@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 // Carrinho de uma loja por vez. Cada linha é uma combinação de produto + tamanho + adicionais,
 // identificada por "key". O preço aqui é só para mostrar: o valor cobrado é calculado no servidor.
 const EMPTY = { store: null, items: [] };
-const SAFE = { cart: EMPTY, add: () => {}, setQty: () => {}, clear: () => {}, count: 0, subtotal: 0, qtyOfProduct: () => 0 };
+const SAFE = { cart: EMPTY, add: () => {}, setQty: () => {}, clear: () => {}, reprice: () => {}, count: 0, subtotal: 0, qtyOfProduct: () => 0 };
 const CartContext = createContext(SAFE);
 
 export const lineKey = (productId, variantId, addonIds = []) =>
@@ -57,13 +57,24 @@ export function CartProvider({ children }) {
     });
 
   const clear = () => setCart(EMPTY);
+  // Atualiza os preços com os valores que o servidor devolveu (o preço mudou depois que o item entrou no carrinho).
+  // lines: [{product_id, variant_id, addon_ids, unit}]; fee: taxa de entrega padrão da loja, quando não é por bairro.
+  const reprice = (lines = [], fee) =>
+    setCart((c) => {
+      const map = new Map(lines.map((l) => [lineKey(l.product_id, l.variant_id, l.addon_ids || []), Number(l.unit)]));
+      return {
+        ...c,
+        store: c.store && fee != null ? { ...c.store, delivery_fee: Number(fee) } : c.store,
+        items: c.items.map((i) => (map.has(i.key) ? { ...i, price: map.get(i.key) } : i)),
+      };
+    });
   const count = cart.items.reduce((s, i) => s + i.quantity, 0);
   const subtotal = cart.items.reduce((s, i) => s + i.price * i.quantity, 0);
   const qtyOfProduct = (storeId, productId) =>
     cart.store?.id === storeId ? cart.items.filter((i) => i.product_id === productId).reduce((s, i) => s + i.quantity, 0) : 0;
 
   return (
-    <CartContext.Provider value={{ cart, add, setQty, clear, count, subtotal, qtyOfProduct }}>
+    <CartContext.Provider value={{ cart, add, setQty, clear, reprice, count, subtotal, qtyOfProduct }}>
       {children}
     </CartContext.Provider>
   );

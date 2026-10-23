@@ -184,7 +184,7 @@ await ok('Pizza grande + catupiry + bacon = (60+8+5) x 2', async () => {
 });
 await fails('Bebida alcoólica sem confirmar maioridade é recusada', () => createOrder([{ product_id: pCerveja, quantity: 4 }], 'chave-pedido-0012', { fulfillment: 'pickup' }), '18 anos');
 await ok('Após confirmar maioridade, bebida é aceita e marcada para conferência', async () => {
-  await q('select public.confirm_age()');
+  await q("select public.confirm_age('1990-05-10')");
   const id = (await createOrder([{ product_id: pCerveja, quantity: 4 }], 'chave-pedido-0013', { fulfillment: 'pickup' }))[0].id;
   return eq((await q('select age_check_required from public.orders where id = $1', [id]))[0].age_check_required, true);
 });
@@ -623,6 +623,92 @@ await ok('Atendente pode sair da equipe por conta própria', async () => { await
 await as(ownerA);
 await fails('O dono não pode ser removido da equipe', () => q('select public.store_remove_staff($1, $2)', [storeA, ownerA.id]), 'dono não pode');
 await ok('Dono continua mudando os dados da loja', async () => { await q('update public.stores set min_order = 0 where id = $1', [storeA]); return true; });
+
+// ---------- 19. Correções do servidor (23/10) ----------
+await as(custA);
+await fails('Pedido com lista de itens nula é recusado', () => q("select public.create_order($1, null, 'pickup', 'pix', 'chave-corr-0001', 'Cliente A', '67988887777')", [storeA]), 'entre 1 e 50');
+await fails('Item que não é objeto é recusado', () => createOrder(['x'], 'chave-corr-0002', { fulfillment: 'pickup' }), 'Item inválido');
+await ok('O pedido vazio não foi gravado', async () => { await su(); return eq((await q("select count(*) c from public.orders where idempotency_key in ('chave-corr-0001', 'chave-corr-0002')"))[0].c, 0); });
+await as(ownerA);
+const pZero = (await q("insert into public.products (store_id, name, price) values ($1, 'Brinde', 0) returning id", [storeA]))[0].id;
+await as(custA);
+await fails('Pedido de R$ 0,00 é recusado', () => createOrder([{ product_id: pZero, quantity: 2 }], 'chave-corr-0003', { fulfillment: 'pickup' }), 'maior que zero');
+await ok('Brinde de R$ 0 junto com item pago é aceito', async () => {
+  const id = (await createOrder([{ product_id: pZero, quantity: 1 }, { product_id: pB1, quantity: 1 }], 'chave-corr-0004', { fulfillment: 'pickup' }))[0].id;
+  return eq((await q('select subtotal from public.orders where id = $1', [id]))[0].subtotal, '10.00');
+});
+const orderExp = (expected, key) => q(
+  "select public.create_order($1, $2::jsonb, 'pickup', 'pix', $3, 'Cliente A', '67988887777', null, null, null, $4) id",
+  [storeA, JSON.stringify([{ product_id: pB1, quantity: 2 }]), key, expected]);
+await ok('Total visto pelo cliente igual ao do servidor: pedido criado', async () => !!(await orderExp(20, 'chave-corr-0005'))[0].id);
+await ok('Preço mudou desde o carrinho: pedido não é criado e o servidor devolve o preço novo', async () => {
+  let err;
+  try { await orderExp(18, 'chave-corr-0006'); } catch (e) { err = e; }
+  if (!err) throw new Error('deveria ter recusado');
+  eq(err.code, 'VMPRC');
+  const d = JSON.parse(err.detail);
+  eq(Number(d.total), 20); eq(Number(d.items[0].unit), 10);
+  await su();
+  eq((await q("select count(*) c from public.orders where idempotency_key = 'chave-corr-0006'"))[0].c, 0);
+  return eq((await q('select stock from public.products where id = $1', [pB1]))[0].stock !== null, true);
+});
+await ok('Pedido recusado por preço não baixa estoque', async () => {
+  await su(); const before = (await q('select stock from public.products where id = $1', [pB1]))[0].stock;
+  await as(custA); try { await orderExp(1, 'chave-corr-0007'); } catch { /* esperado */ }
+  await su(); return eq((await q('select stock from public.products where id = $1', [pB1]))[0].stock, before);
+});
+await as(custA);
+const oPixSnap = (await createOrder([{ product_id: pB1, quantity: 1 }], 'chave-corr-0008', { fulfillment: 'pickup' }))[0].id;
+await as(ownerA);
+await q("update public.store_private set pix_key = 'chave-trocada@outra.test' where store_id = $1", [storeA]);
+await as(custA);
+await ok('Pix: trocar a chave depois não muda a chave do pedido já feito', async () => eq((await q('select public.order_payment_info($1) i', [oPixSnap]))[0].i.pix_key, 'pix@mercadoteste.com'));
+await ok('Pix: pedido novo usa a chave nova', async () => {
+  const id = (await createOrder([{ product_id: pB1, quantity: 1 }], 'chave-corr-0009', { fulfillment: 'pickup' }))[0].id;
+  return eq((await q('select public.order_payment_info($1) i', [id]))[0].i.pix_key, 'chave-trocada@outra.test');
+});
+await as(ownerA); await q("update public.store_private set pix_key = 'pix@mercadoteste.com' where store_id = $1", [storeA]);
+await as(custA);
+await fails('Chave de pedido repetida em outra loja é recusada', () => createOrder([{ product_id: pB1, quantity: 1 }], 'chave-corr-0008', { store: storeB, fulfillment: 'pickup' }), 'outra loja');
+await fails('Maioridade: data de menor de 18 é recusada', () => q("select public.confirm_age((current_date - interval '17 years')::date)"), '18 anos');
+await fails('Maioridade: data no futuro é recusada', () => q("select public.confirm_age((current_date + 1)::date)"), 'válida');
+await fails('Maioridade: confirmar sem data não existe mais', () => q('select public.confirm_age()'), 'does not exist|não existe');
+await ok('Maioridade: guarda quando foi confirmada, não a data de nascimento', async () => {
+  const cols = (await q("select column_name from information_schema.columns where table_name = 'profiles'")).map((r) => r.column_name);
+  return !cols.some((c) => /birth|nasc/.test(c)) && cols.includes('age_confirmed_at');
+});
+const oAge = (await createOrder([{ product_id: pCerveja, quantity: 2 }], 'chave-corr-0010', { fulfillment: 'pickup' }))[0].id;
+const ageCode = (await q('select delivery_code from public.order_secrets where order_id = $1', [oAge]))[0].delivery_code;
+await as(ownerA);
+await q("select public.advance_order_status($1, 'ACCEPTED')", [oAge]);
+await q("select public.advance_order_status($1, 'READY')", [oAge]);
+await fails('Entrega +18 sem conferir documento é recusada', () => q('select public.confirm_delivery($1, $2)', [oAge, ageCode]), 'documento');
+await ok('Recusa por documento não gasta tentativa do código', async () => { await su(); return eq((await q('select attempts from public.order_secrets where order_id = $1', [oAge]))[0].attempts, 0); });
+await as(ownerA);
+await ok('Entrega +18 com documento conferido conclui e fica registrada', async () => {
+  const [{ r }] = await q('select public.confirm_delivery($1, $2, true) r', [oAge, ageCode]);
+  eq(r.ok, true);
+  return eq((await q("select note from public.order_events where order_id = $1 and status = 'DELIVERED'", [oAge]))[0].note, 'Documento conferido (+18)');
+});
+await as(admin);
+await fails('Faturas: período que cruza uma fatura existente é recusado', () => q('select public.admin_generate_invoices(current_date, current_date)'), 'cobre parte');
+await ok('Faturas: gerar de novo o mesmo período continua permitido', async () => { await q("select public.admin_generate_invoices('2000-01-01', (now() + interval '1 day')::date)"); return true; });
+await fails('Faturas: fatura paga não pode ser anulada', async () => {
+  const [{ id }] = await q("select id from public.invoices where store_id = $1 and status = 'paid'", [storeA]);
+  return q("select public.admin_set_invoice_status($1, 'void')", [id]);
+}, 'paga não pode');
+await su();
+const invX = (await q("insert into public.invoices (store_id, period_start, period_end, orders_count, gross_amount, commission_total) values ($1, '1999-01-01', '1999-01-31', 0, 0, 0) returning id", [storeB]))[0].id;
+await as(admin);
+await ok('Faturas: aberta pode ser anulada e reaberta', async () => {
+  await q("select public.admin_set_invoice_status($1, 'void')", [invX]);
+  await q("select public.admin_set_invoice_status($1, 'open')", [invX]);
+  return eq((await q('select status from public.invoices where id = $1', [invX]))[0].status, 'open');
+});
+await fails('Faturas: anulada não vira paga direto', async () => {
+  await q("select public.admin_set_invoice_status($1, 'void')", [invX]);
+  return q("select public.admin_set_invoice_status($1, 'paid')", [invX]);
+}, 'anulada não pode');
 
 // ---------- Relatório ----------
 const passed = results.filter(r => r.pass).length;

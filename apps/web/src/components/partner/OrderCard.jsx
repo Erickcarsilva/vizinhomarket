@@ -7,6 +7,7 @@ export default function OrderCard({ order, onChanged }) {
   const [error, setError] = useState("");
   const [mode, setMode] = useState(null); // "code" | "cancel"
   const [input, setInput] = useState("");
+  const [ageChecked, setAgeChecked] = useState(false);
   const next = nextStatus(order);
   const open = !["DELIVERED", "CANCELLED"].includes(order.status);
 
@@ -42,6 +43,9 @@ export default function OrderCard({ order, onChanged }) {
           </li>
         ))}
       </ul>
+      {order.age_check_required && (
+        <p data-conferir-idade className="text-sm font-semibold rounded-lg bg-amber-100 text-amber-900 px-3 py-2">+18: confira um documento com foto antes de entregar</p>
+      )}
       {order.notes && <p className="text-sm bg-secondary rounded-lg px-3 py-2">“{order.notes}”</p>}
       <div className="text-xs text-muted-foreground space-y-0.5">
         <p>{FULFILLMENT[order.fulfillment]}{order.address ? ` · ${order.address}` : ""}</p>
@@ -68,21 +72,28 @@ export default function OrderCard({ order, onChanged }) {
             e.preventDefault();
             if (mode === "code") {
               if (!/^\d{4}$/.test(input)) { setError("Digite os 4 números do código do cliente."); return; }
-              move("DELIVERED", { delivery_code: input });
+              if (order.age_check_required && !ageChecked) { setError("Confira o documento do cliente (18 anos ou mais) e marque a caixa."); return; }
+              move("DELIVERED", { delivery_code: input, age_checked: ageChecked });
             } else {
               if (input.trim().length < 3) { setError("Escreva o motivo do cancelamento."); return; }
               move("CANCELLED", { cancel_reason: input.trim() });
             }
           }}
-          className="flex gap-2 pt-2"
+          className="flex flex-wrap gap-2 pt-2"
         >
+          {mode === "code" && order.age_check_required && (
+            <label className="w-full flex gap-2 items-start text-sm">
+              <input type="checkbox" checked={ageChecked} onChange={(e) => { setAgeChecked(e.target.checked); setError(""); }} className="mt-1" />
+              <span>Conferi o documento com foto: o cliente tem 18 anos ou mais.</span>
+            </label>
+          )}
           <input
             autoFocus
             value={input}
             onChange={(e) => { setInput(mode === "code" ? e.target.value.replace(/\D/g, "").slice(0, 4) : e.target.value); setError(""); }}
             inputMode={mode === "code" ? "numeric" : "text"}
             placeholder={mode === "code" ? "Código do cliente (4 números)" : "Motivo (ex.: produto em falta)"}
-            className="flex-1 h-10 rounded-full border border-border bg-transparent px-4 text-sm"
+            className="flex-1 min-w-[10rem] h-10 rounded-full border border-border bg-transparent px-4 text-sm"
           />
           <button disabled={busy} className="h-10 px-4 rounded-full text-sm bg-primary text-primary-foreground font-semibold disabled:opacity-40">
             {mode === "code" ? "Confirmar" : "Cancelar pedido"}

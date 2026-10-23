@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -15,7 +15,8 @@ const Label = ({ children }) => <p className="text-xs uppercase tracking-[0.2em]
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { cart, subtotal, clear } = useCart();
+  const { cart, subtotal, clear, reprice } = useCart();
+  const qc = useQueryClient();
   const modes = cart.store?.delivery_modes?.length ? cart.store.delivery_modes : ["loja"];
   const { data: profile } = useQuery({ queryKey: ["my-profile"], queryFn: () => base44.account.getProfile() });
   const { data: addresses = [] } = useQuery({ queryKey: ["my-addresses"], queryFn: () => base44.account.listAddresses() });
@@ -31,6 +32,8 @@ export default function Checkout() {
   // Uma chave por tentativa de compra: se o clique repetir ou a conexão cair, o servidor devolve o mesmo pedido.
   const [idempotencyKey] = useState(() => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`));
   const [error, setError] = useState("");
+  // Itens +18: o servidor pede a confirmação de maioridade (VMAGE) e o pedido segue depois dela.
+  const [age, setAge] = useState({ needed: false, birth: "", declared: false, busy: false });
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v?.target ? v.target.value : v }));
 
   if (!cart.items.length) {
@@ -50,8 +53,7 @@ export default function Checkout() {
   const belowMin = subtotal < (cart.store.min_order || 0);
   const valid = form.name && form.phone && (pickup || form.address) && (!byZone || zone) && !belowMin;
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const placeOrder = async () => {
     setSending(true);
     setError("");
     try {
@@ -62,6 +64,7 @@ export default function Checkout() {
         fulfillment: form.fulfillment, payment_method: form.payment,
         change_for: form.payment === "dinheiro" && form.change_for ? Number(form.change_for) : undefined,
         notes: form.notes,
+        expected_total: total,
         items: cart.items.map((i) => ({ product_id: i.product_id, variant_id: i.variant_id || null, addon_ids: i.addon_ids || [], quantity: i.quantity })),
       });
       // Guarda nome e telefone na conta para o próximo pedido (falha aqui não atrapalha o pedido).
@@ -72,7 +75,30 @@ export default function Checkout() {
       navigate(`/pedido/${order.id}`);
     } catch (err) {
       setSending(false);
+      if (err?.code === "VMAGE") { setAge((a) => ({ ...a, needed: true })); return; }
+      if (err?.code === "VMPRC") {
+        // O preço ou a taxa mudaram: atualiza o carrinho com os valores do servidor e pede nova confirmação.
+        let d = null;
+        try { d = JSON.parse(err.details || "null"); } catch { d = null; }
+        if (d) reprice(d.items, pickup || byZone ? undefined : d.fee);
+        if (byZone) qc.invalidateQueries({ queryKey: ["zones", cart.store.id] });
+        setError(`${err.message}${d ? ` Novo total: ${brl(Number(d.total))}.` : ""}`);
+        return;
+      }
       setError(err?.message || "Não foi possível registrar seu pedido. Tente novamente.");
+    }
+  };
+  const submit = (e) => { e.preventDefault(); placeOrder(); };
+  const confirmAge = async () => {
+    setAge((a) => ({ ...a, busy: true }));
+    setError("");
+    try {
+      await base44.account.confirmAge(age.birth);
+      setAge({ needed: false, birth: "", declared: false, busy: false });
+      await placeOrder();
+    } catch (err) {
+      setAge((a) => ({ ...a, busy: false }));
+      setError(err?.message || "Não foi possível confirmar a idade.");
     }
   };
 
@@ -124,8 +150,24 @@ export default function Checkout() {
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Entrega</span><span>{byZone && !zone ? "escolha o bairro" : fee ? brl(fee) : "Grátis"}</span></div>
         <div className="flex justify-between pt-3 border-t border-border"><span className="font-semibold">Total</span><span className="font-display text-2xl">{brl(total)}</span></div>
         {belowMin && <p className="text-sm text-accent">Pedido mínimo: {brl(cart.store.min_order)}</p>}
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        <button disabled={!valid || sending} className="w-full h-13 py-4 rounded-full bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition">
+        {age.needed && (
+          <div data-idade className="rounded-xl border border-amber-300 bg-amber-50 text-amber-900 p-4 space-y-3 text-sm">
+            <p className="font-semibold">Este pedido tem item para maiores de 18 anos</p>
+            <label className="block">Sua data de nascimento
+              <Input type="date" value={age.birth} onChange={(e) => setAge((a) => ({ ...a, birth: e.target.value }))} className="h-11 mt-1 bg-white" />
+            </label>
+            <label className="flex gap-2 items-start">
+              <input type="checkbox" checked={age.declared} onChange={(e) => setAge((a) => ({ ...a, declared: e.target.checked }))} className="mt-1" />
+              <span>Declaro que tenho 18 anos ou mais e vou mostrar um documento com foto ao receber o pedido.</span>
+            </label>
+            <button type="button" disabled={!age.birth || !age.declared || age.busy || sending} onClick={confirmAge}
+              className="w-full h-11 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-40">
+              Confirmar idade e fazer pedido
+            </button>
+          </div>
+        )}
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        <button disabled={!valid || sending || age.needed} className="w-full h-13 py-4 rounded-full bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition">
           {sending && <Loader2 className="w-4 h-4 animate-spin" />} Fazer pedido
         </button>
       </aside>

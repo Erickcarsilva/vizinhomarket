@@ -73,6 +73,22 @@ try {
 let seg05 = null;
 try { await c.query(dep('05_atualizacao_favoritos_bairros_equipe.sql')); } catch (e) { seg05 = e.message; await c.query('rollback').catch(() => {}); }
 check('Rodar o 05 de novo falha sem estragar nada', !!seg05 && JSON.stringify((await c.query(conf)).rows[0]) === JSON.stringify(c05), seg05 || 'não falhou');
+// 07 (manual) e 08 (correções do servidor) por cima; o 08 pode rodar de novo.
+const conf08 = `select exists (select 1 from information_schema.columns where table_name = 'orders' and column_name = 'pix_key') pix,
+  exists (select 1 from pg_proc where proname = 'confirm_age' and pronargs = 1) idade,
+  not exists (select 1 from pg_proc where proname = 'confirm_age' and pronargs = 0) idade_antiga_saiu,
+  exists (select 1 from pg_proc where proname = 'confirm_delivery' and pronargs = 3) entrega,
+  (select count(*) from pg_proc where proname = 'create_order')::int create_order_versoes`;
+const ok08 = (r) => r.pix && r.idade && r.idade_antiga_saiu && r.entrega && r.create_order_versoes === 1;
+try {
+  await c.query(dep('07_ajustes_seguranca.sql'));
+  await c.query(dep('08_correcoes_servidor.sql'));
+  const r = (await c.query(conf08)).rows[0];
+  check('Atualizações 07 e 08 aplicadas sobre o 06', ok08(r), JSON.stringify(r));
+  await c.query(dep('08_correcoes_servidor.sql'));
+  const r2 = (await c.query(conf08)).rows[0];
+  check('Rodar o 08 de novo não quebra nada', ok08(r2), JSON.stringify(r2));
+} catch (e) { check('Atualizações 07 e 08 aplicadas sobre o 06', false, e.message.split('\n')[0]); }
 await c.end();
 for (const d of ['deploy_completo', 'deploy_04']) await admin.query(`drop database if exists ${d} with (force)`);
 await admin.end();

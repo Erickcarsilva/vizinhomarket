@@ -98,6 +98,8 @@ export const Order = {
       p_customer_name: d.customer_name, p_customer_phone: d.customer_phone,
       p_address_id: addressId, p_notes: d.notes || null,
       p_change_for: d.change_for == null || d.change_for === "" ? null : Number(d.change_for),
+      // Total que o cliente viu: se o preço ou a taxa mudaram, o servidor recusa e devolve os valores novos.
+      p_expected_total: d.expected_total == null ? null : Math.round(Number(d.expected_total) * 100) / 100,
     });
     fail(error);
     return Order.get(id);
@@ -113,7 +115,7 @@ export const Order = {
       fail(error);
     } else if (d.status === "DELIVERED") {
       if (!d.delivery_code) throw new Error("Peça ao cliente o código de 4 dígitos para confirmar a entrega.");
-      const { data, error } = await supabase.rpc("confirm_delivery", { p_order_id: id, p_code: String(d.delivery_code) });
+      const { data, error } = await supabase.rpc("confirm_delivery", { p_order_id: id, p_code: String(d.delivery_code), p_age_checked: !!d.age_checked });
       fail(error);
       if (!data?.ok) throw new Error(`Código incorreto. Restam ${data?.attempts_left ?? 0} tentativas.`);
     } else if (d.status) {

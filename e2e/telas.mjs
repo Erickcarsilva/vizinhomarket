@@ -21,7 +21,7 @@ async function person(name) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'pt-BR', timezoneId: 'America/Campo_Grande' });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(`${name}: ${e.message}`));
-  page.on('console', (m) => { if (m.type() === 'error' && !/realtime|websocket|WebSocket|ERR_CONNECTION_REFUSED|ERR_NAME_NOT_RESOLVED|fonts\.g/i.test(m.text())) errors.push(`${name} console: ${m.text().slice(0, 200)}`); });
+  page.on('console', (m) => { if (m.type() === 'error' && !/realtime|websocket|WebSocket|ERR_CONNECTION_REFUSED|ERR_NAME_NOT_RESOLVED|fonts\.g|status of 400/i.test(m.text())) errors.push(`${name} console: ${m.text().slice(0, 200)}`); });
   return page;
 }
 async function register(page, email, base) {
@@ -300,6 +300,62 @@ try {
   const ped = await one("select o.delivery_fee, n.name bairro from orders o left join neighborhoods n on n.id = o.neighborhood_id where o.customer_name = 'Cliente Bairro'");
   check('Pedido usa a taxa do bairro escolhido (Vila Nova, R$ 6)', ped?.delivery_fee === '6.00' && ped?.bairro === 'Vila Nova', JSON.stringify(ped));
   await shot(cli, 'telas-09-pedido-bairro');
+
+  // ---------- +18: comerciante marca o produto, cliente confirma a idade, entrega exige conferir documento
+  await dono.goto(`${PAR}/cardapio`);
+  await dono.waitForTimeout(1500);
+  await dono.getByRole('button', { name: /Novo produto/ }).click();
+  await dono.fill('input[placeholder="Nome"]', 'Cerveja long neck');
+  await dono.fill('input[placeholder="Preço (R$)"]', '9');
+  await dono.locator('[data-mais18]').check();
+  await dono.locator('form button[type=submit]').last().click();
+  await dono.waitForTimeout(1500);
+  const cerv = await one("select id, age_restricted from products where name = 'Cerveja long neck'");
+  check('+18: comerciante marca o produto como só para maiores', cerv?.age_restricted === true, JSON.stringify(cerv));
+  await cli.goto(`${CLI}/loja/${store}`);
+  await cli.waitForTimeout(1500);
+  await cli.locator('div').filter({ hasText: 'Cerveja long neck' }).filter({ has: cli.getByRole('button', { name: 'Adicionar' }) }).last()
+    .getByRole('button', { name: 'Adicionar' }).click();
+  await cli.goto(`${CLI}/carrinho`);
+  await cli.waitForTimeout(1000);
+  await cli.fill('input[placeholder="Nome"]', 'Cliente Maior');
+  await cli.fill('input[placeholder="WhatsApp / telefone"]', '67988882222');
+  await cli.fill('input[placeholder="Endereço completo (rua, número, bairro)"]', 'Rua das Palmeiras, 10');
+  await cli.selectOption('select[aria-label="Bairro"]', { label: 'Vila Nova · entrega R$ 6,00' });
+  await cli.getByRole('button', { name: /Fazer pedido/ }).click();
+  await cli.waitForSelector('[data-idade]', { timeout: 8000 }).catch(() => {});
+  const semPedido18 = !(await one("select 1 x from orders where customer_name = 'Cliente Maior'"));
+  check('+18: carrinho pede a data de nascimento antes de criar o pedido', await cli.locator('[data-idade]').isVisible() && semPedido18);
+  const menor = new Date(); menor.setFullYear(menor.getFullYear() - 17);
+  await cli.locator('[data-idade] input[type=date]').fill(menor.toISOString().slice(0, 10));
+  await cli.locator('[data-idade] input[type=checkbox]').check();
+  await cli.getByRole('button', { name: 'Confirmar idade e fazer pedido' }).click();
+  await cli.waitForTimeout(1200);
+  const avisoMenor = norm(await cli.locator('[role=alert]').first().textContent().catch(() => ''));
+  check('+18: menor de 18 anos não consegue pedir', /18 anos/.test(avisoMenor) && !(await one("select 1 x from orders where customer_name = 'Cliente Maior'")), avisoMenor);
+  await cli.locator('[data-idade] input[type=date]').fill('1990-05-10');
+  await cli.getByRole('button', { name: 'Confirmar idade e fazer pedido' }).click();
+  await cli.waitForURL(/\/pedido\//, { timeout: 10000 }).catch(() => {});
+  const p18 = await one(`select o.id, o.age_check_required, s.delivery_code, p.age_confirmed, p.age_confirmed_at is not null quando
+    from orders o join order_secrets s on s.order_id = o.id join profiles p on p.id = o.customer_id where o.customer_name = 'Cliente Maior'`);
+  check('+18: com 18+ o pedido é criado e marcado para conferir documento', p18?.age_check_required === true && p18?.age_confirmed === true && p18?.quando === true, JSON.stringify({ ...p18, delivery_code: undefined }));
+  await db.query("update orders set status = 'IN_TRANSIT', accepted_at = now(), ready_at = now(), picked_up_at = now() where id = $1", [p18.id]);
+  await dono.goto(`${PAR}/entregas`);
+  await dono.waitForTimeout(2000);
+  const card = dono.locator('div.bg-card').filter({ hasText: 'Cliente Maior' }).first();
+  check('+18: painel mostra o aviso de conferir documento', await card.locator('[data-conferir-idade]').isVisible());
+  await card.getByRole('button', { name: 'Confirmar entrega' }).click();
+  await card.locator('input[inputmode=numeric]').fill(p18.delivery_code);
+  await card.getByRole('button', { name: 'Confirmar', exact: true }).click();
+  await dono.waitForTimeout(800);
+  const travou = (await one('select status from orders where id = $1', [p18.id])).status === 'IN_TRANSIT';
+  check('+18: sem marcar a conferência, a entrega não é concluída', travou && /documento/.test(norm(await card.textContent())));
+  await card.locator('label', { hasText: 'Conferi o documento' }).locator('input[type=checkbox]').check();
+  await card.getByRole('button', { name: 'Confirmar', exact: true }).click();
+  await dono.waitForTimeout(1500);
+  const fim18 = await one("select o.status, e.note from orders o join order_events e on e.order_id = o.id and e.status = 'DELIVERED' where o.id = $1", [p18.id]);
+  check('+18: com o documento conferido, a entrega conclui e fica registrada', fim18?.status === 'DELIVERED' && fim18?.note === 'Documento conferido (+18)', JSON.stringify(fim18));
+  await shot(dono, 'telas-10-entrega-18');
 
   // ---------- Esqueci a senha: o link do e-mail abre a troca de senha (formato do Supabase: #access_token=...)
   const tok = await (await fetch(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'cliente@telas.test', password: 'SenhaForte123!' }) })).json();

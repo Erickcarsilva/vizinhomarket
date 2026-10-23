@@ -10,6 +10,11 @@ export const account = {
     fail(error);
     return { full_name: data?.full_name || "", phone: data?.phone || "" };
   },
+  // Declaração de maioridade (itens +18). A data só é conferida no servidor; não fica guardada.
+  async confirmAge(birthDate) {
+    const { error } = await supabase.rpc("confirm_age", { p_birth_date: birthDate });
+    fail(error);
+  },
   async updateProfile({ full_name, phone }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Faça login para continuar");

@@ -5,9 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const blank = { name: "", description: "", price: "", category: "", image_url: "", variants: [], addon_groups: [] };
+const blank = { name: "", description: "", price: "", category: "", image_url: "", age_restricted: false, variants: [], addon_groups: [] };
 const clone = (p) => p ? {
-  ...p, price: p.price ?? "",
+  ...p, price: p.price ?? "", age_restricted: !!p.age_restricted,
   variants: (p.variants || []).map((v) => ({ ...v })),
   addon_groups: (p.addon_groups || []).map((g) => ({ ...g, addons: g.addons.map((a) => ({ ...a })) })),
 } : { ...blank };
@@ -61,7 +61,7 @@ export default function ProductForm({ storeId, product, open, onClose, onSaved }
     try {
       // Com tamanhos, o preço do produto vira o menor tamanho (usado no "a partir de").
       const price = hasSizes ? Math.min(...sizes.map((v) => Number(v.price))) : Number(form.price);
-      const data = { name: form.name, description: form.description, price, category: form.category, image_url: form.image_url, variants: form.variants, addon_groups: form.addon_groups };
+      const data = { name: form.name, description: form.description, price, category: form.category, image_url: form.image_url, age_restricted: !!form.age_restricted, variants: form.variants, addon_groups: form.addon_groups };
       if (product) await base44.entities.Product.update(product.id, data);
       else await base44.entities.Product.create({ ...data, store_id: storeId, available: true });
       onSaved();
@@ -89,6 +89,11 @@ export default function ProductForm({ storeId, product, open, onClose, onSaved }
           <label className="block text-sm text-muted-foreground">
             Foto {form.image_url && "✓"}
             <input type="file" accept="image/*" onChange={upload} className="block mt-1 text-sm" />
+          </label>
+
+          <label className="flex gap-2 items-start text-sm">
+            <input type="checkbox" data-mais18 checked={!!form.age_restricted} onChange={(e) => setForm((f) => ({ ...f, age_restricted: e.target.checked }))} className="mt-1" />
+            <span>Só para maiores de 18 anos (bebida alcoólica, cigarro e similares). O cliente confirma a idade e a entrega exige conferir um documento.</span>
           </label>
 
           <div className="space-y-2 pt-2 border-t border-border">

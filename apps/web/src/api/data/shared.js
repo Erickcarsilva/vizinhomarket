@@ -29,6 +29,7 @@ export const fail = (error, fallback = "Não foi possível concluir. Tente novam
   const e = new Error(/permission denied|row-level security|42501/i.test(msg + (error.code || "")) ? "Você não tem permissão para fazer isso." : msg);
   e.status = error.status || (error.code === "42501" ? 403 : 400);
   e.code = error.code;
+  e.details = error.details; // ex.: preços novos quando o total mudou (VMPRC)
   throw e;
 };
 export const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);

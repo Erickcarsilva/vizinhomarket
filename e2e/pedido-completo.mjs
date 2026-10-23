@@ -21,7 +21,7 @@ async function person(name) {
   const page = await ctx.newPage();
   pages.push([name, page]);
   page.on('pageerror', (e) => errors.push(`${name}: ${e.message}`));
-  page.on('console', (m) => { if (m.type() === 'error' && !/realtime|websocket|WebSocket|ERR_CONNECTION_REFUSED|ERR_NAME_NOT_RESOLVED|fonts\.g/i.test(m.text())) errors.push(`${name} console: ${m.text().slice(0, 200)}`); });
+  page.on('console', (m) => { if (m.type() === 'error' && !/realtime|websocket|WebSocket|ERR_CONNECTION_REFUSED|ERR_NAME_NOT_RESOLVED|fonts\.g|status of 400/i.test(m.text())) errors.push(`${name} console: ${m.text().slice(0, 200)}`); });
   return page;
 }
 async function register(page, email, base = CLI) {
@@ -125,9 +125,20 @@ try {
   await cli.fill('input[placeholder="WhatsApp / telefone"]', '67988887777');
   const addr = cli.locator('input[placeholder="Endereço completo (rua, número, bairro)"]');
   if (await addr.count()) await addr.fill('Rua das Flores, 50, Centro');
-  // tenta adulterar o preço no carrinho salvo no navegador antes de enviar
+  // adultera o preço no carrinho salvo no navegador e recarrega (a tela passa a mostrar R$ 0,01): o mesmo caminho
+  // de quando a loja muda o preço depois que o item entrou no carrinho
   await cli.evaluate(() => { const c = JSON.parse(localStorage.getItem('perto_cart')); c.items[0].price = 0.01; localStorage.setItem('perto_cart', JSON.stringify(c)); });
+  await cli.reload();
+  await cli.waitForTimeout(800);
+  await cli.fill('input[placeholder="Nome"]', 'João Cliente');
+  await cli.fill('input[placeholder="WhatsApp / telefone"]', '67988887777');
+  if (await addr.count()) await addr.fill('Rua das Flores, 50, Centro');
   await shot(cli, '06-checkout');
+  await cli.getByRole('button', { name: /Fazer pedido/ }).click();
+  await cli.waitForTimeout(1500);
+  const aviso = (await cli.locator('[role=alert]').first().textContent().catch(() => '')) || '';
+  const semPedido = (await db.query("select count(*)::int n from orders")).rows[0].n === 0;
+  check('Total diferente do servidor: pedido não é criado e o cliente vê o novo total', /mudaram/.test(aviso) && /45,00|50,00/.test(aviso) && semPedido, aviso);
   await cli.getByRole('button', { name: /Fazer pedido/ }).click();
   await cli.waitForURL(/\/pedido\//, { timeout: 10000 });
   await cli.waitForTimeout(1500);

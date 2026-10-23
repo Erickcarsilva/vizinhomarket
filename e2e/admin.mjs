@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 // Teste ponta a ponta do painel administrativo, pelas telas:
 // aprovar loja, comissão negociada, pedidos (filtro e cancelamento), faturas, usuários (bloqueio e admin),
 // entregadores, configurações, histórico e bloqueio de acesso para quem não é admin.
@@ -214,7 +215,8 @@ try {
   await adm.waitForTimeout(2000);
   await adm.getByRole('button', { name: 'Abrir menu' }).click();
   await adm.waitForTimeout(600);
-  check('Versão aparece no menu do painel', await adm.getByText(/Versão 22\/10\/2026/).last().isVisible());
+  const versao = readFileSync(new URL('../apps/web/src/lib/version.js', import.meta.url), 'utf8').match(/APP_VERSION = "([^"]+)"/)[1];
+  check('Versão aparece no menu do painel', await adm.getByText(`Versão ${versao}`).last().isVisible(), versao);
   await adm.keyboard.press('Escape');
   check('Painel admin não oferece cadastro aberto', await (async () => { const p = await person('visitante'); await p.goto(`${ADM}/login`); await p.waitForTimeout(800); return !(await p.getByText('Criar conta').isVisible()); })());
 } catch (e) {
