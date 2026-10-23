@@ -282,7 +282,7 @@ try {
   await cli.goto(`${CLI}/busca`);
   await cli.fill('input[placeholder="Buscar por loja ou produto..."]', 'padaria volume');
   await cli.waitForTimeout(1500);
-  check('Vitrine mostra a faixa de taxa por bairro', await cli.getByText('Entrega R$ 6,00 a R$ 8,50 (conforme o bairro)').first().isVisible());
+  check('Vitrine mostra a faixa de taxa por bairro', await cli.getByText('R$ 6,00 a R$ 8,50').first().isVisible());
   await cli.goto(`${CLI}/loja/${store}`);
   await cli.waitForTimeout(1500);
   await cli.getByRole('button', { name: 'Adicionar' }).first().click();

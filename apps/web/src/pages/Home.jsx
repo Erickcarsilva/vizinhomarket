@@ -16,22 +16,25 @@ const Title = ({ children, right }) => (
   </div>
 );
 
-// Atalho de categoria em quadradinho, como nos apps de delivery.
-function CategoryTiles({ value, onChange }) {
+// Nome curto de cada categoria para as abas do topo.
+const SHORT = { alimentacao: "Restaurantes", mercado: "Mercado", pet: "Pet shop", bebidas: "Bebidas", autopecas: "Autopeças", eletronicos: "Eletrônicos", lojas: "Variedades" };
+
+// Abas de categoria fixas no topo, como nos apps de delivery: a escolhida fica destacada.
+function CategoryTabs({ value, onChange }) {
   return (
-    <div className="flex gap-2 overflow-x-auto no-scrollbar px-3 sm:px-5 pt-3 pb-1">
-      {CATEGORIES.map(({ id, label, icon: Icon }) => {
-        const on = value === id;
-        return (
-          <button key={id} type="button" onClick={() => onChange(on ? null : id)} aria-pressed={on}
-            className="w-[72px] shrink-0 flex flex-col items-center gap-1 text-[11px] leading-tight text-center">
-            <span className={`w-16 h-16 rounded-lg flex items-center justify-center transition-colors ${on ? "bg-primary text-primary-foreground" : "bg-secondary text-primary"}`}>
-              <Icon className="w-7 h-7" strokeWidth={1.8} />
-            </span>
-            <span className={on ? "font-bold" : ""}>{label}</span>
-          </button>
-        );
-      })}
+    <div className="sticky top-14 z-30 bg-background shadow-[0_6px_10px_-8px_rgba(0,0,0,0.18)] rounded-b-2xl">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar px-3 sm:px-5 py-2.5">
+        {CATEGORIES.map(({ id, label, icon: Icon }) => {
+          const on = value === id;
+          return (
+            <button key={id} type="button" onClick={() => onChange(on ? null : id)} aria-pressed={on} title={label}
+              className={`shrink-0 flex items-center gap-2 h-11 pl-3 pr-4 rounded-xl border-2 text-[15px] transition-colors ${on ? "border-primary bg-primary/10 text-primary font-semibold" : "border-transparent text-foreground/80"}`}>
+              <Icon className={`w-5 h-5 ${on ? "text-primary" : "text-primary/80"}`} strokeWidth={2} aria-hidden="true" />
+              {SHORT[id] || label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -120,6 +123,7 @@ export default function Home() {
 
   return (
     <div className="max-w-6xl mx-auto">
+      <CategoryTabs value={category} onChange={setCategory} />
       <div className="px-3 sm:px-5 pt-3">
         <label className="flex items-center gap-2 h-11 px-3 rounded-md bg-secondary text-muted-foreground">
           <Search className="w-[18px] h-[18px] text-primary" strokeWidth={2.4} />
@@ -128,7 +132,6 @@ export default function Home() {
         </label>
       </div>
 
-      <CategoryTiles value={category} onChange={setCategory} />
       {cities.length > 1 && <div className="pt-2"><CityPills value={city} onChange={setCity} cities={cities} /></div>}
 
       {!q && !category && <Banners stores={listable} onPick={setCategory} />}
@@ -160,7 +163,7 @@ export default function Home() {
             <Link to="/indique-loja" className="inline-block text-sm font-bold text-primary">Conhece um comércio? Indique uma loja</Link>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-2 gap-x-8">
+          <div className="grid lg:grid-cols-2 gap-x-8 pt-1">
             {visible.map((s) => <StoreCard key={s.id} store={s} />)}
           </div>
         )}

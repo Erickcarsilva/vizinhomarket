@@ -10,7 +10,7 @@ export default function CartBar({ storeId }) {
   return (
     <AnimatePresence>
       {show && (
-        <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="fixed bottom-16 sm:bottom-5 inset-x-0 z-30 px-3 sm:px-5">
+        <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="fixed bottom-[4.5rem] sm:bottom-5 inset-x-0 z-30 px-3 sm:px-5">
           <Link to="/carrinho" className="max-w-md mx-auto flex items-center justify-between h-12 px-5 rounded-md bg-primary text-primary-foreground shadow-2xl">
             <span className="text-sm font-semibold">{count} {count === 1 ? "item" : "itens"}</span>
             <span className="text-sm font-semibold">Ver sacola · {brl(subtotal)}</span>

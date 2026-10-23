@@ -54,8 +54,8 @@ export default function Layout() {
           </nav>
         </div>
       </header>
-      <main className="flex-1 pb-20 sm:pb-0"><Outlet /></main>
-      <footer className="border-t border-border mt-10 pb-20 sm:pb-0">
+      <main className="flex-1 pb-24 sm:pb-0"><Outlet /></main>
+      <footer className="border-t border-border mt-10 pb-24 sm:pb-0">
         <div className="max-w-6xl mx-auto px-5 py-5 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
           <p><Brand size="sm" className="text-base" /> · Sidrolândia/MS <span className="opacity-70">· v. {APP_VERSION.split(" · ")[0]}</span></p>
           <div className="flex gap-4">
@@ -64,11 +64,11 @@ export default function Layout() {
           </div>
         </div>
       </footer>
-      <nav aria-label="Menu principal" className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-background border-t border-border grid grid-cols-4 pb-[env(safe-area-inset-bottom)]">
+      <nav aria-label="Menu principal" className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-background rounded-t-2xl shadow-[0_-6px_12px_-8px_rgba(0,0,0,0.2)] grid grid-cols-4 pb-[env(safe-area-inset-bottom)]">
         {TABS.map(([to, label, Icon]) => (
           <NavLink key={to} to={to} end={to === "/"}
-            className={({ isActive }) => `flex flex-col items-center justify-center gap-0.5 h-14 text-[11px] ${isActive ? "text-foreground font-bold" : "text-muted-foreground"}`}>
-            {({ isActive }) => (<><Icon className={`w-[22px] h-[22px] ${isActive ? "text-primary" : ""}`} strokeWidth={isActive ? 2.4 : 2} />{label}</>)}
+            className={({ isActive }) => `flex flex-col items-center justify-center gap-1 h-16 text-xs ${isActive ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+            {({ isActive }) => (<><span className={`w-14 h-8 rounded-full flex items-center justify-center transition-colors ${isActive ? "bg-primary/10" : ""}`}><Icon className="w-[22px] h-[22px]" strokeWidth={isActive ? 2.4 : 1.9} /></span>{label}</>)}
           </NavLink>
         ))}
       </nav>
