@@ -44,19 +44,18 @@ export default function Profile() {
   return (
     <div className="max-w-3xl mx-auto px-5 py-12 space-y-10">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Conta</p>
         <h1 className="font-display text-4xl mt-2">Meu perfil</h1>
       </div>
 
       <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
         <h2 className="font-display text-2xl">Dados pessoais</h2>
-        <label className="block text-xs uppercase tracking-[0.15em] text-muted-foreground font-semibold">Nome
+        <label className="block text-sm font-medium">Nome
           <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-2 h-12" />
         </label>
-        <label className="block text-xs uppercase tracking-[0.15em] text-muted-foreground font-semibold">E-mail
+        <label className="block text-sm font-medium">E-mail
           <Input value={user?.email || ""} disabled className="mt-2 h-12" />
         </label>
-        <label className="block text-xs uppercase tracking-[0.15em] text-muted-foreground font-semibold">Telefone / WhatsApp
+        <label className="block text-sm font-medium">Telefone / WhatsApp
           <Input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" className="mt-2 h-12" />
         </label>
         <button onClick={saveProfile} disabled={busy} className="h-11 px-7 rounded-full bg-primary text-primary-foreground font-semibold flex items-center gap-2 disabled:opacity-50">

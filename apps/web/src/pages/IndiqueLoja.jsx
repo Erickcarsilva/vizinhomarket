@@ -6,7 +6,7 @@ import { CATEGORIES } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const Label = ({ children }) => <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold mb-2">{children}</p>;
+const Label = ({ children }) => <p className="text-sm font-bold mb-2">{children}</p>;
 
 export default function IndiqueLoja() {
   const [form, setForm] = useState({ store_name: "", category: "", owner_name: "", contact: "", address: "", city: "Sidrolândia", notes: "" });
@@ -44,7 +44,6 @@ export default function IndiqueLoja() {
   return (
     <form onSubmit={submit} className="max-w-2xl mx-auto px-5 py-12 space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Indique uma loja</p>
         <h1 className="font-display text-4xl mt-2">Conhece um comércio legal?</h1>
         <p className="text-muted-foreground mt-3">Indique para a gente. Entraremos em contato para convidar a loja a integrar o VizinhoMarket.</p>
       </div>

@@ -17,7 +17,6 @@ export default function Avaliacoes() {
   return (
     <div className="max-w-3xl mx-auto px-5 py-12 space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Avaliações</p>
         <h1 className="font-display text-4xl mt-2">Avalie suas lojas</h1>
         <p className="text-muted-foreground mt-3">Conte como foi sua experiência com os pedidos já entregues.</p>
       </div>

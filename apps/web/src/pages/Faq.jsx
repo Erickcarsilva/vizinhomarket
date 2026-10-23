@@ -41,7 +41,6 @@ const TOPICS = [
 export default function Faq() {
   return (
     <div className="max-w-3xl mx-auto px-5 py-12">
-      <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Ajuda</p>
       <h1 className="font-display text-4xl mt-2 mb-10">Dúvidas frequentes</h1>
       <div className="space-y-10">
         {TOPICS.map((topic) => (

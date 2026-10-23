@@ -36,13 +36,13 @@ export default function OrderTracking() {
   return (
     <div className="max-w-4xl mx-auto px-5 py-12 grid md:grid-cols-[1fr_320px] gap-12">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Pedido {order.code}</p>
+        <p className="text-sm text-muted-foreground">Pedido {order.code}</p>
         <h1 className="font-display text-4xl mt-2 mb-10">
           <Link to={`/loja/${order.store_id}`} className="hover:text-primary transition-colors">{order.store_name}</Link>
         </h1>
         {open && code && (
           <div className="mb-8 rounded-2xl border border-primary/30 bg-primary/5 p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Código de entrega</p>
+            <p className="text-sm font-bold text-primary">Código de entrega</p>
             <p className="font-display text-5xl tracking-[0.3em] mt-2">{code}</p>
             <p className="text-sm text-muted-foreground mt-2">Informe este código só quando receber o pedido. Ele confirma a entrega.</p>
           </div>
@@ -50,7 +50,7 @@ export default function OrderTracking() {
         {order.status === "CANCELLED" && order.cancel_reason && <p className="mb-6 text-sm text-destructive">Pedido cancelado: {order.cancel_reason}</p>}
         {open && order.payment_method === "pix" && (
           <div className="mb-8 rounded-2xl border border-border bg-card p-5 space-y-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold">Pagamento por Pix, direto para a loja</p>
+            <p className="text-sm font-bold">Pagamento por Pix, direto para a loja</p>
             {pix?.pix_key ? (
               <>
                 <div className="flex items-center gap-2">

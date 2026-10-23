@@ -44,11 +44,11 @@ export default function StorePage() {
   return (
     <div className="pb-24">
       <StoreHeader store={store} />
-      <div className="max-w-4xl mx-auto px-5 mt-12 space-y-12">
+      <div className="max-w-4xl mx-auto px-3 sm:px-5 mt-6 space-y-6">
         {Object.keys(groups).length === 0 && <p className="text-muted-foreground">Esta loja ainda não cadastrou produtos.</p>}
         {Object.entries(groups).map(([name, items]) => (
           <section key={name}>
-            <h2 className="font-display text-2xl mb-2">{name}</h2>
+            <h2 className="text-lg font-bold">{name}</h2>
             <div>
               {items.map((p) => (
                 <ProductRow key={p.id} product={p} disabled={!store.is_open} inCart={qtyOfProduct(store.id, p.id)} onAdd={() => handleAdd(p)} />

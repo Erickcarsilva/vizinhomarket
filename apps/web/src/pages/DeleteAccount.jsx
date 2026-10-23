@@ -33,7 +33,6 @@ export default function DeleteAccount() {
   return (
     <div className="max-w-xl mx-auto px-5 py-14 space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Privacidade</p>
         <h1 className="font-display text-4xl mt-2">Excluir conta do VizinhoMarket</h1>
       </div>
       <div className="bg-card border border-border rounded-2xl p-6 space-y-3 text-sm leading-relaxed">

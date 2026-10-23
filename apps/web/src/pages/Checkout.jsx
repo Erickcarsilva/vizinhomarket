@@ -11,7 +11,7 @@ import CartItems from "@/components/checkout/CartItems";
 import ChoiceGroup from "@/components/checkout/ChoiceGroup";
 import SavedAddresses from "@/components/checkout/SavedAddresses";
 
-const Label = ({ children }) => <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold mb-3">{children}</p>;
+const Label = ({ children }) => <p className="text-base font-bold mb-3">{children}</p>;
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -103,10 +103,9 @@ export default function Checkout() {
   };
 
   return (
-    <form onSubmit={submit} className="max-w-5xl mx-auto px-5 py-12 grid lg:grid-cols-[1fr_360px] gap-12">
-      <div className="space-y-10">
+    <form onSubmit={submit} className="max-w-5xl mx-auto px-3 sm:px-5 py-4 sm:py-8 grid lg:grid-cols-[1fr_360px] gap-8">
+      <div className="space-y-7">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Seu pedido</p>
           <h1 className="font-display text-4xl mt-2">{cart.store.name}</h1>
           <Link to={`/loja/${cart.store.id}`} className="inline-block mt-3 text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">Continuar comprando</Link>
           <div className="mt-4"><CartItems /></div>

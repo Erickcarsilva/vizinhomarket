@@ -3,7 +3,6 @@ import React from "react";
 export default function Privacy() {
   return (
     <div className="max-w-3xl mx-auto px-5 py-16">
-      <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Legal</p>
       <h1 className="font-display text-4xl mt-2 mb-8">Política de privacidade</h1>
       <p className="text-sm text-muted-foreground mb-8">Última atualização: 26 de setembro de 2026</p>
 

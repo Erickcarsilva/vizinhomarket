@@ -28,7 +28,6 @@ export default function Support() {
   return (
     <div className="max-w-3xl mx-auto px-5 py-12 space-y-12">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Central de ajuda</p>
         <h1 className="font-display text-4xl mt-2">Tire suas dúvidas</h1>
         <p className="text-muted-foreground mt-3">Lojistas e entregadores — encontre respostas e fale com a equipe VizinhoMarket.</p>
       </div>

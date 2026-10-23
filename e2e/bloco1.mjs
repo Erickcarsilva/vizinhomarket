@@ -94,7 +94,7 @@ try {
   await cli.goto(`${APP}/loja/${st.id}`);
   await cli.waitForTimeout(1500);
   check('Vitrine mostra "a partir de" no produto com tamanhos', await cli.getByText('a partir de').first().isVisible());
-  await cli.locator('div.flex.gap-5', { has: cli.locator('h4', { hasText: /^Marmita$/ }) }).getByRole('button', { name: 'Adicionar' }).click();
+  await cli.locator('[data-produto="Marmita"]').getByRole('button', { name: 'Adicionar' }).click();
   await cli.waitForTimeout(500);
   await cli.getByRole('button', { name: /Grande/ }).click();
   await cli.getByRole('button', { name: /Bacon/ }).click();
@@ -129,7 +129,7 @@ try {
   // ---------- Cliente cancela um pedido ainda não aceito
   await cli.goto(`${APP}/loja/${st.id}`);
   await cli.waitForTimeout(1200);
-  await cli.locator('div.flex.gap-5', { has: cli.locator('h4', { hasText: /^Refrigerante$/ }) }).getByRole('button', { name: 'Adicionar' }).click();
+  await cli.locator('[data-produto="Refrigerante"]').getByRole('button', { name: 'Adicionar' }).click();
   await cli.goto(`${APP}/carrinho`);
   await cli.waitForTimeout(1200);
   check('Checkout já vem com nome e telefone salvos na conta', (await cli.inputValue('input[placeholder="Nome"]')) === 'Maria Cliente' && (await cli.inputValue('input[placeholder="WhatsApp / telefone"]')) === '67977776666');

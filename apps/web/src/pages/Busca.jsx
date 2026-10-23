@@ -30,7 +30,6 @@ export default function Busca() {
   return (
     <div className="max-w-6xl mx-auto px-5 py-12">
       <div className="mb-8">
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Busca avançada</p>
         <h1 className="font-display text-4xl mt-2">Encontre lojas e produtos</h1>
       </div>
       <div className="relative max-w-xl">
@@ -56,7 +55,7 @@ export default function Busca() {
         ) : storeResults.length === 0 ? (
           <p className="text-muted-foreground">Nenhuma loja encontrada para "{q}".</p>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8">
             {storeResults.map((s) => <StoreCard key={s.id} store={s} />)}
           </div>
         )}

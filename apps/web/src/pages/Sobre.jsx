@@ -11,7 +11,6 @@ export default function Sobre() {
   ];
   return (
     <div className="max-w-4xl mx-auto px-5 py-16">
-      <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Sobre nós</p>
       <h1 className="font-display text-4xl mt-2">O comércio de Sidrolândia, a um toque.</h1>
       <p className="text-lg text-muted-foreground mt-6 leading-relaxed">
         O VizinhoMarket nasceu para reaproximar moradores e lojistas do bairro. Enquanto os grandes marketplaces
