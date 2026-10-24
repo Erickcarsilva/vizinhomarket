@@ -41,9 +41,9 @@ export default function ProductOptions({ product, open, onOpenChange, onConfirm 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-3xl p-0">
+      <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-2xl p-0 bg-background">
         <div className="px-5 pt-6 pb-4 border-b border-border">
-          <SheetTitle className="font-display text-2xl">{product.name}</SheetTitle>
+          <SheetTitle className="font-display text-2xl text-marca">{product.name}</SheetTitle>
           {product.description ? <SheetDescription className="mt-1">{product.description}</SheetDescription> : <SheetDescription className="sr-only">Escolha as opções</SheetDescription>}
         </div>
 
@@ -57,10 +57,10 @@ export default function ProductOptions({ product, open, onOpenChange, onConfirm 
               <div className="space-y-2">
                 {variants.map((v) => (
                   <button type="button" key={v.id} onClick={() => setVariantId(v.id)}
-                    className={`w-full min-h-[48px] px-4 rounded-xl border flex items-center justify-between text-left transition ${variantId === v.id ? "border-primary bg-primary/5" : "border-border"}`}>
+                    className={`w-full min-h-[48px] px-4 rounded-xl border flex items-center justify-between text-left transition ${variantId === v.id ? "border-marca bg-card ring-1 ring-marca" : "border-border bg-card"}`} aria-pressed={variantId === v.id}>
                     <span className="flex items-center gap-3">
-                      <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${variantId === v.id ? "border-primary" : "border-muted-foreground/40"}`}>
-                        {variantId === v.id && <span className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                      <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${variantId === v.id ? "border-marca" : "border-input"}`}>
+                        {variantId === v.id && <span className="w-2.5 h-2.5 rounded-full bg-marca" />}
                       </span>
                       {v.name}
                     </span>
@@ -83,10 +83,10 @@ export default function ProductOptions({ product, open, onOpenChange, onConfirm 
                   const full = !on && g.max > 1 && (chosen[g.id] || []).length >= g.max;
                   return (
                     <button type="button" key={a.id} onClick={() => toggle(g, a)} disabled={full}
-                      className={`w-full min-h-[48px] px-4 rounded-xl border flex items-center justify-between text-left transition disabled:opacity-40 ${on ? "border-primary bg-primary/5" : "border-border"}`}>
+                      className={`w-full min-h-[48px] px-4 rounded-xl border flex items-center justify-between text-left transition disabled:opacity-60 ${on ? "border-marca bg-card ring-1 ring-marca" : "border-border bg-card"}`} aria-pressed={on}>
                       <span className="flex items-center gap-3">
-                        <span className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"}`}>
-                          {on && <Check className="w-3.5 h-3.5" />}
+                        <span className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${on ? "border-marca bg-marca text-white" : "border-input"}`}>
+                          {on && <Check className="w-3.5 h-3.5" aria-hidden="true" />}
                         </span>
                         {a.name}
                       </span>
@@ -101,13 +101,13 @@ export default function ProductOptions({ product, open, onOpenChange, onConfirm 
 
         <div className="sticky bottom-0 bg-background border-t border-border px-5 py-4 flex items-center gap-3">
           <div className="flex items-center gap-2 bg-secondary rounded-full p-1">
-            <button type="button" aria-label="Diminuir" onClick={() => setQty((q) => Math.max(1, q - 1))} className="w-9 h-9 rounded-full hover:bg-background flex items-center justify-center"><Minus className="w-4 h-4" /></button>
-            <span className="w-6 text-center font-semibold">{qty}</span>
-            <button type="button" aria-label="Aumentar" onClick={() => setQty((q) => q + 1)} className="w-9 h-9 rounded-full hover:bg-background flex items-center justify-center"><Plus className="w-4 h-4" /></button>
+            <button type="button" aria-label="Diminuir" onClick={() => setQty((q) => Math.max(1, q - 1))} className="w-9 h-9 rounded-full hover:bg-background flex items-center justify-center"><Minus className="w-4 h-4" aria-hidden="true" /></button>
+            <span className="w-6 text-center font-semibold" aria-live="polite"><span className="sr-only">Quantidade </span>{qty}</span>
+            <button type="button" aria-label="Aumentar" onClick={() => setQty((q) => q + 1)} className="w-9 h-9 rounded-full hover:bg-background flex items-center justify-center"><Plus className="w-4 h-4" aria-hidden="true" /></button>
           </div>
           <button type="button" disabled={needsVariant || !!missing}
             onClick={() => { onConfirm({ variant, addons: picked, quantity: qty }); onOpenChange(false); }}
-            className="flex-1 h-12 rounded-full bg-primary text-primary-foreground font-semibold flex items-center justify-between px-5 disabled:opacity-50">
+            className="flex-1 h-12 rounded-lg bg-primary text-primary-foreground font-semibold flex items-center justify-between px-5 hover:bg-[#8F4527] transition-colors disabled:bg-secondary disabled:text-muted-foreground">
             <span>{missing ? `Escolha: ${missing.name}` : "Adicionar"}</span>
             <span>{brl(unit * qty)}</span>
           </button>

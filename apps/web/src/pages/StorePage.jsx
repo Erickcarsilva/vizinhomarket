@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useCart } from "@/lib/CartContext";
@@ -19,8 +19,14 @@ export default function StorePage() {
     queryFn: () => base44.entities.Product.filter({ store_id: id, available: true }, "category", 500),
   });
 
-  if (isLoading) return <div className="h-80 bg-muted animate-pulse" />;
-  if (!store || store.status !== "approved") return <p className="text-center py-24 text-muted-foreground">Loja não encontrada.</p>;
+  if (isLoading) return <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-5" aria-busy="true"><div className="w-[76px] h-[76px] rounded-[18px] bg-secondary animate-pulse" /><div className="h-7 w-2/3 mt-4 rounded bg-secondary animate-pulse" /><div className="h-4 w-1/3 mt-3 rounded bg-secondary animate-pulse" /></div>;
+  if (!store || store.status !== "approved") return (
+    <div className="max-w-md mx-auto px-4 py-20 text-center space-y-3">
+      <h1 className="font-display text-2xl text-marca">Loja não encontrada</h1>
+      <p className="text-muted-foreground">Ela pode ter saído do VizinhoMarket ou o endereço está errado.</p>
+      <Link to="/" className="btn-contorno">Ver as lojas da cidade</Link>
+    </div>
+  );
 
   const sameStoreOrConfirm = () => {
     if (cart.store && cart.store.id !== store.id) {
@@ -40,15 +46,26 @@ export default function StorePage() {
     (acc[key] = acc[key] || []).push(p);
     return acc;
   }, {});
+  const names = Object.keys(groups);
 
   return (
     <div className="pb-24">
       <StoreHeader store={store} />
-      <div className="max-w-4xl mx-auto px-3 sm:px-5 mt-6 space-y-6">
-        {Object.keys(groups).length === 0 && <p className="text-muted-foreground">Esta loja ainda não cadastrou produtos.</p>}
-        {Object.entries(groups).map(([name, items]) => (
-          <section key={name}>
-            <h2 className="text-lg font-bold">{name}</h2>
+      {names.length > 1 && (
+        <div className="sticky top-16 z-30 bg-background border-b border-border mt-4">
+          <nav aria-label="Seções do cardápio" className="max-w-4xl mx-auto flex gap-6 overflow-x-auto no-scrollbar px-4 sm:px-6">
+            {names.map((n, i) => (
+              <a key={n} href={`#secao-${i}`} onClick={(e) => { e.preventDefault(); document.getElementById(`secao-${i}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                className="shrink-0 h-11 flex items-center text-[15px] font-medium text-[#4A4840] hover:text-marca whitespace-nowrap">{n}</a>
+            ))}
+          </nav>
+        </div>
+      )}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-5 space-y-7">
+        {names.length === 0 && <p className="text-muted-foreground py-6">Esta loja ainda não cadastrou produtos.</p>}
+        {Object.entries(groups).map(([name, items], i) => (
+          <section key={name} id={`secao-${i}`} className="scroll-mt-32">
+            <h2 className="font-display text-[22px] leading-tight text-marca">{name}</h2>
             <div>
               {items.map((p) => (
                 <ProductRow key={p.id} product={p} disabled={!store.is_open} inCart={qtyOfProduct(store.id, p.id)} onAdd={() => handleAdd(p)} />
