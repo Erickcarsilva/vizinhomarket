@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShoppingBag, ChevronLeft } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useCart } from "@/lib/CartContext";
 import { brl, FULFILLMENT, PAYMENT } from "@/lib/constants";
@@ -11,7 +11,8 @@ import CartItems from "@/components/checkout/CartItems";
 import ChoiceGroup from "@/components/checkout/ChoiceGroup";
 import SavedAddresses from "@/components/checkout/SavedAddresses";
 
-const Label = ({ children }) => <p className="text-base font-bold mb-3">{children}</p>;
+const Label = ({ children }) => <h2 className="font-display text-[20px] leading-tight text-marca mb-3">{children}</h2>;
+const campo = "h-12 rounded-lg bg-card text-[15px]";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -38,9 +39,11 @@ export default function Checkout() {
 
   if (!cart.items.length) {
     return (
-      <div className="max-w-md mx-auto px-5 py-32 text-center">
-        <h1 className="font-display text-4xl">Seu carrinho está vazio</h1>
-        <Link to="/" className="inline-block mt-8 h-12 leading-[3rem] px-8 rounded-full bg-primary text-primary-foreground font-semibold">Explorar lojas</Link>
+      <div className="max-w-md mx-auto px-4 py-24 text-center">
+        <span className="mx-auto w-16 h-16 rounded-full bg-[#E5DDCE] text-marca flex items-center justify-center"><ShoppingBag className="w-7 h-7" aria-hidden="true" /></span>
+        <h1 className="font-display text-2xl text-marca mt-5">Sua sacola está vazia</h1>
+        <p className="text-muted-foreground mt-2">Escolha uma loja e adicione o que quiser pedir.</p>
+        <Link to="/" className="btn-acao mt-6">Ver as lojas</Link>
       </div>
     );
   }
@@ -103,22 +106,23 @@ export default function Checkout() {
   };
 
   return (
-    <form onSubmit={submit} className="max-w-5xl mx-auto px-3 sm:px-5 py-4 sm:py-8 grid lg:grid-cols-[1fr_360px] gap-8">
-      <div className="space-y-7">
+    <form onSubmit={submit} className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-8 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px] gap-8">
+      <div className="space-y-7 min-w-0">
         <div>
-          <h1 className="font-display text-4xl mt-2">{cart.store.name}</h1>
-          <Link to={`/loja/${cart.store.id}`} className="inline-block mt-3 text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">Continuar comprando</Link>
-          <div className="mt-4"><CartItems /></div>
+          <h1 className="font-display text-2xl text-marca">Sua sacola</h1>
+          <p className="text-[15px] mt-1 break-words">de <strong className="font-semibold">{cart.store.name}</strong></p>
+          <Link to={`/loja/${cart.store.id}`} className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-marca underline underline-offset-4"><ChevronLeft className="w-4 h-4" aria-hidden="true" />Continuar comprando</Link>
+          <div className="mt-3"><CartItems /></div>
         </div>
         <div>
           <Label>Como receber</Label>
-          <ChoiceGroup options={modes.map((m) => [m, FULFILLMENT[m]])} value={form.fulfillment} onChange={set("fulfillment")} />
+          <ChoiceGroup label="Como receber" options={modes.map((m) => [m, FULFILLMENT[m]])} value={form.fulfillment} onChange={set("fulfillment")} />
         </div>
         <div className="space-y-3">
           <Label>Seus dados</Label>
           <div className="grid sm:grid-cols-2 gap-3">
-            <Input placeholder="Nome" value={form.name} onChange={set("name")} className="h-12 rounded-xl" />
-            <Input placeholder="WhatsApp / telefone" value={form.phone} onChange={set("phone")} className="h-12 rounded-xl" />
+            <Input placeholder="Nome" aria-label="Nome" autoComplete="name" value={form.name} onChange={set("name")} className={campo} />
+            <Input placeholder="WhatsApp / telefone" aria-label="WhatsApp ou telefone" type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} className={campo} />
           </div>
           {!pickup && (
             <div className="space-y-3">
@@ -126,49 +130,55 @@ export default function Checkout() {
                 const a = addresses.find((x) => x.line === line);
                 setForm((f) => ({ ...f, address: line, neighborhood_id: a?.neighborhood_id || f.neighborhood_id }));
               }} />
-              <Input placeholder="Endereço completo (rua, número, bairro)" value={form.address} onChange={set("address")} className="h-12 rounded-xl" />
+              <Input placeholder="Endereço completo (rua, número, bairro)" aria-label="Endereço completo" autoComplete="street-address" value={form.address} onChange={set("address")} className={campo} />
               {byZone && (
-                <select value={form.neighborhood_id} onChange={set("neighborhood_id")} aria-label="Bairro" className="w-full h-12 rounded-xl border border-input bg-card px-3 text-base">
+                <select value={form.neighborhood_id} onChange={set("neighborhood_id")} aria-label="Bairro" className="w-full h-12 rounded-lg border border-input bg-card px-3 text-[15px]">
                   <option value="">Escolha o bairro</option>
                   {zones.map((z) => <option key={z.neighborhood_id} value={z.neighborhood_id}>{z.name} · entrega {z.fee ? brl(z.fee) : "grátis"}</option>)}
                 </select>
               )}
-              {byZone && <p className="text-xs text-muted-foreground">A loja entrega só nos bairros da lista.</p>}
+              {byZone && <p className="text-[13px] text-muted-foreground">A loja entrega só nos bairros da lista.</p>}
             </div>
           )}
-          <Textarea placeholder="Observações (opcional)" value={form.notes} onChange={set("notes")} className="rounded-xl" />
+          <Textarea placeholder="Observações (opcional)" aria-label="Observações (opcional)" value={form.notes} onChange={set("notes")} className="rounded-lg bg-card text-[15px]" />
         </div>
         <div className="space-y-3">
           <Label>Pagamento na {pickup ? "retirada" : "entrega"}</Label>
-          <ChoiceGroup options={Object.entries(PAYMENT)} value={form.payment} onChange={set("payment")} />
-          {form.payment === "dinheiro" && <Input type="number" placeholder="Troco para quanto? (opcional)" value={form.change_for} onChange={set("change_for")} className="h-12 rounded-xl max-w-xs" />}
+          <ChoiceGroup label="Forma de pagamento" options={Object.entries(PAYMENT)} value={form.payment} onChange={set("payment")} />
+          {form.payment === "dinheiro" && <Input type="number" inputMode="decimal" placeholder="Troco para quanto? (opcional)" aria-label="Troco para quanto? (opcional)" value={form.change_for} onChange={set("change_for")} className={`${campo} max-w-xs`} />}
         </div>
       </div>
-      <aside className="lg:sticky lg:top-24 h-fit bg-card border border-border rounded-2xl p-6 space-y-3">
+      <aside className="lg:sticky lg:top-24 h-fit bg-card border border-border rounded-lg p-5 space-y-3 min-w-0" aria-label="Resumo do pedido">
+        <h2 className="font-display text-[20px] text-marca">Resumo</h2>
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>{brl(subtotal)}</span></div>
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Entrega</span><span>{byZone && !zone ? "escolha o bairro" : fee ? brl(fee) : "Grátis"}</span></div>
-        <div className="flex justify-between pt-3 border-t border-border"><span className="font-semibold">Total</span><span className="font-display text-2xl">{brl(total)}</span></div>
-        {belowMin && <p className="text-sm text-accent">Pedido mínimo: {brl(cart.store.min_order)}</p>}
+        <div className="flex justify-between pt-3 border-t border-border"><span className="font-semibold">Total</span><span className="text-[22px] font-bold">{brl(total)}</span></div>
+        {belowMin && <p className="text-sm font-semibold text-[#7A3A1F]">Pedido mínimo desta loja: {brl(cart.store.min_order)}. Faltam {brl((cart.store.min_order || 0) - subtotal)}.</p>}
         {age.needed && (
-          <div data-idade className="rounded-xl border border-amber-300 bg-amber-50 text-amber-900 p-4 space-y-3 text-sm">
+          <div data-idade className="rounded-lg border border-[#E2C9B8] bg-[#F6E9E0] text-[#4A2A1A] p-4 space-y-3 text-sm">
             <p className="font-semibold">Este pedido tem item para maiores de 18 anos</p>
             <label className="block">Sua data de nascimento
-              <Input type="date" value={age.birth} onChange={(e) => setAge((a) => ({ ...a, birth: e.target.value }))} className="h-11 mt-1 bg-white" />
+              <Input type="date" value={age.birth} onChange={(e) => setAge((a) => ({ ...a, birth: e.target.value }))} className="h-11 mt-1 bg-white rounded-lg" />
             </label>
             <label className="flex gap-2 items-start">
-              <input type="checkbox" checked={age.declared} onChange={(e) => setAge((a) => ({ ...a, declared: e.target.checked }))} className="mt-1" />
+              <input type="checkbox" checked={age.declared} onChange={(e) => setAge((a) => ({ ...a, declared: e.target.checked }))} className="mt-1 w-4 h-4 accent-[#214E3D]" />
               <span>Declaro que tenho 18 anos ou mais e vou mostrar um documento com foto ao receber o pedido.</span>
             </label>
             <button type="button" disabled={!age.birth || !age.declared || age.busy || sending} onClick={confirmAge}
-              className="w-full h-11 rounded-full bg-primary text-primary-foreground font-semibold disabled:opacity-40">
+              className="btn-acao w-full h-11">
               Confirmar idade e fazer pedido
             </button>
           </div>
         )}
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-        <button disabled={!valid || sending || age.needed} className="w-full h-13 py-4 rounded-full bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition">
-          {sending && <Loader2 className="w-4 h-4 animate-spin" />} Fazer pedido
+        <button disabled={!valid || sending || age.needed} className="btn-acao w-full h-[52px] text-base">
+          {sending && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />} Fazer pedido · {brl(total)}
         </button>
+        {!valid && !sending && !age.needed && (
+          <p className="text-[13px] text-muted-foreground text-center">
+            {belowMin ? "Adicione mais itens para chegar ao pedido mínimo." : !form.name || !form.phone ? "Preencha seu nome e telefone." : !pickup && !form.address ? "Preencha o endereço de entrega." : "Escolha o bairro da entrega."}
+          </p>
+        )}
       </aside>
     </form>
   );
