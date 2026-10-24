@@ -6,7 +6,7 @@ export default function Sobre() {
   const pillars = [
     { icon: Store, title: "Comércio local primeiro", text: "Damos visibilidade às lojas de bairro de Sidrolândia e região — do mercado da esquina ao serviço do seu bairro." },
     { icon: HeartHandshake, title: "Custo justo para a loja", text: "Sem mensalidade: o lojista paga só uma comissão pequena sobre os pedidos entregues." },
-    { icon: Truck, title: "Pedidos diretos", text: "O cliente pede e a loja entrega, retira ou usa a entrega da plataforma. Tudo combinado direto, sem intermediário." },
+    { icon: Truck, title: "Pedidos diretos", text: "O cliente pede e a loja entrega ou separa para retirada. Tudo combinado direto, sem intermediário." },
     { icon: Users, title: "Feito para a comunidade", text: "Somos um marketplace local: fortalecemos quem mora e trabalha aqui, gerando renda e conveniência no mesmo lugar." },
   ];
   return (
