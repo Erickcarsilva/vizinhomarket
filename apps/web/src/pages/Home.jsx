@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, RotateCcw, RefreshCw } from "lucide-react";
+import { RotateCcw, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import CityPills from "@/components/home/CityPills";
 import StoreCard from "@/components/home/StoreCard";
 import ProductCard from "@/components/home/ProductCard";
 import CategoryTabs from "@/components/home/CategoryTabs";
+import SearchField from "@/components/home/SearchField";
 import { categoryLabel, isStoreListable } from "@/lib/constants";
 
 // Lista de lojas que nunca fica mais larga que a tela (nome longo é cortado com reticências).
@@ -100,11 +101,7 @@ export default function Home() {
     <div className="max-w-6xl mx-auto">
       <h1 className="sr-only">Lojas de Sidrolândia no VizinhoMarket</h1>
       <div className="px-4 sm:px-6 pt-3">
-        <label className="flex items-center gap-2.5 h-12 px-3.5 rounded-lg bg-card border border-input focus-within:ring-2 focus-within:ring-ring">
-          <Search className="w-[18px] h-[18px] text-marca shrink-0" strokeWidth={2.2} aria-hidden="true" />
-          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar loja, prato ou produto" aria-label="Buscar loja, prato ou produto"
-            className="flex-1 min-w-0 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none" />
-        </label>
+        <SearchField value={query} onChange={setQuery} />
       </div>
 
       <CategoryTabs value={category} onChange={setCategory} available={present} />

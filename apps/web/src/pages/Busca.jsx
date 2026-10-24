@@ -1,11 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import StoreCard from "@/components/home/StoreCard";
+import SearchField from "@/components/home/SearchField";
+import { listaLojas } from "@/pages/Home";
 import { brl, isStoreListable } from "@/lib/constants";
 import { Image } from "@/components/ui/image";
+
+function Title({ children }) {
+  return <h2 className="font-display text-[22px] leading-tight text-marca mb-1">{children}</h2>;
+}
+
+// Produto encontrado: linha com foto, nome, loja e preço.
+function ProductRow({ p, store }) {
+  return (
+    <Link to={`/loja/${p.store_id}`} className="flex items-center gap-3.5 py-3 min-w-0 border-b border-[#EDE6D8] last:border-0 hover:bg-secondary/50 transition-colors">
+      <span className="w-[60px] h-[60px] shrink-0 rounded-[14px] overflow-hidden bg-[#E5DDCE] flex items-center justify-center">
+        {p.image_url ? <Image src={p.image_url} alt="" className="w-full h-full object-cover" />
+          : <span aria-hidden="true" className="font-display font-semibold text-[23px] text-marca">{(p.name || "?")[0]}</span>}
+      </span>
+      <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <span className="text-base font-semibold leading-tight truncate">{p.name}</span>
+        <span className="text-[13px] text-muted-foreground truncate">{store?.name || "Loja"}</span>
+      </span>
+      <span className="shrink-0 text-[15px] font-bold text-primary">{brl(p.price)}</span>
+    </Link>
+  );
+}
 
 export default function Busca() {
   const [q, setQ] = useState("");
@@ -20,75 +42,43 @@ export default function Busca() {
   });
 
   const active = stores.filter(isStoreListable);
+  const byId = new Map(active.map((s) => [s.id, s]));
   const term = q.trim().toLowerCase();
-  const storeResults = term
+  const storeResults = (term
     ? active.filter((s) => s.name.toLowerCase().includes(term) || (s.description || "").toLowerCase().includes(term))
-    : active;
-  const listable = new Set(active.map((s) => s.id));
-  const productResults = typed.length >= 2 ? products.filter((p) => listable.has(p.store_id)) : [];
+    : active).slice().sort((a, b) => Number(b.is_open) - Number(a.is_open));
+  const productResults = typed.length >= 2 ? products.filter((p) => byId.has(p.store_id)) : [];
 
   return (
-    <div className="max-w-6xl mx-auto px-5 py-12">
-      <div className="mb-8">
-        <h1 className="font-display text-4xl mt-2">Encontre lojas e produtos</h1>
-      </div>
-      <div className="relative max-w-xl">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <input
-          autoFocus
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar por loja ou produto..."
-          className="w-full h-12 pl-12 pr-10 rounded-full border border-input bg-card text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        />
-        {q && (
-          <button onClick={() => setQ("")} aria-label="Limpar" className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-
-      <section className="mt-12">
-        <h2 className="font-display text-2xl mb-5">Lojas {!term && `(${storeResults.length})`}</h2>
-        {isLoading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">{[0, 1, 2].map((i) => <div key={i} className="aspect-[4/3] rounded-2xl bg-muted animate-pulse" />)}</div>
-        ) : storeResults.length === 0 ? (
-          <p className="text-muted-foreground">Nenhuma loja encontrada para "{q}".</p>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8">
-            {storeResults.map((s) => <StoreCard key={s.id} store={s} />)}
-          </div>
-        )}
-      </section>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-10">
+      <h1 className="font-display text-2xl text-marca mb-3">Buscar</h1>
+      <SearchField value={q} onChange={setQ} autoFocus />
 
       {term && (
-        <section className="mt-14">
-          <h2 className="font-display text-2xl mb-5">Produtos ({searching ? "…" : productResults.length})</h2>
-          {searching && productResults.length === 0 ? (
-            <p className="text-muted-foreground">Buscando…</p>
-          ) : productResults.length === 0 ? (
-            <p className="text-muted-foreground">Nenhum produto encontrado para "{q}".</p>
+        <section className="pt-6" aria-live="polite">
+          <Title>Produtos</Title>
+          <p className="text-[13px] text-muted-foreground">{searching ? "Buscando…" : `${productResults.length} ${productResults.length === 1 ? "produto encontrado" : "produtos encontrados"}`}</p>
+          {!searching && productResults.length === 0 ? (
+            <p className="py-4 text-sm text-muted-foreground">Nenhum produto encontrado para “{q.trim()}”.</p>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {productResults.slice(0, 16).map((p) => (
-                <Link key={p.id} to={`/loja/${p.store_id}`} className="group rounded-2xl border border-border bg-card overflow-hidden hover:border-primary/40 transition-colors">
-                  <div className="aspect-square bg-secondary">
-                    {p.image_url ? (
-                      <Image src={p.image_url} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center font-display text-3xl text-primary/40">{(p.name || "?")[0]}</div>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <p className="font-medium text-sm truncate">{p.name}</p>
-                    <p className="font-display text-lg mt-1">{brl(p.price)}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <div className={listaLojas}>{productResults.slice(0, 16).map((p) => <ProductRow key={p.id} p={p} store={byId.get(p.store_id)} />)}</div>
           )}
         </section>
       )}
+
+      <section className="pt-6">
+        <Title>{term ? "Lojas" : "Todas as lojas"}</Title>
+        {isLoading ? (
+          <p className="text-[13px] text-muted-foreground">Carregando lojas…</p>
+        ) : storeResults.length === 0 ? (
+          <p className="py-4 text-sm text-muted-foreground">Nenhuma loja encontrada para “{q.trim()}”.</p>
+        ) : (
+          <>
+            <p className="text-[13px] text-muted-foreground">{storeResults.length} {storeResults.length === 1 ? "loja" : "lojas"}</p>
+            <div className={listaLojas}>{storeResults.map((s) => <StoreCard key={s.id} store={s} />)}</div>
+          </>
+        )}
+      </section>
     </div>
   );
 }

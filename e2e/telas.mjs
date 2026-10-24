@@ -158,17 +158,17 @@ try {
 
   // ---------- Cliente: Busca
   await cli.goto(`${CLI}/busca`);
-  await cli.fill('input[placeholder="Buscar por loja ou produto..."]', 'pão de queijo');
+  await cli.fill('input[placeholder="Buscar loja, prato ou produto"]', 'pão de queijo');
   await cli.waitForTimeout(1500);
   check('Busca: encontra o produto pelo nome', await cli.getByText('Pão de queijo recheado').first().isVisible());
   const catalogo = [];
   cli.on('request', (r) => { if (/\/rest\/v1\/products/.test(r.url())) catalogo.push(r.url()); });
-  await cli.fill('input[placeholder="Buscar por loja ou produto..."]', 'queijo rech');
+  await cli.fill('input[placeholder="Buscar loja, prato ou produto"]', 'queijo rech');
   await cli.waitForTimeout(1500);
   check('Busca: no servidor, com partes do nome, sem baixar o catálogo inteiro',
     await cli.getByText('Pão de queijo recheado').first().isVisible() && catalogo.length > 0 && catalogo.every((u) => /ilike/.test(decodeURIComponent(u)) && !/limit=1000/.test(u)),
     catalogo.map((u) => decodeURIComponent(u).split('?')[1]?.slice(0, 120)).join(' | '));
-  await cli.fill('input[placeholder="Buscar por loja ou produto..."]', 'padaria volume');
+  await cli.fill('input[placeholder="Buscar loja, prato ou produto"]', 'padaria volume');
   await cli.waitForTimeout(800);
   check('Busca: encontra a loja pelo nome', await cli.getByText('Padaria Volume').first().isVisible());
   await shot(cli, 'telas-05-busca');
@@ -280,7 +280,7 @@ try {
   await shot(dono, 'telas-08-taxa-bairro');
 
   await cli.goto(`${CLI}/busca`);
-  await cli.fill('input[placeholder="Buscar por loja ou produto..."]', 'padaria volume');
+  await cli.fill('input[placeholder="Buscar loja, prato ou produto"]', 'padaria volume');
   await cli.waitForTimeout(1500);
   check('Vitrine mostra a taxa por bairro (a partir de)', await cli.getByText('a partir de R$ 6,00').first().isVisible());
   await cli.goto(`${CLI}/loja/${store}`);
