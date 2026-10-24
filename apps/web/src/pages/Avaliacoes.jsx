@@ -15,26 +15,26 @@ export default function Avaliacoes() {
     .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
 
   return (
-    <div className="max-w-3xl mx-auto px-5 py-12 space-y-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 pb-10 space-y-6">
       <div>
-        <h1 className="font-display text-4xl mt-2">Avalie suas lojas</h1>
-        <p className="text-muted-foreground mt-3">Conte como foi sua experiência com os pedidos já entregues.</p>
+        <h1 className="font-display text-2xl text-marca">Avalie suas lojas</h1>
+        <p className="text-muted-foreground mt-1">Conte como foi sua experiência com os pedidos já entregues.</p>
       </div>
       {isLoading ? (
-        <div className="space-y-4">{[0, 1, 2].map((i) => <div key={i} className="h-32 rounded-2xl bg-muted animate-pulse" />)}</div>
+        <p className="text-[13px] text-muted-foreground">Carregando pedidos…</p>
       ) : delivered.length === 0 ? (
         <div className="text-center py-16">
-          <Star className="w-10 h-10 mx-auto text-muted-foreground/40" />
+          <span className="mx-auto w-16 h-16 rounded-full bg-[#E5DDCE] text-marca flex items-center justify-center"><Star className="w-7 h-7" aria-hidden="true" /></span>
           <p className="text-muted-foreground mt-4">Você ainda não tem pedidos entregues para avaliar.</p>
-          <Link to="/vitrine" className="inline-flex items-center mt-6 h-11 px-6 rounded-full bg-primary text-primary-foreground font-semibold">Explorar lojas</Link>
+          <Link to="/" className="btn-acao mt-6">Ver as lojas</Link>
         </div>
       ) : (
         <div className="space-y-6">
           {delivered.map((o) => (
             <div key={o.id} className="space-y-3">
-              <div className="flex items-baseline justify-between">
-                <Link to={`/loja/${o.store_id}`} className="font-display text-xl hover:text-primary transition-colors">{o.store_name}</Link>
-                <span className="text-sm text-muted-foreground">{brl(o.total)} · {new Date(o.created_date).toLocaleDateString("pt-BR")}</span>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 min-w-0">
+                <Link to={`/loja/${o.store_id}`} className="text-base font-semibold hover:text-marca transition-colors break-words min-w-0">{o.store_name}</Link>
+                <span className="text-[13px] text-muted-foreground">{brl(o.total)} · {new Date(o.created_date).toLocaleDateString("pt-BR")}</span>
               </div>
               <RateOrder order={o} onSaved={reload} />
             </div>
