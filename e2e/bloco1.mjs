@@ -146,7 +146,7 @@ try {
   // ---------- Perfil salvo na conta
   await cli.goto(`${APP}/perfil`);
   await cli.waitForTimeout(1500);
-  check('Perfil mostra o endereço usado no pedido', await cli.getByText('Rua das Palmeiras, 80, Centro').isVisible());
+  check('Perfil mostra o endereço usado no pedido', await cli.getByRole('main').getByText('Rua das Palmeiras, 80, Centro').isVisible());
   await cli.fill('input[inputmode="tel"]', '67900001111');
   await cli.getByRole('button', { name: 'Salvar dados' }).click();
   await cli.waitForTimeout(1200);

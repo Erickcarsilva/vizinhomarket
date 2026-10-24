@@ -105,3 +105,23 @@ export function isOpenNow(rows, timeZone = "America/Campo_Grande", at = new Date
     return (h.weekday === d && t >= o) || (h.weekday === (d + 6) % 7 && t < c);
   });
 }
+
+// Próxima abertura de uma loja fechada, no fuso da cidade: "hoje às 18h", "amanhã às 8h", "sáb às 8h".
+// Devolve null se a loja não tiver horários.
+export function nextOpening(rows, timeZone = "America/Campo_Grande", at = new Date()) {
+  if (!rows || !rows.length) return null;
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+    .formatToParts(at).map((p) => [p.type, p.value]));
+  const d = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts.weekday);
+  const t = `${parts.hour}:${parts.minute}`;
+  for (let offset = 0; offset < 8; offset++) {
+    const day = (d + offset) % 7;
+    const opens = rows.filter((r) => r.weekday === day).map((r) => String(r.opens).slice(0, 5))
+      .filter((o) => offset > 0 || o > t).sort();
+    if (opens.length) {
+      const when = offset === 0 ? "hoje" : offset === 1 ? "amanhã" : SHORT[day].toLowerCase();
+      return `${when} às ${hhmm(opens[0])}`;
+    }
+  }
+  return null;
+}

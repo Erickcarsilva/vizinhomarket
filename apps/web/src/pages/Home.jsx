@@ -1,61 +1,26 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, RotateCcw, X } from "lucide-react";
+import { Search, RotateCcw, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import CityPills from "@/components/home/CityPills";
 import StoreCard from "@/components/home/StoreCard";
 import ProductCard from "@/components/home/ProductCard";
-import { CATEGORIES, categoryLabel, isStoreListable } from "@/lib/constants";
+import CategoryTabs from "@/components/home/CategoryTabs";
+import { categoryLabel, isStoreListable } from "@/lib/constants";
 
-const Title = ({ children, right }) => (
-  <div className="flex items-baseline justify-between mb-2">
-    <h2 className="text-base font-bold">{children}</h2>
-    {right}
-  </div>
-);
+// Lista de lojas que nunca fica mais larga que a tela (nome longo é cortado com reticências).
+export const listaLojas = "grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[repeat(2,minmax(0,1fr))] gap-x-10";
 
-// Nome curto de cada categoria para as abas do topo.
-const SHORT = { alimentacao: "Restaurantes", mercado: "Mercado", pet: "Pet shop", bebidas: "Bebidas", autopecas: "Autopeças", eletronicos: "Eletrônicos", lojas: "Variedades" };
-
-// Abas de categoria fixas no topo, como nos apps de delivery: a escolhida fica destacada.
-function CategoryTabs({ value, onChange }) {
+function SectionTitle({ children, sub, right }) {
   return (
-    <div className="sticky top-14 z-30 bg-background shadow-[0_6px_10px_-8px_rgba(0,0,0,0.18)] rounded-b-2xl">
-      <div className="flex gap-2 overflow-x-auto no-scrollbar px-3 sm:px-5 py-2.5">
-        {CATEGORIES.map(({ id, label, icon: Icon }) => {
-          const on = value === id;
-          return (
-            <button key={id} type="button" onClick={() => onChange(on ? null : id)} aria-pressed={on} title={label}
-              className={`shrink-0 flex items-center gap-2 h-11 pl-3 pr-4 rounded-xl border-2 text-[15px] transition-colors ${on ? "border-primary bg-primary/10 text-primary font-semibold" : "border-transparent text-foreground/80"}`}>
-              <Icon className={`w-5 h-5 ${on ? "text-primary" : "text-primary/80"}`} strokeWidth={2} aria-hidden="true" />
-              {SHORT[id] || label}
-            </button>
-          );
-        })}
+    <div className="flex items-end justify-between gap-3 mb-1">
+      <div className="min-w-0">
+        <h2 className="font-display text-[22px] leading-tight text-marca">{children}</h2>
+        {sub && <p className="text-[13px] text-muted-foreground mt-0.5">{sub}</p>}
       </div>
-    </div>
-  );
-}
-
-// Cartazes das categorias que têm loja: levam para a lista filtrada.
-function Banners({ stores, onPick }) {
-  const items = [
-    ["alimentacao", "Restaurantes e lanches", "bg-primary text-primary-foreground"],
-    ["mercado", "Mercado em casa", "bg-amber-400 text-amber-950"],
-    ["bebidas", "Bebidas geladas", "bg-neutral-900 text-white"],
-  ].map(([id, title, tone]) => ({ id, title, tone, n: stores.filter((s) => s.category === id).length })).filter((b) => b.n > 0);
-  if (!items.length) return null;
-  return (
-    <div className="flex gap-2 overflow-x-auto no-scrollbar px-3 sm:px-5 py-3">
-      {items.map((b) => (
-        <button key={b.id} type="button" onClick={() => onPick(b.id)}
-          className={`w-[78%] max-w-[300px] h-28 shrink-0 rounded-lg p-4 text-left flex flex-col justify-between ${b.tone}`}>
-          <span className="text-xl font-extrabold uppercase leading-none">{b.title}</span>
-          <span className="text-xs font-medium">{b.n} {b.n === 1 ? "loja" : "lojas"} na cidade · Ver</span>
-        </button>
-      ))}
+      {right}
     </div>
   );
 }
@@ -69,19 +34,32 @@ function OrderAgain() {
     enabled: !!user?.id,
   });
   if (!last) return null;
-  const resumo = last.items.map((i) => `${i.quantity} ${i.name}`).join(", ");
+  const resumo = last.items.map((i) => `${i.quantity}× ${i.name}`).join(", ");
   return (
-    <section className="px-3 sm:px-5 pt-3">
-      <Title>Peça de novo</Title>
-      <Link to={`/loja/${last.store_id}`} className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-secondary/60 transition-colors">
-        <span className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-primary shrink-0"><RotateCcw className="w-5 h-5" /></span>
+    <section className="px-4 sm:px-6 pt-5" aria-label="Peça de novo">
+      <Link to={`/loja/${last.store_id}`} className="flex items-center gap-3 rounded-lg bg-card border border-border px-3.5 py-3 hover:border-marca/40 transition-colors">
+        <RotateCcw className="w-5 h-5 text-marca shrink-0" aria-hidden="true" />
         <span className="flex-1 min-w-0">
-          <span className="block text-sm font-medium truncate">{last.store_name}</span>
-          <span className="block text-xs text-muted-foreground truncate">{resumo}</span>
+          <span className="block text-[13px] text-muted-foreground">Peça de novo</span>
+          <span className="block text-[15px] font-semibold truncate">{last.store_name}</span>
+          <span className="block text-[13px] text-muted-foreground truncate">{resumo}</span>
         </span>
-        <span className="text-sm font-bold text-primary">Ver loja</span>
+        <span className="text-sm font-semibold text-marca underline underline-offset-4 shrink-0">Ver loja</span>
       </Link>
     </section>
+  );
+}
+
+function Skeleton() {
+  return (
+    <div aria-hidden="true" className="pt-2">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="flex items-center gap-3.5 py-3">
+          <div className="w-[60px] h-[60px] rounded-[14px] bg-secondary animate-pulse" />
+          <div className="flex-1 space-y-2"><div className="h-4 w-2/3 rounded bg-secondary animate-pulse" /><div className="h-3 w-1/2 rounded bg-secondary animate-pulse" /></div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -89,10 +67,8 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState(null);
   const [city, setCity] = useState(null);
-  const [onlyOpen, setOnlyOpen] = useState(false);
-  const [freeDelivery, setFreeDelivery] = useState(false);
 
-  const { data: stores = [], isLoading } = useQuery({
+  const { data: stores = [], isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["stores", "approved"],
     queryFn: () => base44.entities.Store.filter({ status: "approved" }, "-rating", 200),
   });
@@ -105,67 +81,89 @@ export default function Home() {
   const cities = [...new Set(listable.map((s) => s.city).filter(Boolean))];
   const q = query.trim().toLowerCase();
   const matchStoreIds = new Set(products.filter((p) => p.name.toLowerCase().includes(q)).map((p) => p.store_id));
-  const isFree = (s) => (s.delivery_zones ? s.delivery_fee_max === 0 : !s.delivery_fee);
   const visible = listable
     .filter((s) => !city || s.city === city)
     .filter((s) => !category || s.category === category)
-    .filter((s) => !onlyOpen || s.is_open)
-    .filter((s) => !freeDelivery || isFree(s))
-    .filter((s) => !q || s.name.toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q) || matchStoreIds.has(s.id))
-    .sort((a, b) => Number(b.is_open) - Number(a.is_open));
+    .filter((s) => !q || s.name.toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q) || matchStoreIds.has(s.id));
+  const open = visible.filter((s) => s.is_open);
+  const closed = visible.filter((s) => !s.is_open);
 
   const storeById = new Map(listable.map((s) => [s.id, s]));
   const featured = products
     // Só produtos com foto: destaque sem foto não convence ninguém.
     .filter((p) => p.image_url && storeById.get(p.store_id)?.is_open && (!category || storeById.get(p.store_id)?.category === category))
     .slice(0, 10);
-  const chip = (on) => `h-8 px-3 rounded-full border text-xs whitespace-nowrap transition-colors ${on ? "bg-foreground text-background border-foreground" : "bg-background border-border"}`;
+  const present = new Set(listable.map((s) => s.category));
+  const catName = category ? categoryLabel(category) : "";
 
   return (
     <div className="max-w-6xl mx-auto">
-      <CategoryTabs value={category} onChange={setCategory} />
-      <div className="px-3 sm:px-5 pt-3">
-        <label className="flex items-center gap-2 h-11 px-3 rounded-md bg-secondary text-muted-foreground">
-          <Search className="w-[18px] h-[18px] text-primary" strokeWidth={2.4} />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar item ou loja" aria-label="Buscar item ou loja"
-            className="flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none" />
+      <h1 className="sr-only">Lojas de Sidrolândia no VizinhoMarket</h1>
+      <div className="px-4 sm:px-6 pt-3">
+        <label className="flex items-center gap-2.5 h-12 px-3.5 rounded-lg bg-card border border-input focus-within:ring-2 focus-within:ring-ring">
+          <Search className="w-[18px] h-[18px] text-marca shrink-0" strokeWidth={2.2} aria-hidden="true" />
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar loja, prato ou produto" aria-label="Buscar loja, prato ou produto"
+            className="flex-1 min-w-0 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none" />
         </label>
       </div>
 
-      {cities.length > 1 && <div className="pt-2"><CityPills value={city} onChange={setCity} cities={cities} /></div>}
+      <CategoryTabs value={category} onChange={setCategory} available={present} />
+      {cities.length > 1 && <div className="pt-3"><CityPills value={city} onChange={setCity} cities={cities} /></div>}
 
-      {!q && !category && <Banners stores={listable} onPick={setCategory} />}
-      {!q && <OrderAgain />}
+      {!q && !category && <OrderAgain />}
 
       {!q && featured.length > 0 && (
-        <section className="pt-4">
-          <div className="px-3 sm:px-5"><Title right={<Link to="/busca" className="text-xs font-bold text-primary">Ver mais</Link>}>{category ? `Destaques em ${categoryLabel(category)}` : "Destaques de hoje"}</Title></div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar px-3 sm:px-5 pb-1">
+        <section className="pt-6">
+          <div className="px-4 sm:px-6"><SectionTitle right={<Link to="/busca" className="text-sm font-semibold text-marca underline underline-offset-4">Ver mais</Link>}>{category ? `Destaques em ${catName}` : "Destaques de hoje"}</SectionTitle></div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 sm:px-6 pt-2 pb-1">
             {featured.map((p) => <ProductCard key={p.id} product={p} store={storeById.get(p.store_id)} />)}
           </div>
         </section>
       )}
 
-      <section className="pt-5 px-3 sm:px-5">
-        <Title right={<span className="text-xs text-muted-foreground">{visible.length} {visible.length === 1 ? "loja" : "lojas"}</span>}>
-          {q ? "Resultados" : category ? categoryLabel(category) : "Lojas"}
-        </Title>
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          <button type="button" onClick={() => setOnlyOpen((v) => !v)} aria-pressed={onlyOpen} className={chip(onlyOpen)}>Abertas agora</button>
-          <button type="button" onClick={() => setFreeDelivery((v) => !v)} aria-pressed={freeDelivery} className={chip(freeDelivery)}>Entrega grátis</button>
-          {category && <button type="button" onClick={() => setCategory(null)} className={`${chip(false)} inline-flex items-center gap-1`}>Todas as categorias <X className="w-3.5 h-3.5" aria-hidden="true" /></button>}
-        </div>
+      <section className="pt-6 px-4 sm:px-6" aria-live="polite">
         {isLoading ? (
-          <div className="space-y-3 pt-3">{[0, 1, 2].map((i) => <div key={i} className="h-16 rounded-lg bg-muted animate-pulse" />)}</div>
+          <>
+            <SectionTitle>{q ? "Resultados" : "Abertas agora"}</SectionTitle>
+            <p className="text-[13px] text-muted-foreground">Carregando lojas…</p>
+            <Skeleton />
+          </>
+        ) : isError ? (
+          <div className="py-10 text-center space-y-3" role="alert" data-erro-lojas>
+            <p className="font-semibold">Não foi possível carregar as lojas.</p>
+            <p className="text-sm text-muted-foreground">Confira sua internet e tente de novo.</p>
+            <button type="button" onClick={() => refetch()} disabled={isFetching} className="btn-contorno h-11">
+              <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} aria-hidden="true" /> Tentar de novo
+            </button>
+          </div>
         ) : visible.length === 0 ? (
-          <div className="py-12 text-center space-y-2">
-            <p className="text-muted-foreground">{listable.length ? "Nenhuma loja com esses filtros." : "Nenhuma loja disponível ainda."}</p>
-            <Link to="/indique-loja" className="inline-block text-sm font-bold text-primary">Conhece um comércio? Indique uma loja</Link>
+          <div className="py-10 text-center space-y-3">
+            <p className="font-semibold">
+              {q ? `Nada encontrado para “${query.trim()}”.` : category ? `Ainda não há lojas de ${catName}.` : "Ainda não há lojas no VizinhoMarket."}
+            </p>
+            {(q || category) ? (
+              <button type="button" onClick={() => { setQuery(""); setCategory(null); }} className="btn-contorno h-11">Ver todas as lojas</button>
+            ) : (
+              <Link to="/indique-loja" className="btn-contorno h-11">Indique um comércio da cidade</Link>
+            )}
           </div>
         ) : (
-          <div className="grid lg:grid-cols-2 gap-x-8 pt-1">
-            {visible.map((s) => <StoreCard key={s.id} store={s} />)}
-          </div>
+          <>
+            <SectionTitle sub={`${open.length} ${open.length === 1 ? "loja" : "lojas"} ${catName ? `de ${catName} ` : ""}entregando agora`}>
+              {q ? "Resultados" : "Abertas agora"}
+            </SectionTitle>
+            {open.length === 0 ? (
+              <p className="py-4 text-sm text-muted-foreground">Nenhuma loja aberta neste momento.</p>
+            ) : (
+              <div className={listaLojas}>{open.map((s) => <StoreCard key={s.id} store={s} />)}</div>
+            )}
+            {closed.length > 0 && (
+              <div className="pt-7">
+                <h2 className="text-sm font-semibold text-muted-foreground mb-1">Fechadas agora</h2>
+                <div className={listaLojas}>{closed.map((s) => <StoreCard key={s.id} store={s} />)}</div>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

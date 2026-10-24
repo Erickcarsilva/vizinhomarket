@@ -98,7 +98,8 @@
    Letras servidas pelo próprio site (@fontsource, importadas em apps/cliente/ClienteApp.jsx).
    Os painéis do comerciante e do admin não usam esta classe e não mudam. Contrastes conferidos (AA). */
 @layer base {
-  :root { --marca: 156 42% 20%; }
+  /* --marca e --marca-destaque: as duas cores do logotipo. Nos painéis são iguais às de hoje (verde e terracota). */
+  :root { --marca: 156 42% 20%; --marca-destaque: 16 68% 52%; }
   .tema-cliente {
     --background: 42 45% 94%;          /* marfim  #F7F3EA */
     --foreground: 100 8% 15%;          /* grafite #252923 — 13,4:1 sobre o marfim */
@@ -109,6 +110,7 @@
     --primary: 18 56% 42%;             /* terracota forte #A8532F — branco sobre ele 5,3:1 */
     --primary-foreground: 0 0% 100%;
     --marca: 157 41% 22%;              /* verde #214E3D — 8,5:1 sobre o marfim */
+    --marca-destaque: 18 56% 42%;
     --secondary: 40 36% 90%;           /* areia clara #EFE9DD */
     --secondary-foreground: 100 8% 15%;
     --muted: 40 36% 90%;
