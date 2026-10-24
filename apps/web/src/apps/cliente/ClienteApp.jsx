@@ -3,7 +3,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import AppShell from "@/apps/shared/AppShell";
 import { RequireLogin } from "@/apps/shared/Guards";
 import { CartProvider } from "@/lib/CartContext";
-import PageNotFound from "@/lib/PageNotFound";
+import NaoEncontrada from "@/pages/NaoEncontrada";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -78,8 +78,8 @@ export default function ClienteApp() {
             <Route key={p} path={p} element={<GoTo href={URLS.parceiro} />} />
           ))}
           {["/admin", "/admin-dashboard"].map((p) => <Route key={p} path={p} element={<GoTo href={URLS.admin} />} />)}
+          <Route path="*" element={<NaoEncontrada />} />
         </Route>
-        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </AppShell>
   );

@@ -6,7 +6,8 @@ import { CATEGORIES } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const Label = ({ children }) => <p className="text-sm font-bold mb-2">{children}</p>;
+const Label = ({ children, htmlFor }) => <label htmlFor={htmlFor} className="block text-sm font-semibold mb-1.5">{children}</label>;
+const campo = "h-12 rounded-lg bg-card text-[15px]";
 
 export default function IndiqueLoja() {
   const [form, setForm] = useState({ store_name: "", category: "", owner_name: "", contact: "", address: "", city: "Sidrolândia", notes: "" });
@@ -32,60 +33,60 @@ export default function IndiqueLoja() {
 
   if (done) {
     return (
-      <div className="max-w-md mx-auto px-5 py-24 text-center">
-        <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto"><Check className="w-7 h-7" /></div>
-        <h1 className="font-display text-4xl mt-6">Obrigado pela indicação!</h1>
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-[#E5DDCE] text-marca flex items-center justify-center mx-auto"><Check className="w-7 h-7" aria-hidden="true" /></div>
+        <h1 className="font-display text-2xl text-marca mt-5">Obrigado pela indicação!</h1>
         <p className="text-muted-foreground mt-4">Vamos entrar em contato com a loja para convidá-la a fazer parte do VizinhoMarket.</p>
-        <Link to="/vitrine" className="inline-flex items-center mt-8 h-11 px-6 rounded-full bg-primary text-primary-foreground font-semibold">Voltar para a vitrine</Link>
+        <Link to="/" className="btn-contorno mt-6">Voltar para as lojas</Link>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="max-w-2xl mx-auto px-5 py-12 space-y-8">
+    <form onSubmit={submit} className="max-w-2xl mx-auto px-4 sm:px-6 pt-4 pb-10 space-y-6">
       <div>
-        <h1 className="font-display text-4xl mt-2">Conhece um comércio legal?</h1>
-        <p className="text-muted-foreground mt-3">Indique para a gente. Entraremos em contato para convidar a loja a integrar o VizinhoMarket.</p>
+        <h1 className="font-display text-2xl text-marca">Conhece um comércio legal?</h1>
+        <p className="text-[15px] text-muted-foreground mt-1">Indique para a gente. Entraremos em contato para convidar a loja a integrar o VizinhoMarket.</p>
       </div>
-      <div className="space-y-5">
+      <div className="space-y-4 bg-card border border-border rounded-lg p-4 sm:p-5">
         <div>
-          <Label>Nome da loja *</Label>
-          <Input required value={form.store_name} onChange={set("store_name")} className="h-12 rounded-xl" placeholder="Ex.: Padaria do Bairro" />
+          <Label htmlFor="ind-store_name">Nome da loja *</Label>
+          <Input required value={form.store_name} id="ind-store_name" onChange={set("store_name")} className={campo} placeholder="Ex.: Padaria do Bairro" />
         </div>
         <div>
-          <Label>Categoria</Label>
-          <select value={form.category} onChange={set("category")} className="flex h-12 w-full rounded-xl border border-input bg-transparent px-3 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          <Label htmlFor="ind-category">Categoria</Label>
+          <select value={form.category} id="ind-category" onChange={set("category")} className="flex h-12 w-full rounded-lg border border-input bg-card px-3 text-[15px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <option value="">Selecione...</option>
             {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <Label>Responsável</Label>
-            <Input value={form.owner_name} onChange={set("owner_name")} className="h-12 rounded-xl" placeholder="Nome de quem comandar a loja" />
+            <Label htmlFor="ind-owner_name">Responsável</Label>
+            <Input value={form.owner_name} id="ind-owner_name" onChange={set("owner_name")} className={campo} placeholder="Nome de quem comandar a loja" />
           </div>
           <div>
-            <Label>Contato *</Label>
-            <Input required value={form.contact} onChange={set("contact")} className="h-12 rounded-xl" placeholder="WhatsApp, telefone ou e-mail" />
+            <Label htmlFor="ind-contact">Contato *</Label>
+            <Input required value={form.contact} id="ind-contact" onChange={set("contact")} className={campo} placeholder="WhatsApp, telefone ou e-mail" />
           </div>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <Label>Endereço</Label>
-            <Input value={form.address} onChange={set("address")} className="h-12 rounded-xl" placeholder="Rua, número, bairro" />
+            <Label htmlFor="ind-address">Endereço</Label>
+            <Input value={form.address} id="ind-address" onChange={set("address")} className={campo} placeholder="Rua, número, bairro" />
           </div>
           <div>
-            <Label>Cidade</Label>
-            <Input value={form.city} onChange={set("city")} className="h-12 rounded-xl" />
+            <Label htmlFor="ind-city">Cidade</Label>
+            <Input value={form.city} id="ind-city" onChange={set("city")} className={campo} />
           </div>
         </div>
         <div>
-          <Label>Observações</Label>
-          <Textarea value={form.notes} onChange={set("notes")} className="rounded-xl" placeholder="Conte por que essa loja deveria estar aqui (opcional)" />
+          <Label htmlFor="ind-notes">Observações</Label>
+          <Textarea value={form.notes} id="ind-notes" onChange={set("notes")} className="rounded-lg bg-card text-[15px]" placeholder="Conte por que essa loja deveria estar aqui (opcional)" />
         </div>
       </div>
-      <button disabled={!valid || sending} className="w-full h-12 rounded-full bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition">
-        {sending && <Loader2 className="w-4 h-4 animate-spin" />} Enviar indicação
+      <button disabled={!valid || sending} className="btn-acao w-full">
+        {sending && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />} Enviar indicação
       </button>
       {error && <p role="alert" className="text-sm text-destructive text-center">{error}</p>}
     </form>

@@ -23,9 +23,9 @@ export default function DeleteAccount() {
   if (done) {
     return (
       <div className="max-w-md mx-auto px-5 py-28 text-center">
-        <h1 className="font-display text-4xl">Conta excluída</h1>
-        <p className="text-muted-foreground mt-3">Seus dados pessoais foram apagados. Obrigado por ter usado o VizinhoMarket.</p>
-        <a href="/" className="inline-block mt-8 h-12 leading-[3rem] px-8 rounded-full bg-primary text-primary-foreground font-semibold">Voltar ao início</a>
+        <h1 className="font-display text-2xl text-marca">Conta excluída</h1>
+        <p className="text-[15px] text-muted-foreground mt-1">Seus dados pessoais foram apagados. Obrigado por ter usado o VizinhoMarket.</p>
+        <a href="/" className="btn-acao mt-6">Voltar ao início</a>
       </div>
     );
   }
@@ -33,9 +33,9 @@ export default function DeleteAccount() {
   return (
     <div className="max-w-xl mx-auto px-5 py-14 space-y-6">
       <div>
-        <h1 className="font-display text-4xl mt-2">Excluir conta do VizinhoMarket</h1>
+        <h1 className="font-display text-2xl text-marca">Excluir conta do VizinhoMarket</h1>
       </div>
-      <div className="bg-card border border-border rounded-2xl p-6 space-y-3 text-sm leading-relaxed">
+      <div className="bg-card border border-border rounded-lg p-6 space-y-3 text-sm leading-relaxed">
         <p><strong>O que é apagado:</strong> nome, telefone, e-mail de acesso, endereços salvos e o comentário das suas avaliações.</p>
         <p><strong>O que fica, sem identificar você:</strong> o registro dos pedidos (itens, valores e datas), porque a loja precisa dele para a contabilidade e para obrigações fiscais.</p>
         <p><strong>Antes de excluir:</strong> espere terminar qualquer pedido em andamento. Se você é dono de uma loja, fale com o suporte para encerrar a loja primeiro.</p>
@@ -45,10 +45,10 @@ export default function DeleteAccount() {
       {!isAuthenticated ? (
         <div className="space-y-3">
           <p className="text-sm">Para excluir, entre na sua conta e volte a esta página (ou vá em <strong>Perfil → Excluir minha conta</strong> no app).</p>
-          <Link to="/login?returnTo=/excluir-conta" className="inline-block h-12 leading-[3rem] px-8 rounded-full bg-primary text-primary-foreground font-semibold">Entrar para excluir</Link>
+          <Link to="/login?returnTo=/excluir-conta" className="btn-acao">Entrar para excluir</Link>
         </div>
       ) : (
-        <div className="border border-destructive/40 rounded-2xl p-6 space-y-4">
+        <div className="border border-destructive/40 rounded-lg p-6 space-y-4">
           <p className="text-sm">Você está conectado como <strong>{user?.email}</strong>. Para confirmar, digite <strong>EXCLUIR</strong> abaixo.</p>
           <Input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="EXCLUIR" className="h-12 max-w-xs" autoCapitalize="characters" />
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

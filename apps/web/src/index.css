@@ -129,8 +129,10 @@
     --sombra-flutuante: 0 8px 24px rgb(37 41 35 / 0.12);
   }
   .tema-cliente body { font-variant-numeric: tabular-nums; caret-color: hsl(157 41% 22%); -webkit-font-smoothing: antialiased; }
-  .tema-cliente .font-display { font-weight: 600; letter-spacing: -0.01em; }
+  .tema-cliente .font-display { font-weight: 600; letter-spacing: -0.01em; word-spacing: -0.2em; } /* o espaço do Lora é largo (0,5em) */
   .tema-cliente em { font-style: normal; }
+  /* Links de texto no cliente são verdes; terracota fica só para ações (botões). */
+  .tema-cliente a.text-primary { color: hsl(var(--marca)); }
   .tema-cliente h1.font-display { font-size: 1.5rem; line-height: 1.25; color: hsl(var(--marca)); }
   .tema-cliente h2.font-display { font-size: 1.25rem; line-height: 1.3; color: hsl(var(--marca)); }
   .tema-cliente .rounded-2xl, .tema-cliente .rounded-3xl { border-radius: 0.875rem; }

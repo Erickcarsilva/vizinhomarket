@@ -1,7 +1,29 @@
 import React from "react";
-import { APP_LABEL } from "@/lib/appConfig";
+import { Link } from "react-router-dom";
+import { APP, APP_LABEL } from "@/lib/appConfig";
+import Brand from "@/components/layout/Brand";
+
+// Variação do app do cliente: fundo marfim, marca no topo, título em Lora, sem ícone grande.
+function AuthCliente({ title, subtitle, footer, children }) {
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="h-16 flex items-center px-4 sm:px-6 border-b border-border">
+        <Link to="/" aria-label="VizinhoMarket, início" className="leading-none"><Brand size="sm" className="text-[23px] font-bold" /></Link>
+      </header>
+      <main className="flex-1 flex justify-center px-4 py-8 sm:py-14">
+        <div className="w-full max-w-[420px]">
+          <h1 className="font-display text-[28px] leading-tight text-marca">{title}</h1>
+          {subtitle && <p className="text-[15px] text-muted-foreground mt-1">{subtitle}</p>}
+          <div className="mt-6 bg-card rounded-lg border border-border p-5 sm:p-6">{children}</div>
+          {footer && <p className="text-center text-[15px] text-muted-foreground mt-6">{footer}</p>}
+        </div>
+      </main>
+    </div>
+  );
+}
 
 export default function AuthLayout({ icon: Icon, title, subtitle, footer, children }) {
+  if (APP === "cliente") return <AuthCliente title={title} subtitle={subtitle} footer={footer}>{children}</AuthCliente>;
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
