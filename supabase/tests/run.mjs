@@ -691,7 +691,7 @@ await ok('Entrega +18 com documento conferido conclui e fica registrada', async 
   return eq((await q("select note from public.order_events where order_id = $1 and status = 'DELIVERED'", [oAge]))[0].note, 'Documento conferido (+18)');
 });
 await as(admin);
-await fails('Faturas: período que cruza uma fatura existente é recusado', () => q('select public.admin_generate_invoices(current_date, current_date)'), 'cobre parte');
+await fails('Faturas: período que cruza uma fatura existente é recusado', () => q("select public.admin_generate_invoices((now() at time zone 'America/Campo_Grande')::date, (now() at time zone 'America/Campo_Grande')::date)"), 'cobre parte');
 await ok('Faturas: gerar de novo o mesmo período continua permitido', async () => { await q("select public.admin_generate_invoices('2000-01-01', (now() + interval '1 day')::date)"); return true; });
 await fails('Faturas: fatura paga não pode ser anulada', async () => {
   const [{ id }] = await q("select id from public.invoices where store_id = $1 and status = 'paid'", [storeA]);
