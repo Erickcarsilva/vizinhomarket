@@ -86,3 +86,12 @@ Revisão visual: 14 telas do marketplace revisadas (miniaturas geradas no CI). A
 prestadores de serviço, descrição do orçamento sem duplicar, rótulo "Forma de pagamento" na finalização, versão do app atualizada.
 A carga roda num servidor do GitHub (2 vCPUs), não no Supabase: serve como referência de capacidade das regras, não do plano contratado.
 
+
+## 10. Depois do reposicionamento visual (execução 36 do CI, commit `4f2dcdb`) — verde
+- Banco (PGlite): todas as suítes passaram; lint e build dos 4 produtos; auditoria de pacotes sem vulnerabilidades.
+- Ponta a ponta (Postgres 17 + PostgREST + Chromium, com axe): pedido-completo 23/23, bloco1 22/22, admin 30/30, telas 43/43,
+  push 10/10, marketplace 53/53, concorrência 11/11, carga 4/4, travas do script de zerar 4/4.
+- Falha encontrada e corrigida no caminho (execução 34): axe `aria-required-children` — vitrine horizontal da página inicial
+  marcada como lista com links diretos; virou grupo.
+- Revisão visual com dados fictícios (sem banco): cliente em 360, 390 e 1280 px; painéis do lojista e do admin em 1280 px;
+  entregador em 390 px. Telas reais do teste ponta a ponta (sacola, Pix, acompanhamento, orçamento, atendimento, entregador) conferidas nas miniaturas do CI.
