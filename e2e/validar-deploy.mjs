@@ -46,7 +46,7 @@ const expected = (r) => r.tabelas === 28 && r.categorias === 9 && r.funcoes_tota
 const expected05 = (r) => r.tabelas === 29 && r.categorias === 9 && r.funcoes_totais === 3 && r.farmacia_ativa === false && r.favoritos && r.funcoes_novas === 6;
 
 let c = await fresh('deploy_completo');
-const expected09 = (r) => r.tabelas === 45 && r.categorias === 18 && r.funcoes_totais === 3 && r.farmacia_ativa === false && r.favoritos && r.funcoes_novas === 6;
+const expected09 = (r) => r.tabelas === 47 && r.categorias === 18 && r.funcoes_totais === 3 && r.farmacia_ativa === false && r.favoritos && r.funcoes_novas === 6;
 try { await c.query(part1(dep('vizinhomarket_banco_completo.sql'))); const r = (await c.query(conf)).rows[0]; check('Banco completo instala do zero', expected09(r), JSON.stringify(r)); }
 catch (e) { check('Banco completo instala do zero', false, e.message); }
 await c.end();
@@ -95,7 +95,7 @@ try {
 try {
   await c.query(semPlataforma(dep('09_atualizacao_marketplace.sql')));
   const r = (await c.query(conf)).rows[0];
-  check('Atualização 09 (marketplace) aplicada sobre o 08 chega ao mesmo banco do completo', r.tabelas === 45 && r.categorias === 18, JSON.stringify(r));
+  check('Atualização 09 (marketplace) aplicada sobre o 08 chega ao mesmo banco do completo', r.tabelas === 47 && r.categorias === 18, JSON.stringify(r));
 } catch (e) { check('Atualização 09 (marketplace) aplicada sobre o 08', false, e.message.split('\n')[0]); }
 await c.end();
 for (const d of ['deploy_completo', 'deploy_04']) await admin.query(`drop database if exists ${d} with (force)`);

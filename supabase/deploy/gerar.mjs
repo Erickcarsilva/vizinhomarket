@@ -13,7 +13,7 @@ const CRON = '202610200002_supabase_platform_agendamentos.sql';
 const AVISO = '202610220004_supabase_platform_aviso_pedido.sql'; // usa pg_net: fica na Parte 2, como o pg_cron
 const ENUM = '202611130001_pagamento_online_tipo.sql'; // "alter type ... add value": fora da transação
 const PLAT09 = '202611130007_supabase_platform_pagamentos.sql'; // pg_cron + pg_net dos pagamentos: Parte 4
-const NOVOS09 = ['202611130002_financeiro.sql', '202611130004_logistica.sql', '202611130005_servicos_categorias_lgpd.sql', '202611130006_admin_operacao.sql'];
+const NOVOS09 = ['202611130002_financeiro.sql', '202611130004_logistica.sql', '202611130005_servicos_categorias_lgpd.sql', '202611130006_admin_operacao.sql', '202611130008_cidades_equipe_cpf.sql'];
 const read = (f) => readFileSync(join(mig, f), 'utf8').trimEnd();
 const block = (f) => `-- ================= migrations/${f} =================\n${read(f)}\n`;
 const hoje = '22/10/2026';
@@ -41,7 +41,7 @@ ${read(AVISO).trim()}
 -- PARTE 4: pagamentos e limpezas agendadas (pg_cron + pg_net). Se der erro, ative as extensões e rode só esta parte.
 ${read(PLAT09).trim()}
 
--- Conferência: tabelas = 45, categorias = 18, agendamentos = 5, funcoes_totais = 3, farmacia_ativa = false
+-- Conferência: tabelas = 47, categorias = 18, agendamentos = 5, funcoes_totais = 3, farmacia_ativa = false
 select (select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE') as tabelas,
        (select count(*) from public.categories) as categorias,
        (select count(*) from cron.job where jobname like 'vm-%') as agendamentos,

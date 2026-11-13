@@ -289,7 +289,7 @@ await ok('Loja vê o atendimento de reembolso do próprio pedido', async () => e
 await as(B.owner);
 await ok('Outra loja não vê o atendimento', async () => eq((await q('select count(*) c from public.support_tickets'))[0].c, 0));
 await as(A.owner);
-await fails('Lojista não decide reembolso', () => q("select public.admin_decide_refund($1, true, null, 'store', 'aprovado')", [refReq]), 'administrador');
+await fails('Lojista não decide reembolso', () => q("select public.admin_decide_refund($1, true, null, 'store', 'aprovado')", [refReq]), 'administrador|restrito');
 await as(admin);
 await fails('Admin precisa justificar a decisão', () => q("select public.admin_decide_refund($1, true, null, 'store', '')", [refReq]), 'justificativa');
 await ok('Admin aprova; estorno pós-entrega é descontado da loja', async () => {
@@ -341,7 +341,7 @@ await ok('Conciliação aponta linha do extrato sem pagamento e estorno pendente
   return kinds.has('extrato_sem_pagamento') && !kinds.has('razao_desbalanceado') && !kinds.has('entregue_sem_lancamento');
 });
 await as(cust);
-await fails('Cliente não acessa a conciliação', () => q('select * from public.admin_reconciliation()'), 'administrador');
+await fails('Cliente não acessa a conciliação', () => q('select * from public.admin_reconciliation()'), 'administrador|restrito');
 
 // ---------- 9. Suporte ----------
 let tk;

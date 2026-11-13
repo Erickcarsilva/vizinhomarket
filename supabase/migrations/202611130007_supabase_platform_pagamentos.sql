@@ -34,3 +34,19 @@ alter publication supabase_realtime add table public.payments;
 -- Propostas de serviço vencidas e posições de entrega antigas.
 select cron.schedule('vm-expira-propostas', '*/15 * * * *', $$select public.expire_service_quotes()$$);
 select cron.schedule('vm-limpa-posicoes', '30 4 * * *', $$select public.purge_delivery_locations()$$);
+
+-- Avisos para cliente e entregador: a cada minuto, se houver fila, chama a função "avisos".
+create or replace function public._call_notifications_function() returns void
+language plpgsql security definer set search_path = public as $$
+declare v_url text; v_secret text;
+begin
+  select value #>> '{}' into v_url from public.platform_settings where key = 'notifications_function_url';
+  select value #>> '{}' into v_secret from public.platform_settings where key = 'cron_secret';
+  if coalesce(v_url, '') = '' or coalesce(v_secret, '') = '' then return; end if;
+  if not exists (select 1 from public.notification_outbox where sent_at is null) then return; end if;
+  perform net.http_post(url := v_url, body := '{}'::jsonb,
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', v_secret), timeout_milliseconds := 10000);
+end $$;
+revoke execute on function public._call_notifications_function() from public, anon, authenticated;
+select cron.schedule('vm-avisos', '* * * * *', $$select public._call_notifications_function()$$);
+select cron.schedule('vm-limpa-avisos', '45 4 * * *', $$delete from public.notification_outbox where created_at < now() - interval '7 days'$$);

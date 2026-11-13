@@ -133,7 +133,7 @@ await ok('Entregador reporta problema e abre atendimento', async () => {
   await su(); return eq((await q("select count(*) c from public.support_tickets where order_id = $1 and kind = 'delivery'", [o1]))[0].c, 1);
 });
 await as(A.owner);
-await fails('Loja não reatribui entrega da plataforma', () => q("select public.admin_reassign_delivery($1, null, 'quero trocar')", [o1]), 'administrador');
+await fails('Loja não reatribui entrega da plataforma', () => q("select public.admin_reassign_delivery($1, null, 'quero trocar')", [o1]), 'administrador|restrito');
 await as(admin);
 await ok('Admin vê a corrida no monitor', async () => (await q('select * from public.admin_delivery_monitor()')).some((r) => r.order_id === o1));
 await fails('Reatribuir exige justificativa', () => q("select public.admin_reassign_delivery($1, $2, '')", [o1, c1.id]), 'Justifique');

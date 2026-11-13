@@ -22,11 +22,8 @@ Deno.serve(async (req) => {
   const res = await createPayment({ userId, orderId: body.order_id }, {
     rpc, provider, log,
     notificationUrl: `${env.SUPABASE_URL}/functions/v1/pagamentos-webhook?provider=${provider.name}`,
-    getPayer: async (id: string) => {
-      const { data } = await admin.auth.admin.getUserById(id);
-      const { data: prof } = await admin.from("profiles").select("full_name").eq("id", id).maybeSingle();
-      return { id, email: data?.user?.email, name: prof?.full_name || undefined };
-    },
+    // Nome, e-mail e CPF (se a pessoa informou) vêm do banco, pela função do serviço.
+    getPayer: async (id: string) => { const p = await rpc("svc_payer", { p_user_id: id }); return { ...p, name: p?.name || undefined }; },
   });
   return reply(res.status, res.body, cors);
 });
