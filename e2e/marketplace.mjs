@@ -95,7 +95,7 @@ try {
   await cli.waitForTimeout(1000);
   await cli.fill('input[placeholder="Nome"]', 'Maria Cliente');
   await cli.fill('input[placeholder="WhatsApp / telefone"]', '67988887777');
-  await cli.getByRole('radio', { name: /Entrega/ }).first().click().catch(() => {});
+  await cli.getByRole('radio', { name: 'Entrega pela plataforma' }).click();
   const addr = cli.locator('input[placeholder="Endereço completo (rua, número, bairro)"]');
   if (await addr.count()) await addr.fill('Rua das Flores, 50, Centro');
   await cli.fill('input[placeholder="Cupom de desconto"]', 'bemvindo5');
