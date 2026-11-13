@@ -8,6 +8,48 @@ import NeighborhoodsAdmin from "./NeighborhoodsAdmin";
 const toPct = (r) => (r == null ? "" : String(Math.round(r * 10000) / 100).replace(".", ","));
 const fromPct = (s) => { const v = String(s).replace(",", ".").trim(); return v === "" ? null : Number(v) / 100; };
 
+// Chaves da operação: o que liga pagamento online e entrega pela plataforma. Toda mudança fica na auditoria.
+function OperationsCard({ settings, onSaved }) {
+  const { busy, error, run } = useAction(onSaved);
+  const [share, setShare] = useState("");
+  const [refundDays, setRefundDays] = useState("");
+  if (!settings) return null;
+  const bool = (k) => settings[k] === true;
+  const provider = settings.payment_provider || "sandbox";
+  const toggle = (key, label) => (
+    <div className="flex items-center gap-3 py-2">
+      <span className="flex-1 text-sm">{label}</span>
+      <Btn variant={bool(key) ? "danger" : "primary"} busy={busy === key} onClick={() => run(key, () => base44.admin.setSetting(key, !bool(key)), bool(key) ? `Desligar "${label}"?` : `Ligar "${label}"?`)}>{bool(key) ? "Desligar" : "Ligar"}</Btn>
+    </div>
+  );
+  return (
+    <Card className="p-5 space-y-3">
+      <h3 className="font-semibold">Operação</h3>
+      <div className="divide-y divide-border">
+        {toggle("online_payments_enabled", "Pagamento pelo app (Pix/cartão online)")}
+        {toggle("platform_delivery_enabled", "Entrega por entregadores da plataforma")}
+        <div className="flex flex-wrap items-center gap-3 py-2">
+          <span className="flex-1 text-sm">Gateway de pagamento {provider === "sandbox" && <strong className="text-destructive">(simulação: não cobra de verdade)</strong>}</span>
+          <select value={provider} onChange={(e) => run("prov", () => base44.admin.setSetting("payment_provider", e.target.value), `Trocar o gateway para ${e.target.value}? Só faça isso com as chaves configuradas nas funções do Supabase.`)} className="h-9 rounded-full border border-border bg-card px-3 text-sm" aria-label="Gateway">
+            <option value="sandbox">Simulação (sandbox)</option><option value="mercadopago">Mercado Pago</option><option value="asaas">Asaas</option>
+          </select>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 py-2">
+          <span className="flex-1 text-sm">Parte da taxa de entrega que vai para o entregador (atual: {pct(Number(settings.courier_fee_share ?? 1))})</span>
+          <Input value={share} onChange={(e) => setShare(e.target.value)} placeholder="%" inputMode="decimal" className="h-9 w-20" />
+          <Btn busy={busy === "share"} disabled={!share} onClick={() => run("share", () => base44.admin.setSetting("courier_fee_share", fromPct(share)))}>Salvar</Btn>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 py-2">
+          <span className="flex-1 text-sm">Prazo para o cliente pedir reembolso (atual: {Number(settings.refund_window_days ?? 7)} dias)</span>
+          <Input value={refundDays} onChange={(e) => setRefundDays(e.target.value.replace(/\D/g, ""))} placeholder="dias" inputMode="numeric" className="h-9 w-20" />
+          <Btn busy={busy === "rd"} disabled={!refundDays} onClick={() => run("rd", () => base44.admin.setSetting("refund_window_days", Number(refundDays)))}>Salvar</Btn>
+        </div>
+      </div>
+      <ErrorLine error={error} />
+    </Card>
+  );
+}
+
 export default function SettingsAdmin() {
   const qc = useQueryClient();
   const { data: settings } = useQuery({ queryKey: ["admin-settings"], queryFn: () => base44.admin.getSettings() });
@@ -79,6 +121,7 @@ export default function SettingsAdmin() {
           ))}
         </div>
       </Card>
+      <OperationsCard settings={settings} onSaved={() => qc.invalidateQueries({ queryKey: ["admin-settings"] })} />
       <NeighborhoodsAdmin />
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, Store, ShoppingBag, Users, Bike, Wallet, Settings, AlertTriangle, LogOut, Menu, ExternalLink } from "lucide-react";
+import { LayoutDashboard, Store, ShoppingBag, Users, Bike, Wallet, Settings, AlertTriangle, LogOut, Menu, ExternalLink, Landmark, Undo2, LifeBuoy, Tag, MapPinned, Shapes } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/AuthContext";
 import Brand from "@/components/layout/Brand";
@@ -12,8 +12,14 @@ export const ADMIN_NAV = [
   ["/lojas", "Lojas", Store],
   ["/pedidos", "Pedidos", ShoppingBag],
   ["/usuarios", "Usuários", Users],
+  ["/entregas", "Entregas", MapPinned],
   ["/entregadores", "Entregadores", Bike],
+  ["/financeiro", "Pagamentos e conciliação", Landmark],
   ["/comissoes", "Comissões e faturas", Wallet],
+  ["/reembolsos", "Reembolsos", Undo2],
+  ["/atendimento", "Atendimento", LifeBuoy],
+  ["/cupons", "Cupons e campanhas", Tag],
+  ["/categorias", "Categorias", Shapes],
   ["/config", "Configurações", Settings],
   ["/registros", "Erros e histórico", AlertTriangle],
 ];
@@ -36,6 +42,7 @@ function Sidebar({ onNavigate }) {
         <div className="pt-3 mt-3 border-t border-border space-y-0.5">
           <a href={URLS.cliente} target="_blank" rel="noreferrer" className="flex items-center gap-3 min-h-[40px] px-3 rounded-xl text-sm text-muted-foreground hover:bg-secondary"><ExternalLink className="w-4 h-4" />Abrir app do cliente</a>
           <a href={URLS.parceiro} target="_blank" rel="noreferrer" className="flex items-center gap-3 min-h-[40px] px-3 rounded-xl text-sm text-muted-foreground hover:bg-secondary"><ExternalLink className="w-4 h-4" />Abrir painel do comerciante</a>
+          <a href={URLS.entregador} target="_blank" rel="noreferrer" className="flex items-center gap-3 min-h-[40px] px-3 rounded-xl text-sm text-muted-foreground hover:bg-secondary"><ExternalLink className="w-4 h-4" />Abrir app do entregador</a>
         </div>
       </nav>
       <div className="px-5 py-4 border-t border-border space-y-2">

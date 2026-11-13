@@ -30,3 +30,7 @@ create trigger orders_notify_paid after update of payment_status on public.order
   execute function public._notify_new_order();
 
 alter publication supabase_realtime add table public.payments;
+
+-- Propostas de serviço vencidas e posições de entrega antigas.
+select cron.schedule('vm-expira-propostas', '*/15 * * * *', $$select public.expire_service_quotes()$$);
+select cron.schedule('vm-limpa-posicoes', '30 4 * * *', $$select public.purge_delivery_locations()$$);

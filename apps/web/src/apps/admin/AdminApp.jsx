@@ -15,6 +15,12 @@ import CouriersAdmin from "@/components/admin/panel/CouriersAdmin";
 import InvoicesAdmin from "@/components/admin/panel/InvoicesAdmin";
 import SettingsAdmin from "@/components/admin/panel/SettingsAdmin";
 import LogsAdmin from "@/components/admin/panel/LogsAdmin";
+import FinanceAdmin from "@/components/admin/panel/FinanceAdmin";
+import RefundsAdmin from "@/components/admin/panel/RefundsAdmin";
+import SupportAdmin from "@/components/admin/panel/SupportAdmin";
+import CouponsAdmin from "@/components/admin/panel/CouponsAdmin";
+import DeliveriesAdmin from "@/components/admin/panel/DeliveriesAdmin";
+import CategoriesAdmin from "@/components/admin/panel/CategoriesAdmin";
 
 const TAB_PATH = { visao: "/", lojas: "/lojas", pedidos: "/pedidos", usuarios: "/usuarios", entregadores: "/entregadores", comissoes: "/comissoes", config: "/config", registros: "/registros" };
 
@@ -53,6 +59,12 @@ export default function AdminApp() {
             <Route path="/usuarios" element={<Page><UsersAdmin /></Page>} />
             <Route path="/entregadores" element={<Page><CouriersAdmin /></Page>} />
             <Route path="/comissoes" element={<Page><InvoicesAdmin /></Page>} />
+            <Route path="/entregas" element={<Page><DeliveriesAdmin /></Page>} />
+            <Route path="/financeiro" element={<Page><FinanceAdmin /></Page>} />
+            <Route path="/reembolsos" element={<Page><RefundsAdmin /></Page>} />
+            <Route path="/atendimento" element={<Page><SupportAdmin /></Page>} />
+            <Route path="/cupons" element={<Page><CouponsAdmin /></Page>} />
+            <Route path="/categorias" element={<Page><CategoriesAdmin /></Page>} />
             <Route path="/config" element={<Page><SettingsAdmin /></Page>} />
             <Route path="/registros" element={<Page><LogsAdmin /></Page>} />
           </Route>

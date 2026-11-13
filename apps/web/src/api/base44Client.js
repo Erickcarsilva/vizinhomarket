@@ -12,7 +12,8 @@ import { Order, StoreReferral, neighborhoods, storeZones } from "./data/orders";
 import { auth } from "./data/auth";
 import { account } from "./data/account";
 import { partner } from "./data/partner";
-import { admin } from "./data/admin";
+import { admin as adminBase } from "./data/admin";
+import { adminOps } from "./data/adminOps";
 import { courier } from "./data/courier";
 import { services } from "./data/services";
 import { support } from "./data/support";
@@ -26,7 +27,7 @@ export const base44 = {
   auth,
   account,
   partner,
-  admin,
+  admin: { ...adminBase, ...adminOps },
   courier,
   services,
   support,

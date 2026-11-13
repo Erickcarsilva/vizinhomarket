@@ -141,4 +141,20 @@ await ok('Exclusão da conta anonimiza pedidos de serviço e mensagens', async (
   return eq((await q("select count(*) c from auth.users where email = 'cliente@teste.local'"))[0].c, 0);
 });
 
+// ---------- Chaves de operação ----------
+await su();
+const admin2 = (await q("select user_id id from public.user_roles where role = 'admin' limit 1"))[0];
+await as({ id: admin2.id });
+await fails('Configuração com provedor inválido é recusada', () => q(`select public.admin_set_setting('payment_provider', '"paypal"'::jsonb)`), 'inválido');
+await fails('Comissão fora da faixa é recusada', () => q(`select public.admin_set_setting('default_commission_rate', '0.9'::jsonb)`), 'fora da faixa');
+await fails('Liga/desliga exige verdadeiro ou falso', () => q(`select public.admin_set_setting('online_payments_enabled', '"sim"'::jsonb)`), 'verdadeiro ou falso');
+await ok('Admin habilita loja para receber online com conta de recebedor', async () => {
+  await q("select public.admin_set_store_online_payment($1, true, 'asaas', 'wal_123')", [E.id]);
+  await su();
+  const [r] = await q('select s.accepts_online_payment, p.gateway_recipient_id from public.stores s join public.store_private p on p.store_id = s.id where s.id = $1', [E.id]);
+  return r.accepts_online_payment === true && r.gateway_recipient_id === 'wal_123';
+});
+await as(E.owner);
+await fails('Lojista não se habilita para receber online', () => q("select public.admin_set_store_online_payment($1, true)", [E.id]), 'administrador');
+
 process.exit(t.report() ? 0 : 1);

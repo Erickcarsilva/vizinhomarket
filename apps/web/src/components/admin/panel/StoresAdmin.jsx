@@ -59,6 +59,15 @@ export default function StoresAdmin() {
                 <div className="flex flex-wrap gap-2">
                   {s.status !== "approved" && <Btn variant="primary" busy={busy === `ap-${s.id}`} onClick={() => run(`ap-${s.id}`, () => base44.admin.setStoreStatus(s.id, "approved"))}>{s.status === "suspended" ? "Reativar" : "Aprovar"}</Btn>}
                   {s.status === "approved" && <Btn variant="danger" busy={busy === `su-${s.id}`} onClick={() => run(`su-${s.id}`, () => base44.admin.setStoreStatus(s.id, "suspended"), `Suspender ${s.name}? A loja some da vitrine na hora.`)}>Suspender</Btn>}
+                  {s.status === "approved" && (
+                    <Btn busy={busy === `on-${s.id}`} onClick={() => {
+                      if (s.accepts_online_payment) { run(`on-${s.id}`, () => base44.admin.setStoreOnlinePayment(s.id, false)); return; }
+                      const provider = window.prompt("Provedor do recebedor (sandbox, mercadopago ou asaas). Deixe vazio para só ligar:", "") ?? null;
+                      if (provider === null) return;
+                      const recipient = provider ? window.prompt("ID da conta de recebedor da loja no gateway (walletId/ID do vendedor):", "") : null;
+                      run(`on-${s.id}`, () => base44.admin.setStoreOnlinePayment(s.id, true, provider || null, recipient || null));
+                    }}>{s.accepts_online_payment ? "Desligar pagamento pelo app" : "Ligar pagamento pelo app"}</Btn>
+                  )}
                   {wa && <a href={wa} target="_blank" rel="noreferrer" className="h-9 px-4 rounded-full text-xs font-semibold border border-border hover:bg-secondary flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" />WhatsApp</a>}
                   <Link to={`/loja/${s.id}`} className="h-9 px-4 rounded-full text-xs font-semibold border border-border hover:bg-secondary flex items-center">Ver loja</Link>
                 </div>
