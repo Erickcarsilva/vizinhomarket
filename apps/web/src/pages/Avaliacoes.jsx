@@ -24,7 +24,7 @@ export default function Avaliacoes() {
         <p className="text-[13px] text-muted-foreground">Carregando pedidos…</p>
       ) : delivered.length === 0 ? (
         <div className="text-center py-16">
-          <span className="mx-auto w-16 h-16 rounded-full bg-[#E5DDCE] text-marca flex items-center justify-center"><Star className="w-7 h-7" aria-hidden="true" /></span>
+          <span className="mx-auto w-16 h-16 rounded-full bg-[#EAF6EF] text-marca flex items-center justify-center"><Star className="w-7 h-7" aria-hidden="true" /></span>
           <p className="text-muted-foreground mt-4">Você ainda não tem pedidos entregues para avaliar.</p>
           <Link to="/" className="btn-acao mt-6">Ver as lojas</Link>
         </div>

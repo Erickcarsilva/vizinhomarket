@@ -36,7 +36,7 @@ export default function OnlinePayment({ order, onRefresh, autoStart }) {
         <p className="text-[15px] font-semibold">{order.payment_status === "failed" ? "Pagamento não aprovado" : "Pague para a loja receber o pedido"}</p>
         <p className="font-bold">{brl(order.total)}</p>
       </div>
-      {charge?.sandbox && <p className="text-[13px] font-semibold text-[#7A3A1F]">Ambiente de teste: este Pix é simulado e não cobra nada.</p>}
+      {charge?.sandbox && <p className="text-[13px] font-semibold text-[#C2331A]">Ambiente de teste: este Pix é simulado e não cobra nada.</p>}
       {state.busy && !charge && <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Gerando pagamento…</p>}
       {state.error && (
         <div className="space-y-2">

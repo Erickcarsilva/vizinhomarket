@@ -12,7 +12,7 @@ export default function Sobre() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-4 pb-10">
       <h1 className="font-display text-[28px] leading-tight text-marca">O comércio de Sidrolândia, a um toque.</h1>
-      <p className="text-base text-[#4A4840] mt-4 leading-relaxed">
+      <p className="text-base text-[#3E4743] mt-4 leading-relaxed">
         O VizinhoMarket nasceu para reaproximar moradores e lojistas do bairro. Enquanto os grandes marketplaces
         cobram comissões altas e afastam o cliente da loja, nós fazemos o oposto: colocamos o comércio local na
         palma da sua mão, com um custo justo para quem vende e mais conveniência para quem compra.
@@ -23,7 +23,7 @@ export default function Sobre() {
           const Icon = p.icon;
           return (
             <div key={p.title} className="rounded-lg border border-border bg-card p-4 sm:p-5">
-              <div className="w-11 h-11 rounded-[12px] bg-[#E5DDCE] text-marca flex items-center justify-center">
+              <div className="w-11 h-11 rounded-[12px] bg-[#EAF6EF] text-marca flex items-center justify-center">
                 <Icon className="w-5 h-5" aria-hidden="true" />
               </div>
               <h2 className="font-display text-xl text-marca mt-3">{p.title}</h2>
@@ -35,7 +35,7 @@ export default function Sobre() {
 
       <section className="mt-10">
         <h2 className="font-display text-2xl text-marca mb-3">Como funcionamos</h2>
-        <ol className="space-y-3 text-[15px] text-[#4A4840]">
+        <ol className="space-y-3 text-[15px] text-[#3E4743]">
           <li><strong className="text-foreground">1. Lojista se cadastra</strong> e, depois de aprovado, monta o catálogo. Sem mensalidade: paga só uma comissão sobre os pedidos entregues.</li>
           <li><strong className="text-foreground">2. O cliente navega pela vitrine</strong>, escolhe a loja e monta o pedido pelo catálogo.</li>
           <li><strong className="text-foreground">3. A loja recebe e prepara</strong>, e o pedido é entregue pela loja ou retirado no local.</li>

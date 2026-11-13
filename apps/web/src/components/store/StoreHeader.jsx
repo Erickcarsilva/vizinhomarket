@@ -2,6 +2,7 @@ import React from "react";
 import { Clock, MapPin, Star, Bike, ShoppingBasket } from "lucide-react";
 import { Image } from "@/components/ui/image";
 import { StoreLogo } from "@/components/home/StoreCard";
+import { CAT_COLOR } from "@/components/home/CategoryTabs";
 import { brl, categoryLabel, FULFILLMENT, deliveryFeeLabel } from "@/lib/constants";
 import { nextOpening } from "@/lib/hours";
 
@@ -19,17 +20,20 @@ export default function StoreHeader({ store }) {
   const opens = !store.is_open && !store.is_paused ? nextOpening(store.hours, store.city_timezone) : null;
   return (
     <div>
-      {store.cover_url && (
+      {store.cover_url ? (
         <div className="relative overflow-hidden bg-secondary h-36 md:h-56">
           <Image src={store.cover_url} alt="" className="w-full h-full object-cover" />
         </div>
+      ) : (
+        // Sem foto de capa: faixa na cor da categoria (a loja não fica com cara de página vazia).
+        <div aria-hidden="true" className="h-24 md:h-32" style={{ background: (CAT_COLOR[store.category] || ["#F0F4F1"])[0] }} />
       )}
-      <div className={`max-w-4xl mx-auto px-4 sm:px-6 relative ${store.cover_url ? "-mt-9" : "pt-5"}`}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 relative -mt-9">
         <StoreLogo store={store} size={76} className="border-4 border-background rounded-[18px]" />
-        <h1 className="font-display text-[26px] leading-tight text-marca mt-3 break-words">{store.name}</h1>
+        <h1 className="font-display text-[26px] leading-tight mt-3 break-words">{store.name}</h1>
         <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground mt-1">
           {store.rating ? (
-            <><Star className="w-3.5 h-3.5 fill-[#B7791F] text-[#B7791F]" aria-hidden="true" /><span className="font-semibold text-foreground"><span className="sr-only">Nota </span>{store.rating.toFixed(1).replace(".", ",")}</span><span aria-hidden="true">·</span></>
+            <><Star className="w-3.5 h-3.5 fill-[#F2A900] text-[#F2A900]" aria-hidden="true" /><span className="font-semibold text-foreground"><span className="sr-only">Nota </span>{store.rating.toFixed(1).replace(".", ",")}</span><span aria-hidden="true">·</span></>
           ) : <><span className="font-semibold text-marca">Nova</span><span aria-hidden="true">·</span></>}
           <span>{categoryLabel(store.category)}</span>
         </p>
@@ -39,9 +43,9 @@ export default function StoreHeader({ store }) {
             <span className="w-2 h-2 rounded-full bg-marca" aria-hidden="true" /> Aberta agora
           </p>
         ) : (
-          <div role="status" className="mt-3 rounded-lg border border-[#E2C9B8] bg-[#F6E9E0] px-3.5 py-2.5 text-sm">
-            <p className="font-semibold text-[#7A3A1F]">{store.is_paused ? "Loja pausada no momento" : "Fechada agora"}{opens ? ` · abre ${opens}` : ""}</p>
-            <p className="text-[#5C4A3F] mt-0.5">Você pode ver o cardápio, mas só dá para pedir quando ela abrir.</p>
+          <div role="status" className="mt-3 rounded-lg border border-[#F5DFA0] bg-[#FFF6DB] px-3.5 py-2.5 text-sm">
+            <p className="font-semibold text-[#C2331A]">{store.is_paused ? "Loja pausada no momento" : "Fechada agora"}{opens ? ` · abre ${opens}` : ""}</p>
+            <p className="text-[#3E4743] mt-0.5">Você pode ver o cardápio, mas só dá para pedir quando ela abrir.</p>
           </div>
         )}
 

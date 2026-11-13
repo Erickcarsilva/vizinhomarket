@@ -7,7 +7,7 @@ import { brl } from "@/lib/constants";
 export default function ProductCard({ product, store }) {
   return (
     <Link to={`/loja/${product.store_id}`} className="block w-[136px] shrink-0 group">
-      <div className="aspect-square rounded-lg overflow-hidden bg-[#E5DDCE] border border-border">
+      <div className="aspect-square rounded-lg overflow-hidden bg-[#EAF6EF] border border-border">
         {product.image_url ? (
           <Image src={product.image_url} alt="" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform" fittingType="fill" />
         ) : (

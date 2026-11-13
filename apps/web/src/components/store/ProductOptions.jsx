@@ -52,7 +52,7 @@ export default function ProductOptions({ product, open, onOpenChange, onConfirm 
             <section>
               <div className="flex items-baseline justify-between mb-2">
                 <h3 className="font-semibold">Tamanho</h3>
-                <span className="text-xs font-semibold text-accent">Obrigatório</span>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-accent text-accent-foreground">Obrigatório</span>
               </div>
               <div className="space-y-2">
                 {variants.map((v) => (
@@ -75,7 +75,7 @@ export default function ProductOptions({ product, open, onOpenChange, onConfirm 
             <section key={g.id}>
               <div className="flex items-baseline justify-between mb-2">
                 <h3 className="font-semibold">{g.name}</h3>
-                <span className={`text-xs font-semibold ${g.min > 0 ? "text-accent" : "text-muted-foreground"}`}>{rule(g)}</span>
+                <span className={`text-xs font-semibold ${g.min > 0 ? "text-[#C2331A]" : "text-muted-foreground"}`}>{rule(g)}</span>
               </div>
               <div className="space-y-2">
                 {g.addons.map((a) => {
@@ -107,7 +107,7 @@ export default function ProductOptions({ product, open, onOpenChange, onConfirm 
           </div>
           <button type="button" disabled={needsVariant || !!missing}
             onClick={() => { onConfirm({ variant, addons: picked, quantity: qty }); onOpenChange(false); }}
-            className="flex-1 h-12 rounded-lg bg-primary text-primary-foreground font-semibold flex items-center justify-between px-5 hover:bg-[#8F4527] transition-colors disabled:bg-secondary disabled:text-muted-foreground">
+            className="flex-1 h-12 rounded-lg bg-primary text-primary-foreground font-semibold flex items-center justify-between px-5 hover:bg-[#06683C] transition-colors disabled:bg-secondary disabled:text-muted-foreground">
             <span>{missing ? `Escolha: ${missing.name}` : "Adicionar"}</span>
             <span>{brl(unit * qty)}</span>
           </button>

@@ -29,7 +29,7 @@ export default function Tickets() {
         <input value={f.subject} onChange={(e) => setF({ ...f, subject: e.target.value.slice(0, 120) })} placeholder="Resumo em poucas palavras" aria-label="Resumo" className="w-full h-11 rounded-lg border border-input bg-background px-3" />
         <textarea value={f.message} onChange={(e) => setF({ ...f, message: e.target.value.slice(0, 2000) })} rows={3} placeholder="Conte o que aconteceu. Se for sobre um pedido, abra pela tela do pedido." aria-label="Mensagem" className="w-full rounded-lg border border-input bg-background p-3" />
         {state.error && <p role="alert" className="text-sm text-destructive">{state.error}</p>}
-        {state.ok && <p className="text-sm text-[#1F6B47]">Recebemos sua mensagem. A resposta aparece aqui.</p>}
+        {state.ok && <p className="text-sm text-[#077243]">Recebemos sua mensagem. A resposta aparece aqui.</p>}
         <button className="btn-acao h-11" disabled={state.busy || f.subject.trim().length < 3 || !f.message.trim()}>{state.busy && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}Enviar</button>
       </form>
       {isLoading ? null : list.length > 0 && (

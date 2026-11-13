@@ -68,7 +68,7 @@ export default function Orcamento() {
           <div className="flex gap-1" role="radiogroup" aria-label="Nota">
             {[1, 2, 3, 4, 5].map((n) => (
               <button key={n} type="button" role="radio" aria-checked={stars === n} aria-label={`${n} estrela(s)`} onClick={() => setStars(n)}>
-                <Star className={`w-8 h-8 ${n <= stars ? "fill-[#C8892B] text-[#C8892B]" : "text-input"}`} />
+                <Star className={`w-8 h-8 ${n <= stars ? "fill-[#F2A900] text-[#F2A900]" : "text-input"}`} />
               </button>
             ))}
           </div>
@@ -80,7 +80,7 @@ export default function Orcamento() {
         <h2 className="px-4 pt-4 text-[15px] font-semibold">Conversa</h2>
         <div className="p-4 space-y-2 max-h-[50vh] overflow-y-auto">
           {msgs.map((m) => (
-            <div key={m.id} className={`text-[15px] ${m.author_kind === "system" ? "text-center text-[13px] text-muted-foreground" : m.author_kind === "customer" ? "ml-auto bg-[#E3EFE6]" : "bg-secondary"} ${m.author_kind !== "system" ? "max-w-[85%] w-fit rounded-2xl px-3 py-2" : ""}`}>
+            <div key={m.id} className={`text-[15px] ${m.author_kind === "system" ? "text-center text-[13px] text-muted-foreground" : m.author_kind === "customer" ? "ml-auto bg-[#E3F6EA]" : "bg-secondary"} ${m.author_kind !== "system" ? "max-w-[85%] w-fit rounded-2xl px-3 py-2" : ""}`}>
               <p className="whitespace-pre-wrap break-words">{m.body}</p>
               {m.author_kind !== "system" && <p className="text-[11px] text-muted-foreground mt-0.5">{when(m.created_at)}</p>}
             </div>

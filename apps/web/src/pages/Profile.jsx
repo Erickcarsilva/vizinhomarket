@@ -68,7 +68,7 @@ export default function Profile() {
 
       <section className="bg-card border border-border rounded-lg p-4 sm:p-5 space-y-4">
         <h2 className="font-display text-xl text-marca">Endereços de entrega</h2>
-        <div className="divide-y divide-[#EDE6D8]">
+        <div className="divide-y divide-[#E8ECE9]">
           {loadingAddr && <p className="text-sm text-muted-foreground py-2">Carregando…</p>}
           {!loadingAddr && addresses.length === 0 && <p className="text-sm text-muted-foreground py-2">Nenhum endereço salvo. Os endereços usados nos pedidos aparecem aqui.</p>}
           {addresses.map((a) => (
@@ -94,14 +94,14 @@ export default function Profile() {
         {orders.length === 0 ? (
           <p className="text-sm text-muted-foreground">Você ainda não fez pedidos.</p>
         ) : (
-          <div className="divide-y divide-[#EDE6D8]">
+          <div className="divide-y divide-[#E8ECE9]">
             {orders.map((o) => (
               <Link key={o.id} to={`/pedido/${o.id}`} className="flex items-center justify-between gap-3 py-3 min-w-0">
                 <div className="min-w-0">
                   <p className="font-semibold truncate">{o.store_name}</p>
                   <p className="text-[13px] text-muted-foreground">{new Date(o.created_date).toLocaleDateString("pt-BR")} · {brl(o.total)}</p>
                 </div>
-                <span className={`text-[13px] font-semibold shrink-0 ${o.status === "CANCELLED" ? "text-[#7A3A1F]" : o.status === "DELIVERED" ? "text-muted-foreground" : "text-marca"}`}>{STATUS[o.status].label}</span>
+                <span className={`text-[13px] font-semibold shrink-0 ${o.status === "CANCELLED" ? "text-[#C2331A]" : o.status === "DELIVERED" ? "text-muted-foreground" : "text-marca"}`}>{STATUS[o.status].label}</span>
               </Link>
             ))}
           </div>

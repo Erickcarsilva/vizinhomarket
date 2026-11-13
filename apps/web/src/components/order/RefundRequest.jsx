@@ -33,7 +33,7 @@ export default function RefundRequest({ order, windowDays = 7 }) {
           {r.decision_note && <p className="text-muted-foreground">Resposta: {r.decision_note}</p>}
         </div>
       ))}
-      {state.done && <p className="text-sm text-[#1F6B47]">Pedido de reembolso enviado. Você acompanha a resposta aqui e em Ajuda.</p>}
+      {state.done && <p className="text-sm text-[#077243]">Pedido de reembolso enviado. Você acompanha a resposta aqui e em Ajuda.</p>}
       {within && !open && refunds.every((r) => ["rejected", "failed"].includes(r.status)) && (
         <button type="button" onClick={() => setOpen(true)} className="text-sm font-semibold text-marca underline underline-offset-2">Teve problema com este pedido?</button>
       )}

@@ -26,7 +26,7 @@ export default function ProductRow({ product, disabled, onAdd, inCart }) {
   );
   const from = hasOptions(product) && (product.variants || []).some((v) => v.available);
   return (
-    <div data-produto={product.name} className="flex gap-4 py-4 border-b border-[#EDE6D8] last:border-0">
+    <div data-produto={product.name} className="flex gap-4 py-4 border-b border-[#E8ECE9] last:border-0">
       <div className="flex-1 min-w-0">
         <h3 className="text-base font-semibold leading-snug break-words">{product.name}</h3>
         {product.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{product.description}</p>}
@@ -35,7 +35,7 @@ export default function ProductRow({ product, disabled, onAdd, inCart }) {
       {product.image_url ? (
         <div className="relative shrink-0 self-start">
           {favBtn("absolute -top-2 -left-2 z-10 w-8 h-8 shadow-sm")}
-          <Image src={product.image_url} alt="" className="w-24 h-24 rounded-lg object-cover bg-[#E5DDCE]" />
+          <Image src={product.image_url} alt="" className="w-24 h-24 rounded-lg object-cover bg-[#EAF6EF]" />
           <div className="absolute -bottom-2 -right-2"><AddButton onAdd={onAdd} disabled={disabled} inCart={inCart} name={product.name} /></div>
         </div>
       ) : (

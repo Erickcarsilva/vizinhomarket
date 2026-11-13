@@ -34,7 +34,7 @@ export default function IndiqueLoja() {
   if (done) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="w-16 h-16 rounded-full bg-[#E5DDCE] text-marca flex items-center justify-center mx-auto"><Check className="w-7 h-7" aria-hidden="true" /></div>
+        <div className="w-16 h-16 rounded-full bg-[#EAF6EF] text-marca flex items-center justify-center mx-auto"><Check className="w-7 h-7" aria-hidden="true" /></div>
         <h1 className="font-display text-2xl text-marca mt-5">Obrigado pela indicação!</h1>
         <p className="text-muted-foreground mt-4">Vamos entrar em contato com a loja para convidá-la a fazer parte do VizinhoMarket.</p>
         <Link to="/" className="btn-contorno mt-6">Voltar para as lojas</Link>

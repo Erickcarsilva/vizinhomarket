@@ -63,7 +63,7 @@ export default function OrderTracking() {
         <div>
           <Link to="/meus-pedidos" className="inline-flex items-center gap-1 text-sm font-semibold text-marca"><ChevronLeft className="w-4 h-4" aria-hidden="true" />Meus pedidos</Link>
           <p className="text-[13px] text-muted-foreground mt-3">Pedido {order.code} · <Link to={`/loja/${order.store_id}`} className="underline underline-offset-2 hover:text-foreground">{order.store_name}</Link></p>
-          <h1 className={`font-display text-[28px] leading-tight mt-1 ${cancelled ? "text-[#7A3A1F]" : "text-marca"}`} aria-live="polite">
+          <h1 className={`font-display text-[28px] leading-tight mt-1 ${cancelled ? "text-[#C2331A]" : "text-marca"}`} aria-live="polite">
             {cancelled ? "Pedido cancelado" : statusLabel(order.status, order.fulfillment)}
           </h1>
           {cancelled ? (
@@ -77,7 +77,7 @@ export default function OrderTracking() {
           <OnlinePayment order={order} onRefresh={refetch} autoStart={search.get("pagar") === "1"} />
         )}
         {order.payment_mode === "online" && order.payment_status === "paid" && open && (
-          <p className="text-sm rounded-lg bg-[#E3EFE6] text-[#1F4D3A] px-3 py-2 font-semibold">Pagamento confirmado pelo banco.</p>
+          <p className="text-sm rounded-lg bg-[#E3F6EA] text-[#077243] px-3 py-2 font-semibold">Pagamento confirmado pelo banco.</p>
         )}
 
         <DriverInfo order={order} />
@@ -138,7 +138,7 @@ export default function OrderTracking() {
         ))}
         <div className="border-t border-border pt-3 space-y-1.5">
           <div className="flex justify-between text-muted-foreground"><span>Entrega</span><span>{order.delivery_fee ? brl(order.delivery_fee) : "Grátis"}</span></div>
-          {order.discount > 0 && <div className="flex justify-between text-[#1F6B47]"><span>Desconto</span><span>− {brl(order.discount)}</span></div>}
+          {order.discount > 0 && <div className="flex justify-between text-[#077243]"><span>Desconto</span><span>− {brl(order.discount)}</span></div>}
           <div className="flex justify-between font-bold text-base"><span>Total</span><span>{brl(order.total)}</span></div>
         </div>
         <div className="border-t border-border pt-3 space-y-1 text-muted-foreground">

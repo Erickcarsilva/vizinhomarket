@@ -7,7 +7,7 @@ import { brl } from "@/lib/constants";
 export default function CartItems() {
   const { cart, setQty } = useCart();
   return (
-    <ul className="divide-y divide-[#EDE6D8]">
+    <ul className="divide-y divide-[#E8ECE9]">
       {cart.items.map((i) => {
         const nome = `${i.name}${i.variant_name ? ` (${i.variant_name})` : ""}`;
         return (

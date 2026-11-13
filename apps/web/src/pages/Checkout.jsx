@@ -47,7 +47,7 @@ export default function Checkout() {
   if (!cart.items.length) {
     return (
       <div className="max-w-md mx-auto px-4 py-24 text-center">
-        <span className="mx-auto w-16 h-16 rounded-full bg-[#E5DDCE] text-marca flex items-center justify-center"><ShoppingBag className="w-7 h-7" aria-hidden="true" /></span>
+        <span className="mx-auto w-16 h-16 rounded-full bg-[#EAF6EF] text-marca flex items-center justify-center"><ShoppingBag className="w-7 h-7" aria-hidden="true" /></span>
         <h1 className="font-display text-2xl text-marca mt-5">Sua sacola está vazia</h1>
         <p className="text-muted-foreground mt-2">Escolha uma loja e adicione o que quiser pedir.</p>
         <Link to="/" className="btn-acao mt-6">Ver as lojas</Link>
@@ -190,7 +190,7 @@ export default function Checkout() {
               <p className="text-[15px] font-semibold pt-1">Forma de pagamento</p>
               <ChoiceGroup label="Forma de pagamento pelo app" options={Object.entries(PAYMENT_ONLINE)} value={form.online_method} onChange={set("online_method")} />
               <p className="text-[13px] text-muted-foreground">O pagamento é confirmado pelo banco. A loja só começa a preparar depois da confirmação. Se o pedido for cancelado, o valor volta automaticamente.</p>
-              {config?.payment_sandbox && <p className="text-[13px] font-semibold text-[#7A3A1F]">Ambiente de teste: nenhum valor real é cobrado.</p>}
+              {config?.payment_sandbox && <p className="text-[13px] font-semibold text-[#C2331A]">Ambiente de teste: nenhum valor real é cobrado.</p>}
               {needsCpf && (
                 <label className="block text-sm">CPF de quem paga (exigido pelo banco para o pagamento online)
                   <Input value={cpf} onChange={(e) => setCpf(e.target.value.replace(/[^\d.-]/g, "").slice(0, 14))} inputMode="numeric" placeholder="000.000.000-00" className={`${campo} mt-1 max-w-xs`} />
@@ -213,7 +213,7 @@ export default function Checkout() {
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>{brl(subtotal)}</span></div>
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Entrega</span><span>{byZone && !zone ? "escolha o bairro" : fee ? brl(fee) : "Grátis"}</span></div>
         {coupon && (
-          <div className="flex justify-between text-sm text-[#1F6B47]"><span className="flex items-center gap-1"><Tag className="w-3.5 h-3.5" aria-hidden="true" />Cupom {coupon.code}</span><span>− {brl(discount)}</span></div>
+          <div className="flex justify-between text-sm text-[#077243]"><span className="flex items-center gap-1"><Tag className="w-3.5 h-3.5" aria-hidden="true" />Cupom {coupon.code}</span><span>− {brl(discount)}</span></div>
         )}
         <div className="flex justify-between pt-3 border-t border-border"><span className="font-semibold">Total</span><span className="text-[22px] font-bold">{brl(total)}</span></div>
         {coupon ? (
@@ -229,15 +229,15 @@ export default function Checkout() {
             {couponState.error && <p role="alert" className="text-[13px] text-destructive">{couponState.error}</p>}
           </div>
         )}
-        {belowMin && <p className="text-sm font-semibold text-[#7A3A1F]">Pedido mínimo desta loja: {brl(cart.store.min_order)}. Faltam {brl((cart.store.min_order || 0) - subtotal)}.</p>}
+        {belowMin && <p className="text-sm font-semibold text-[#C2331A]">Pedido mínimo desta loja: {brl(cart.store.min_order)}. Faltam {brl((cart.store.min_order || 0) - subtotal)}.</p>}
         {age.needed && (
-          <div data-idade className="rounded-lg border border-[#E2C9B8] bg-[#F6E9E0] text-[#4A2A1A] p-4 space-y-3 text-sm">
+          <div data-idade className="rounded-lg border border-[#F5DFA0] bg-[#FFF6DB] text-[#5C4300] p-4 space-y-3 text-sm">
             <p className="font-semibold">Este pedido tem item para maiores de 18 anos</p>
             <label className="block">Sua data de nascimento
               <Input type="date" value={age.birth} onChange={(e) => setAge((a) => ({ ...a, birth: e.target.value }))} className="h-11 mt-1 bg-white rounded-lg" />
             </label>
             <label className="flex gap-2 items-start">
-              <input type="checkbox" checked={age.declared} onChange={(e) => setAge((a) => ({ ...a, declared: e.target.checked }))} className="mt-1 w-4 h-4 accent-[#214E3D]" />
+              <input type="checkbox" checked={age.declared} onChange={(e) => setAge((a) => ({ ...a, declared: e.target.checked }))} className="mt-1 w-4 h-4 accent-[#077243]" />
               <span>Declaro que tenho 18 anos ou mais e vou mostrar um documento com foto ao receber o pedido.</span>
             </label>
             <button type="button" disabled={!age.birth || !age.declared || age.busy || sending} onClick={confirmAge}

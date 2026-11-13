@@ -12,7 +12,7 @@ window.addEventListener('unhandledrejection', (e) => reportError(e.reason))
 // App do Cliente tem tema próprio (classe tema-cliente em index.css); os painéis não.
 if (!['admin', 'parceiro', 'entregador'].includes(import.meta.env.VITE_APP)) {
   document.documentElement.classList.add('tema-cliente')
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#F7F3EA')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#FFFFFF')
 }
 
 // Cada site gera só o seu produto (VITE_APP vem do modo: cliente, parceiro, admin ou entregador).

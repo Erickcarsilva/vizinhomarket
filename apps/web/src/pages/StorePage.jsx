@@ -60,7 +60,7 @@ export default function StorePage() {
           <nav aria-label="Seções do cardápio" className="max-w-4xl mx-auto flex gap-6 overflow-x-auto no-scrollbar px-4 sm:px-6">
             {names.map((n, i) => (
               <a key={n} href={`#secao-${i}`} onClick={(e) => { e.preventDefault(); document.getElementById(`secao-${i}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
-                className="shrink-0 h-11 flex items-center text-[15px] font-medium text-[#4A4840] hover:text-marca whitespace-nowrap">{n}</a>
+                className="shrink-0 h-11 flex items-center text-[15px] font-medium text-[#3E4743] hover:text-marca whitespace-nowrap">{n}</a>
             ))}
           </nav>
         </div>

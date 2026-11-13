@@ -107,6 +107,17 @@ export default function Home() {
       <CategoryTabs value={category} onChange={setCategory} available={present} />
       {cities.length > 1 && <div className="pt-3"><CityPills value={city} onChange={setCity} cities={cities} /></div>}
 
+      {!q && !category && (
+        <div className="px-4 sm:px-6 pt-4">
+          <div className="relative overflow-hidden rounded-2xl bg-marca text-white px-5 py-5">
+            <p className="text-[13px] font-bold uppercase tracking-wide text-accent">Sidrolândia no seu celular</p>
+            <p className="text-[22px] leading-tight font-extrabold mt-1 max-w-[16rem]">Lanche, mercado e o que precisar, das lojas do bairro.</p>
+            <span aria-hidden="true" className="absolute -right-6 -bottom-8 w-32 h-32 rounded-full bg-accent/90" />
+            <span aria-hidden="true" className="absolute right-12 -top-6 w-16 h-16 rounded-full bg-white/10" />
+          </div>
+        </div>
+      )}
+
       {!q && !category && <OrderAgain />}
 
       {!q && featured.length > 0 && (

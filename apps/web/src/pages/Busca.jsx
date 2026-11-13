@@ -15,8 +15,8 @@ function Title({ children }) {
 // Produto encontrado: linha com foto, nome, loja e preço.
 function ProductRow({ p, store }) {
   return (
-    <Link to={`/loja/${p.store_id}`} className="flex items-center gap-3.5 py-3 min-w-0 border-b border-[#EDE6D8] last:border-0 hover:bg-secondary/50 transition-colors">
-      <span className="w-[60px] h-[60px] shrink-0 rounded-[14px] overflow-hidden bg-[#E5DDCE] flex items-center justify-center">
+    <Link to={`/loja/${p.store_id}`} className="flex items-center gap-3.5 py-3 min-w-0 border-b border-[#E8ECE9] last:border-0 hover:bg-secondary/50 transition-colors">
+      <span className="w-[60px] h-[60px] shrink-0 rounded-[14px] overflow-hidden bg-[#EAF6EF] flex items-center justify-center">
         {p.image_url ? <Image src={p.image_url} alt="" className="w-full h-full object-cover" />
           : <span aria-hidden="true" className="font-display font-semibold text-[23px] text-marca">{(p.name || "?")[0]}</span>}
       </span>

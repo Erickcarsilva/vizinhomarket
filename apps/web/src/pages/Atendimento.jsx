@@ -28,7 +28,7 @@ export default function Atendimento() {
       </div>
       <div className="space-y-2">
         {t.messages.map((m) => (
-          <div key={m.id} className={`rounded-lg p-3 text-[15px] ${m.author_kind === "admin" ? "bg-[#E3EFE6]" : "bg-card border border-border"}`}>
+          <div key={m.id} className={`rounded-lg p-3 text-[15px] ${m.author_kind === "admin" ? "bg-[#E3F6EA]" : "bg-card border border-border"}`}>
             <p className="text-[12px] font-semibold text-muted-foreground">{WHO[m.author_kind]} · {new Date(m.created_at).toLocaleString("pt-BR")}</p>
             <p className="whitespace-pre-wrap break-words mt-1">{m.body}</p>
           </div>

@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Textarea } from "@/components/ui/textarea";
 
 const NOMES = ["", "Ruim", "Fraco", "Bom", "Muito bom", "Excelente"];
-const estrela = (on, cls) => <Star className={`${cls} ${on ? "fill-[#B7791F] text-[#B7791F]" : "text-[#C9BFAE]"}`} aria-hidden="true" />;
+const estrela = (on, cls) => <Star className={`${cls} ${on ? "fill-[#F2A900] text-[#F2A900]" : "text-[#C9D1CC]"}`} aria-hidden="true" />;
 
 export default function RateOrder({ order, onSaved }) {
   const [rating, setRating] = useState(0);

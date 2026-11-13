@@ -32,19 +32,19 @@ export default function Favoritos() {
         <p className="text-[13px] text-muted-foreground">Carregando favoritos…</p>
       ) : products.length === 0 ? (
         <div className="text-center py-16">
-          <span className="mx-auto w-16 h-16 rounded-full bg-[#E5DDCE] text-marca flex items-center justify-center"><Heart className="w-7 h-7" aria-hidden="true" /></span>
+          <span className="mx-auto w-16 h-16 rounded-full bg-[#EAF6EF] text-marca flex items-center justify-center"><Heart className="w-7 h-7" aria-hidden="true" /></span>
           <p className="font-semibold mt-4">Você ainda não favoritou produtos.</p>
           <p className="text-sm text-muted-foreground mt-1">Toque no coração de um produto para guardar aqui.</p>
           <Link to="/" className="btn-acao mt-6">Ver as lojas</Link>
         </div>
       ) : (
-        <div className="divide-y divide-[#EDE6D8]">
+        <div className="divide-y divide-[#E8ECE9]">
           {products.map((p) => (
             <div key={p.id} className="flex items-center gap-3 py-3 min-w-0">
               {p.image_url ? (
-                <Image src={p.image_url} alt="" className="w-[60px] h-[60px] shrink-0 rounded-[14px] object-cover bg-[#E5DDCE]" />
+                <Image src={p.image_url} alt="" className="w-[60px] h-[60px] shrink-0 rounded-[14px] object-cover bg-[#EAF6EF]" />
               ) : (
-                <div aria-hidden="true" className="w-[60px] h-[60px] shrink-0 rounded-[14px] bg-[#E5DDCE] flex items-center justify-center font-display text-2xl text-marca">{(p.name || "?")[0]}</div>
+                <div aria-hidden="true" className="w-[60px] h-[60px] shrink-0 rounded-[14px] bg-[#EAF6EF] flex items-center justify-center font-display text-2xl text-marca">{(p.name || "?")[0]}</div>
               )}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{p.name}</p>

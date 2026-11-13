@@ -21,14 +21,19 @@ export const monogram = (name = "") => {
   return ((words[0]?.[0] || "?") + (words[1]?.[0] || "")).toUpperCase();
 };
 
+// Cor do monograma: fixa por loja (pelo nome), da paleta das categorias. Sem logo, a loja ainda fica viva na lista.
+const PALETA = [["#FFE8DF", "#C2380F"], ["#E3F6EA", "#077043"], ["#FFF1D6", "#8F5200"], ["#E5EEFF", "#2457C5"], ["#FCE7F3", "#A1215F"], ["#EAE8FF", "#4B33BE"], ["#E6F7F5", "#0F766E"]];
+const corDe = (name = "") => PALETA[[...name].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7) % PALETA.length];
+
 export function StoreLogo({ store, size = 60, className = "", muted = false }) {
-  const style = { width: size, height: size };
+  const [bg, fg] = muted ? ["#EEF1EF", "#5C6661"] : corDe(store.name);
+  const style = { width: size, height: size, background: store.logo_url ? undefined : bg };
   return (
-    <span style={style} className={`shrink-0 overflow-hidden rounded-[14px] bg-[#E5DDCE] flex items-center justify-center ${className}`}>
+    <span style={style} className={`shrink-0 overflow-hidden rounded-[16px] bg-[#F0F4F1] flex items-center justify-center ${className}`}>
       {store.logo_url ? (
         <Image src={store.logo_url} alt="" className={`w-full h-full object-cover ${muted ? "grayscale" : ""}`} fittingType="fit" />
       ) : (
-        <span aria-hidden="true" className={`font-display font-semibold ${muted ? "text-[#57534A]" : "text-marca"}`} style={{ fontSize: Math.round(size * 0.38) }}>{monogram(store.name)}</span>
+        <span aria-hidden="true" className="font-display" style={{ fontSize: Math.round(size * 0.36), color: fg }}>{monogram(store.name)}</span>
       )}
     </span>
   );
@@ -41,7 +46,7 @@ export default function StoreCard({ store }) {
   const opens = !open && !store.is_paused ? nextOpening(store.hours, store.city_timezone) : null;
   return (
     <Link to={`/loja/${store.id}`} data-loja={store.name}
-      className="flex items-center gap-3.5 py-3 min-w-0 border-b border-[#EDE6D8] last:border-0 hover:bg-secondary/50 transition-colors">
+      className="flex items-center gap-3.5 py-3 min-w-0 border-b border-[#E8ECE9] last:border-0 hover:bg-secondary/50 transition-colors">
       <StoreLogo store={store} muted={!open} />
       <span className="flex-1 min-w-0 flex flex-col gap-1">
         <span className={`text-base font-semibold leading-tight truncate ${open ? "" : "text-muted-foreground"}`}>{store.name}</span>
@@ -51,7 +56,7 @@ export default function StoreCard({ store }) {
         {open && (
           <span className="flex items-center gap-1.5 text-[13px] text-muted-foreground whitespace-nowrap overflow-hidden">
             {store.rating ? (
-              <><Star className="w-3.5 h-3.5 fill-[#B7791F] text-[#B7791F] shrink-0" aria-hidden="true" /><span className="font-semibold text-foreground">{store.rating.toFixed(1).replace(".", ",")}</span></>
+              <><Star className="w-3.5 h-3.5 fill-[#F2A900] text-[#F2A900] shrink-0" aria-hidden="true" /><span className="font-semibold text-foreground">{store.rating.toFixed(1).replace(".", ",")}</span></>
             ) : (
               <span className="font-semibold text-marca">Nova</span>
             )}

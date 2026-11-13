@@ -24,8 +24,8 @@ export default function Categorias() {
           const n = count(c.id);
           return (
             <Link key={c.id} to={`/vitrine?categoria=${c.id}`}
-              className="flex items-center gap-3.5 py-3 min-w-0 border-b border-[#EDE6D8] hover:bg-secondary/50 transition-colors">
-              <span className="w-12 h-12 shrink-0 rounded-[12px] bg-[#E5DDCE] text-marca flex items-center justify-center"><Icon className="w-6 h-6" aria-hidden="true" /></span>
+              className="flex items-center gap-3.5 py-3 min-w-0 border-b border-[#E8ECE9] hover:bg-secondary/50 transition-colors">
+              <span className="w-12 h-12 shrink-0 rounded-[12px] bg-[#EAF6EF] text-marca flex items-center justify-center"><Icon className="w-6 h-6" aria-hidden="true" /></span>
               <span className="flex-1 min-w-0">
                 <span className="block text-base font-semibold truncate">{c.label}</span>
                 <span className="block text-[13px] text-muted-foreground">{isLoading ? "Carregando…" : n === 0 ? "Nenhuma loja ainda" : `${n} ${n === 1 ? "loja" : "lojas"}`}</span>
