@@ -71,4 +71,4 @@ Execução final do CI depois das correções: ver a seção 6.
 - Restauração de backup no Supabase real (ensaio local 9/9 em 21/10).
 
 ## 8. Execução depois da correção dos favoritos
-(registrada no fim do trabalho)
+**Execução 26 do CI** (commit `4540c9a`): **verde** nos dois trabalhos (banco/build e ponta a ponta com todas as suítes).
