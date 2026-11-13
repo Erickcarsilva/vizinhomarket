@@ -9,7 +9,6 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
-import Brand from "@/components/layout/Brand";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { APP_VERSION } from "@/lib/version";
@@ -461,7 +460,7 @@ function CourierLayout() {
   return (
     <div className="min-h-screen pb-20">
       <header className="sticky top-0 z-40 bg-[#14231C] text-white h-14 px-4 flex items-center justify-between">
-        <Brand size="sm" className="!text-white" />
+        <span className="font-display text-lg tracking-tight text-white">Vizinho<span className="text-[#F2B79B]">Market</span></span>
         <span className="text-[11px] uppercase tracking-[0.2em] text-white">Entregador</span>
       </header>
       <main><Outlet context={{ loc }} /></main>

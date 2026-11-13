@@ -68,7 +68,7 @@ const noSideScroll = (page) => page.evaluate(() => document.documentElement.scro
 async function axe(page) {
   await page.addScriptTag({ content: AXE });
   const r = await page.evaluate(async () => (await window.axe.run(document, { resultTypes: ['violations'] })).violations
-    .filter((v) => ['serious', 'critical'].includes(v.impact)).map((v) => `${v.id} (${v.nodes.length})`));
+    .filter((v) => ['serious', 'critical'].includes(v.impact)).map((v) => `${v.id} (${v.nodes.length}): ${v.nodes.slice(0, 2).map((n) => `${n.target.join(' ')} ${(n.any[0]?.message || '').slice(0, 90)}`).join(' | ')}`));
   return r;
 }
 
