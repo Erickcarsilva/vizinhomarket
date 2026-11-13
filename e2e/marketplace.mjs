@@ -31,9 +31,11 @@ async function asUser(userId, sql, params = []) {
 
 const browser = await chromium.launch(launchOptions);
 const errors = [];
+const opened = [];
 async function person(name, opts = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'pt-BR', timezoneId: 'America/Campo_Grande', ...opts });
   const page = await ctx.newPage();
+  opened.push([name, page]);
   page.on('pageerror', (e) => errors.push(`${name}: ${e.message}`));
   return page;
 }
@@ -249,6 +251,12 @@ try {
   }
 } catch (e) {
   check('Execução sem erro inesperado', false, e.message.split('\n')[0]);
+  // Diagnóstico: onde cada pessoa estava quando parou (aparece no log do CI).
+  for (const [n, p] of opened) {
+    const txt = await p.evaluate(() => document.body.innerText.slice(0, 200).replace(/\s+/g, ' ')).catch(() => '');
+    console.log(`FALHOU  (diagnóstico) ${n} em ${p.url()} → ${txt}`);
+    await shot(p, `m99-falha-${n}`).catch(() => {});
+  }
 }
 
 check('Nenhum erro de JavaScript nas telas', errors.length === 0, errors.slice(0, 3).join(' | '));
