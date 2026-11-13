@@ -67,8 +67,22 @@ Execução final do CI depois das correções: ver a seção 6.
 - Aplicação do `09` no Supabase real; pg_cron, pg_net, realtime e storage reais.
 - Pagamentos com gateway real (sandbox do provedor) — sem credenciais.
 - E-mail real de cadastro/recuperação; Web Push em aparelhos reais; instalação do PWA em Android/iOS físicos.
-- Teste de carga com tráfego HTTP real (os testes de concorrência cobrem as disputas por dados; volume de 1.350 pedidos coberto em `telas`/`run.mjs`).
 - Restauração de backup no Supabase real (ensaio local 9/9 em 21/10).
 
 ## 8. Execução depois da correção dos favoritos
 **Execução 26 do CI** (commit `4540c9a`): **verde** nos dois trabalhos (banco/build e ponta a ponta com todas as suítes).
+
+## 9. Rodada final (execução 31 do CI, commit `73e519d`) — verde
+| Suíte | Resultado |
+|---|---|
+| Banco (7 suítes: + `equipe.mjs` — cidades, equipe por área, CPF, avisos) | 206 + 81 + 24 + 40 + 45 + 30 = **426/426** |
+| `pedido-completo`, `bloco1`, `admin`, `telas`, `push` | 23/23, 22/22, 30/30, 43/43, 10/10 |
+| `marketplace` (agora com reembolso, atendimento, planilha CSV, equipe por área e cidades pelas telas) | **53/53** |
+| `concorrencia` | 11/11 |
+| `carga` (25 usuários × 30 s pela API real de teste) | **4/4** — 24.108 requisições (804/s), 4.068 pedidos; p95: leitura 58 ms, simulação 79 ms, pedido 78 ms; 0 erros; estoque nunca vendido além do disponível |
+| Travas do zerar | 4/4 |
+
+Revisão visual: 14 telas do marketplace revisadas (miniaturas geradas no CI). Ajustes feitos: banner de alerta de pedido escondido para
+prestadores de serviço, descrição do orçamento sem duplicar, rótulo "Forma de pagamento" na finalização, versão do app atualizada.
+A carga roda num servidor do GitHub (2 vCPUs), não no Supabase: serve como referência de capacidade das regras, não do plano contratado.
+
