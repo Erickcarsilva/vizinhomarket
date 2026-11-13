@@ -1,0 +1,17 @@
+import { chromium } from 'playwright';
+import { launchOptions } from './config.mjs';
+const url = process.argv[2] || 'http://localhost:4473';
+const b = await chromium.launch(launchOptions); const ctx = await b.newContext(); const p = await ctx.newPage();
+const res = []; const check = (n, ok, d = '') => { res.push(ok); console.log(`${ok ? 'PASSOU' : 'FALHOU'}  ${n}${d ? '  →  ' + d : ''}`); };
+await p.goto(url); await p.waitForTimeout(2500);
+const man = await p.evaluate(async () => { const h = document.querySelector('link[rel=manifest]').href; return (await fetch(h)).json(); });
+check('Manifest com ícones PNG 192/512 e maskable', ['192x192', '512x512'].every((s) => man.icons.some((i) => i.sizes === s)) && man.icons.some((i) => i.purpose === 'maskable'), man.name);
+await p.reload(); await p.waitForTimeout(1500);
+check('Service worker ativo controlando a página', await p.evaluate(() => !!navigator.serviceWorker.controller));
+await ctx.setOffline(true);
+await p.reload().catch(() => {}); await p.waitForTimeout(1500);
+check('Sem internet a tela abre (do cache) e mostra o aviso', await p.evaluate(() => document.body.innerText.length > 0) && (await p.locator('#aviso-offline').count() + await p.getByText(/sem internet/i).count()) > 0);
+const posted = await p.evaluate(async () => { try { await fetch('/rest/v1/x', { method: 'POST' }); return 'respondeu'; } catch { return 'falhou'; } });
+check('Envio (POST) sem internet não é atendido pelo cache', posted === 'falhou');
+await b.close();
+console.log(`\n${res.filter(Boolean).length}/${res.length} verificações passaram`); process.exit(res.every(Boolean) ? 0 : 1);
