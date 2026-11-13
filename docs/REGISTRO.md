@@ -285,3 +285,35 @@ Problemas apontados pelo Erick e reproduzidos no banco de teste antes de corrigi
 
 ## Próxima tarefa recomendada
 Erick revisa o relatório de 21/10 e autoriza juntar o ramo `correcoes-pre-piloto` ao principal. Depois: GitHub privado, atualização 04 no Supabase de teste, Netlify com os 3 sites e validação real (calendário no relatório).
+
+## Marketplace completo (13/11/2026) — ramo `claude/vizinhomarket-marketplace-yp4r1m`
+
+### Decisões técnicas
+- Backend continua em PostgreSQL (Supabase) com regras em funções transacionais; integrações em Edge Functions TypeScript.
+  Justificativa em `docs/ARQUITETURA.md` (a especificação sugeria Node; a troca não traria ganho de segurança e custaria o que já estava testado).
+- Pagamento separado do pedido; razão contábil imutável de partidas que somam zero; gateway trocável por configuração.
+- Pagamento online e entrega pela plataforma ficam **desligados** até o admin ligar (sem efeito para quem já usa).
+- Entregador: localização só online e só guardada durante a entrega; aceite em duas etapas (aceitar → retirar).
+- Serviços como fluxo próprio (orçamento), sem carrinho nem entrega.
+
+### Feito (migrações `202611130001..7`, deploy `09_atualizacao_marketplace.sql`)
+- Financeiro: pagamentos, webhooks idempotentes, razão, cupons, estornos automáticos e pedidos de reembolso, repasses, ajustes,
+  conciliação com extrato do gateway, suporte/disputas, faturas só de pedidos offline + serviços.
+- Gateway: adaptadores sandbox, Mercado Pago e Asaas (split por walletId); Edge Functions `pagamentos`, `pagamentos-webhook`, `pagamentos-estornos`.
+- Logística: online/offline, ofertas com distância real (linha reta, só com coordenadas), recusa, aceite atômico, retirada, problema,
+  reatribuição pelo admin, monitor, entregadores próprios da loja, ganhos, retenção de posições.
+- Serviços, 9 categorias novas, atributos por categoria validados no servidor, LGPD (exportação, consentimentos, exclusão ampliada).
+- 4º produto: App do Entregador (PWA). Cliente: cupom, Pix/cartão pelo app, entregador no acompanhamento, reembolso, orçamentos, atendimento,
+  baixar meus dados. Lojista: pagamento/entregador no pedido, "recebi o pagamento", saldo, promoções, orçamentos, serviços, atributos.
+  Admin: pagamentos e conciliação, saldos e repasses, reembolsos, atendimento, cupons, entregas, categorias, chaves de operação.
+- PWA: ícones PNG, service worker (sem cache de API), tela offline, aviso de versão nova e de conexão.
+
+### Bugs encontrados pelos testes e corrigidos
+- Permissão com comparação a NULL (`open_ticket`, `rate_order` em pedido anonimizado).
+- Gatilho `SECURITY DEFINER` com `current_user` (nunca bloqueava).
+- `CASE ... THEN` dentro de `IF` no PL/pgSQL (erro de sintaxe em produção).
+- `.gitignore` do `apps/web` deixava `.env.entregador` fora do repositório (o build do entregador virava o app do cliente).
+- Service worker recarregava a página na primeira visita; GPS do entregador parava ao abrir a corrida e não reenviava parado.
+
+### Resultados
+Ver `docs/RELATORIO_TESTES.md`. Situação e pendências: `docs/STATUS_PILOTO.md`.
