@@ -89,6 +89,9 @@ jobs:
           for p in 4173 4174 4175 4176; do for i in $(seq 1 30); do curl -sf localhost:$p >/dev/null && break; sleep 1; done; done
       - name: Testes ponta a ponta
         run: bash e2e/rodar-todos.sh e2e/prints
+      - name: Miniaturas das telas para revisão (ramos de trabalho)
+        if: always() && startsWith(github.ref_name, 'claude/')
+        run: bash e2e/miniaturas.sh e2e/prints
       - name: Guardar prints e registros
         if: always()
         uses: actions/upload-artifact@v6

@@ -241,6 +241,80 @@ try {
   await adm.waitForTimeout(1500);
   await shot(adm, 'm10-admin-conciliacao');
 
+  // ---------- Reembolso pelas telas: cliente pede → admin decide → gateway (sandbox) devolve
+  await cli.goto(`${CLI}/pedido/${o.id}`);
+  await cli.waitForTimeout(1500);
+  await cli.getByRole('button', { name: 'Teve problema com este pedido?' }).click();
+  await cli.locator('textarea').last().fill('O café veio com a embalagem rasgada.');
+  await cli.locator('input[inputmode=decimal]').last().fill('10');
+  await cli.getByRole('button', { name: 'Enviar' }).last().click();
+  await cli.waitForTimeout(1500);
+  check('Cliente pede reembolso pela tela do pedido', await cli.getByText(/Pedido de reembolso enviado/).isVisible().catch(() => false));
+  await shot(cli, 'm11-reembolso-pedido');
+  await adm.goto(`${ADM}/reembolsos`);
+  await adm.waitForTimeout(1500);
+  await adm.locator('input[placeholder="Justificativa (obrigatória)"]').first().fill('Loja confirmou a embalagem danificada');
+  await adm.getByRole('button', { name: 'Aprovar' }).first().click();
+  await adm.waitForTimeout(1500);
+  await shot(adm, 'm12-admin-reembolso');
+  const est = await (await fetch(`${API}/functions/v1/pagamentos-estornos`, { method: 'POST' })).json();
+  const ord = await one('select payment_status, refunded_amount from orders where id = $1', [o.id]);
+  check('Admin aprova e o estorno é executado no gateway (sandbox)', est.processed === 1 && ord.payment_status === 'partially_refunded' && Number(ord.refunded_amount) === 10, JSON.stringify({ est, ord }));
+  check('Razão continua fechando em zero depois do estorno', Number((await one('select coalesce(sum(amount),0) s from ledger_entries')).s) === 0);
+
+  // ---------- Atendimento pelas telas
+  await cli.goto(`${CLI}/suporte`);
+  await cli.waitForTimeout(1500);
+  await cli.fill('input[aria-label="Resumo"]', 'Horário de domingo');
+  await cli.fill('textarea[aria-label="Mensagem"]', 'Vocês entregam no domingo à noite?');
+  await cli.getByRole('button', { name: 'Enviar' }).click();
+  await cli.waitForTimeout(1500);
+  check('Cliente abre atendimento', await cli.getByText(/Recebemos sua mensagem/).isVisible().catch(() => false));
+  await adm.goto(`${ADM}/atendimento`);
+  await adm.waitForTimeout(1500);
+  await adm.getByText('Horário de domingo').first().click();
+  await adm.waitForTimeout(800);
+  await adm.locator('textarea[placeholder="Resposta para quem abriu"]').fill('Sim, até as 22h.');
+  await adm.getByRole('button', { name: 'Responder' }).click();
+  await adm.waitForTimeout(1500);
+  await cli.goto(`${CLI}/suporte`);
+  await cli.waitForTimeout(1200);
+  await cli.getByText('Horário de domingo').first().click();
+  await cli.waitForTimeout(1200);
+  check('Cliente vê a resposta da equipe', await cli.getByText('Sim, até as 22h.').isVisible().catch(() => false));
+  await shot(cli, 'm13-atendimento-resposta');
+
+  // ---------- Planilha (CSV) e equipe por área
+  await adm.goto(`${ADM}/pedidos`);
+  await adm.waitForTimeout(1500);
+  await adm.getByRole('button', { name: 'Todos' }).first().click().catch(() => {});
+  const [dl] = await Promise.all([adm.waitForEvent('download', { timeout: 15000 }), adm.getByRole('button', { name: /Baixar planilha/ }).click()]);
+  const csv = readFileSync(await dl.path(), 'utf8');
+  check('Admin baixa a planilha de pedidos com o pedido e os valores', csv.includes(o.code) && /Comissão/.test(csv), csv.split('\n')[0].slice(0, 80));
+  const ope = await person('operador', { viewport: { width: 1280, height: 900 } });
+  await register(ope, 'operador@vizinhomarket.test', CLI);
+  await adm.goto(`${ADM}/equipe`);
+  await adm.waitForTimeout(1200);
+  await adm.fill('input[aria-label="E-mail"]', 'operador@vizinhomarket.test');
+  await adm.selectOption('select[aria-label="Área"]', 'operacao');
+  await adm.getByRole('button', { name: 'Conceder' }).click();
+  await adm.waitForTimeout(1500);
+  await signIn(ope, ADM, 'operador@vizinhomarket.test');
+  await ope.goto(`${ADM}/`);
+  await ope.waitForTimeout(1800);
+  const navOpe = await ope.locator('nav').first().innerText().catch(() => '');
+  check('Equipe de operação entra direto em Entregas e só vê o que é dela', new URL(ope.url()).pathname === '/entregas' && /Entregas/.test(navOpe) && !/Pagamentos|Configurações|Usuários/.test(navOpe), `${ope.url()} · ${navOpe.replace(/\s+/g, ' ').slice(0, 100)}`);
+  await ope.goto(`${ADM}/financeiro`);
+  await ope.waitForTimeout(1200);
+  check('Operação não abre o financeiro nem pelo endereço', new URL(ope.url()).pathname !== '/financeiro');
+  await adm.goto(`${ADM}/cidades`);
+  await adm.waitForTimeout(1200);
+  await adm.fill('input[aria-label="Nome da cidade"]', 'Maracaju');
+  await adm.getByRole('button', { name: 'Cadastrar (inativa)' }).click();
+  await adm.waitForTimeout(1200);
+  check('Admin cadastra cidade nova pela tela', await adm.getByText('Maracaju / MS').isVisible().catch(() => false));
+  await shot(adm, 'm14-admin-cidades');
+
   // ---------- Acessibilidade e celular nas telas do cliente
   for (const path of ['/', `/loja/${storeId}`, `/pedido/${o.id}`, '/meus-pedidos', '/suporte']) {
     await cli.goto(`${CLI}${path}`);
