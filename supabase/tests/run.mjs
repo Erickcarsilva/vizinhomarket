@@ -446,7 +446,8 @@ await ok('Resumo do admin calcula no servidor', async () => {
 await ok('Admin gera faturas do período só com pedidos entregues', async () => {
   const n = (await q("select public.admin_generate_invoices('2000-01-01', (now() + interval '1 day')::date) n"))[0].n;
   const [inv] = await q('select orders_count, commission_total from public.invoices where store_id = $1', [storeA]);
-  const [real] = await q("select count(*) c, sum(commission_amount) s from public.orders where store_id = $1 and status = 'DELIVERED'", [storeA]);
+  // Offline: a loja recebeu tudo e deve comissão + taxa da entrega feita pela plataforma (− desconto bancado pela plataforma).
+  const [real] = await q("select count(*) c, sum(commission_amount + case when fulfillment = 'platform_delivery' then delivery_fee else 0 end - case when discount_funded_by = 'platform' then discount_amount else 0 end) s from public.orders where store_id = $1 and status = 'DELIVERED' and payment_mode = 'offline'", [storeA]);
   eq(inv.orders_count, real.c); eq(inv.commission_total, real.s); return n >= 1;
 });
 await ok('Gerar de novo não duplica a fatura', async () => {

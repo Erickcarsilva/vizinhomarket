@@ -6,7 +6,9 @@
     "doc": "docs"
   },
   "scripts": {
-    "test:db": "node supabase/tests/run.mjs"
+    "test:db": "node supabase/tests/run.mjs && node supabase/tests/financeiro.mjs",
+    "test:db:base": "node supabase/tests/run.mjs",
+    "test:db:financeiro": "node supabase/tests/financeiro.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.9"
