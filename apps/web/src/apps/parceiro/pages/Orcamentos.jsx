@@ -55,7 +55,7 @@ function RequestCard({ r, onChanged }) {
           )}
           {r.scheduled_at && <p className="text-sm font-semibold">Agendado: {when(r.scheduled_at)}</p>}
           <div className="rounded-xl border border-border p-3 space-y-2 max-h-64 overflow-y-auto">
-            {msgs.map((m) => <p key={m.id} className={`text-sm ${m.author_kind === "system" ? "text-xs text-muted-foreground" : ""}`}><strong>{m.author_kind === "customer" ? "Cliente" : m.author_kind === "provider" ? "Você" : ""}</strong>{m.author_kind !== "system" ? ": " : ""}{m.body}</p>)}
+            {msgs.filter((m, i) => !(i === 0 && m.author_kind === "customer" && m.body === r.description)).map((m) => <p key={m.id} className={`text-sm ${m.author_kind === "system" ? "text-xs text-muted-foreground" : ""}`}><strong>{m.author_kind === "customer" ? "Cliente" : m.author_kind === "provider" ? "Você" : ""}</strong>{m.author_kind !== "system" ? ": " : ""}{m.body}</p>)}
           </div>
           {!["CANCELLED", "DECLINED", "EXPIRED"].includes(r.status) && (
             <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); act("msg", async () => { await base44.services.send(r.id, msg); setMsg(""); }); }}>

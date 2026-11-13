@@ -187,6 +187,7 @@ export default function Checkout() {
           )}
           {online ? (
             <>
+              <p className="text-[15px] font-semibold pt-1">Forma de pagamento</p>
               <ChoiceGroup label="Forma de pagamento pelo app" options={Object.entries(PAYMENT_ONLINE)} value={form.online_method} onChange={set("online_method")} />
               <p className="text-[13px] text-muted-foreground">O pagamento é confirmado pelo banco. A loja só começa a preparar depois da confirmação. Se o pedido for cancelado, o valor volta automaticamente.</p>
               {config?.payment_sandbox && <p className="text-[13px] font-semibold text-[#7A3A1F]">Ambiente de teste: nenhum valor real é cobrado.</p>}
@@ -200,6 +201,7 @@ export default function Checkout() {
           ) : (
             <>
               {!onlineAvailable && <p className="text-[13px] text-muted-foreground -mt-1">Pagamento na {pickup ? "retirada" : "entrega"}{form.payment === "pix" ? ", por Pix direto para a loja" : ""}.</p>}
+              {onlineAvailable && <p className="text-[15px] font-semibold pt-1">Forma de pagamento</p>}
               <ChoiceGroup label="Forma de pagamento" options={Object.entries(PAYMENT)} value={form.payment} onChange={set("payment")} />
               {form.payment === "dinheiro" && <Input type="number" inputMode="decimal" placeholder="Troco para quanto? (opcional)" aria-label="Troco para quanto? (opcional)" value={form.change_for} onChange={set("change_for")} className={`${campo} max-w-xs`} />}
             </>

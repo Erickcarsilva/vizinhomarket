@@ -118,7 +118,7 @@ export default function ParceiroLayout() {
             </div>
           </div>
         )}
-        {store && !pending && (
+        {store && !pending && !store.is_service && (
           <div className="px-5 pt-4 max-w-6xl mx-auto">
             <NewOrderAlert key={store.id} orders={orders} ready={ready} />
           </div>
