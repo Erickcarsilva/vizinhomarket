@@ -794,7 +794,7 @@ end $$;
 -- Começa (ou reaproveita) uma cobrança online. O valor vem do pedido, nunca de quem chama.
 create function public.svc_payment_begin(p_order_id uuid, p_user_id uuid, p_provider text) returns jsonb
 language plpgsql security definer set search_path = public as $$
-declare o public.orders%rowtype; p public.payments%rowtype; v_timeout numeric;
+declare o public.orders%rowtype; p public.payments%rowtype; v_timeout numeric; v_recipient text;
 begin
   select * into o from public.orders where id = p_order_id for update;
   if not found or o.customer_id is distinct from p_user_id then raise exception 'Pedido não encontrado'; end if;
@@ -821,8 +821,13 @@ begin
   values (o.id, p_provider, o.payment_method::text, o.total, 'created', o.created_at + make_interval(mins => v_timeout::int))
   returning * into p;
   update public.orders set payment_status = 'awaiting_payment' where id = o.id and payment_status in ('failed', 'expired', 'awaiting_payment');
+  -- Split: valor da loja (mesma regra da liquidação), se a loja tem conta de recebedor neste provedor.
+  select gateway_recipient_id into v_recipient from public.store_private where store_id = o.store_id and gateway_provider = p_provider;
   return jsonb_build_object('payment_id', p.id, 'reuse', false, 'amount', p.amount, 'method', p.method, 'order_code', o.code,
-    'expires_at', p.expires_at, 'customer_name', o.customer_name);
+    'expires_at', p.expires_at, 'customer_name', o.customer_name, 'store_name', (select name from public.stores where id = o.store_id),
+    'split', case when v_recipient is not null then jsonb_build_object('recipient_id', v_recipient,
+      'store_amount', o.subtotal - case when o.discount_funded_by = 'store' then o.discount_amount else 0 end - o.commission_amount
+                      + case when o.fulfillment = 'platform_delivery' then 0 else o.delivery_fee end) end);
 end $$;
 
 -- Guarda o que o gateway devolveu ao criar a cobrança (id, QR do Pix, link do checkout).

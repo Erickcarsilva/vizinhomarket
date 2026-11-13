@@ -7,7 +7,8 @@ export async function handleNewOrder(orderId, { db, send, now = Date.now(), maxA
   const o = await db.getOrder(orderId);
   if (!o) return { skipped: "nao_encontrado" };
   if (o.status !== "CREATED") return { skipped: "status" };
-  if (now - Date.parse(o.created_at) > maxAgeMin * 60e3) return { skipped: "antigo" };
+  if (o.payment_mode === "online" && o.payment_status !== "paid") return { skipped: "aguardando_pagamento" };
+  if (now - Date.parse(o.paid_at || o.created_at) > maxAgeMin * 60e3) return { skipped: "antigo" };
 
   const tokens = await db.getPartnerTokens(o.store_id);
   const payload = JSON.stringify({

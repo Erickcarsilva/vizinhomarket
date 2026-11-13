@@ -17,7 +17,7 @@ function vapidReady() {
 
 const store = {
   async getOrder(id: string) {
-    const { data } = await db.from("orders").select("id, code, store_id, status, created_at, customer_name, total").eq("id", id).maybeSingle();
+    const { data } = await db.from("orders").select("id, code, store_id, status, created_at, customer_name, total, payment_mode, payment_status, paid_at").eq("id", id).maybeSingle();
     return data;
   },
   async getPartnerTokens(storeId: string) {
