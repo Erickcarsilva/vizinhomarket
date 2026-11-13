@@ -11,6 +11,11 @@ const conn = (database) => new pg.Client({ host: process.env.VM_PG_HOST || 'loca
 
 const c = conn('postgres');
 await c.connect();
+// Banco de teste: não registrar no log do servidor os erros esperados (estoque insuficiente, recusas de permissão),
+// que no CI enchem o log do contêiner. Só erros fatais.
+await c.query("alter system set log_min_error_statement = 'panic'").catch(() => {});
+await c.query("alter system set log_min_messages = 'fatal'").catch(() => {});
+await c.query('select pg_reload_conf()').catch(() => {});
 await c.query(`drop database if exists ${DB} with (force)`);
 await c.query(`create database ${DB}`);
 await c.end();
