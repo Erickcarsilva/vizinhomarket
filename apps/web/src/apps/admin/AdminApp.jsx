@@ -38,7 +38,7 @@ function Page({ children }) {
   return (
     <div className="max-w-6xl mx-auto px-5 py-8 space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Administração</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Administração</p>
         <h1 className="font-display text-4xl mt-2">{title}</h1>
       </div>
       {children}

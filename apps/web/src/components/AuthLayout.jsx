@@ -8,11 +8,11 @@ function AuthCliente({ title, subtitle, footer, children }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="h-16 flex items-center px-4 sm:px-6 border-b border-border">
-        <Link to="/" aria-label="VizinhoMarket, início" className="leading-none"><Brand size="sm" className="text-[23px] font-bold" /></Link>
+        <Link to="/" aria-label="VizinhoMarket, início" className="leading-none"><Brand size="sm" /></Link>
       </header>
       <main className="flex-1 flex justify-center px-4 py-8 sm:py-14">
         <div className="w-full max-w-[420px]">
-          <h1 className="font-display text-[28px] leading-tight text-marca">{title}</h1>
+          <h1 className="font-display text-[28px] leading-tight">{title}</h1>
           {subtitle && <p className="text-[15px] text-muted-foreground mt-1">{subtitle}</p>}
           <div className="mt-6 bg-card rounded-lg border border-border p-5 sm:p-6">{children}</div>
           {footer && <p className="text-center text-[15px] text-muted-foreground mt-6">{footer}</p>}
@@ -31,7 +31,7 @@ export default function AuthLayout({ icon: Icon, title, subtitle, footer, childr
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-4">
             <Icon className="w-7 h-7 text-primary-foreground" aria-hidden="true" />
           </div>
-          {APP_LABEL && <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold mb-2">VizinhoMarket · {APP_LABEL}</p>}
+          {APP_LABEL && <p className="text-[13px] font-semibold text-muted-foreground mb-2">VizinhoMarket · {APP_LABEL}</p>}
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
           {subtitle && <p className="text-muted-foreground mt-2">{subtitle}</p>}
         </div>

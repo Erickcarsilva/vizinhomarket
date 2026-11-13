@@ -15,23 +15,24 @@ export const SCOPE_PATHS = {
 };
 export const allowedPaths = (user) => (user?.role === "admin" ? null : [...new Set((user?.scopes || []).flatMap((s) => SCOPE_PATHS[s] || []))]);
 
+// Menu agrupado por área de trabalho (quarto campo). A ordem dentro de cada grupo segue a frequência de uso.
 export const ADMIN_NAV = [
-  ["/", "Visão geral", LayoutDashboard],
-  ["/lojas", "Lojas", Store],
-  ["/pedidos", "Pedidos", ShoppingBag],
-  ["/usuarios", "Usuários", Users],
-  ["/entregas", "Entregas", MapPinned],
-  ["/entregadores", "Entregadores", Bike],
-  ["/financeiro", "Pagamentos e conciliação", Landmark],
-  ["/comissoes", "Comissões e faturas", Wallet],
-  ["/reembolsos", "Reembolsos", Undo2],
-  ["/atendimento", "Atendimento", LifeBuoy],
-  ["/cupons", "Cupons e campanhas", Tag],
-  ["/categorias", "Categorias", Shapes],
-  ["/cidades", "Cidades", Building2],
-  ["/equipe", "Equipe e permissões", UserCog],
-  ["/config", "Configurações", Settings],
-  ["/registros", "Erros e histórico", AlertTriangle],
+  ["/", "Visão geral", LayoutDashboard, "Operação"],
+  ["/lojas", "Lojas", Store, "Cadastros"],
+  ["/pedidos", "Pedidos", ShoppingBag, "Operação"],
+  ["/usuarios", "Usuários", Users, "Cadastros"],
+  ["/entregas", "Entregas", MapPinned, "Operação"],
+  ["/entregadores", "Entregadores", Bike, "Cadastros"],
+  ["/financeiro", "Pagamentos e conciliação", Landmark, "Financeiro"],
+  ["/comissoes", "Comissões e faturas", Wallet, "Financeiro"],
+  ["/reembolsos", "Reembolsos", Undo2, "Financeiro"],
+  ["/atendimento", "Atendimento", LifeBuoy, "Operação"],
+  ["/cupons", "Cupons e campanhas", Tag, "Marketing"],
+  ["/categorias", "Categorias", Shapes, "Cadastros"],
+  ["/cidades", "Cidades", Building2, "Cadastros"],
+  ["/equipe", "Equipe e permissões", UserCog, "Sistema"],
+  ["/config", "Configurações", Settings, "Sistema"],
+  ["/registros", "Erros e histórico", AlertTriangle, "Sistema"],
 ];
 
 function Sidebar({ onNavigate }) {
@@ -40,15 +41,24 @@ function Sidebar({ onNavigate }) {
     <div className="flex flex-col h-full">
       <div className="px-5 pt-6 pb-4 border-b border-border">
         <Brand size="md" />
-        <p className="text-[11px] uppercase tracking-[0.2em] text-accent font-semibold mt-1">Painel administrativo</p>
+        <p className="text-[13px] font-semibold text-muted-foreground mt-1">Painel administrativo</p>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        {ADMIN_NAV.filter(([to]) => !allowedPaths(user) || allowedPaths(user).includes(to)).map(([to, label, Icon]) => (
-          <NavLink key={to} to={to} end={to === "/"} onClick={onNavigate}
-            className={({ isActive }) => `flex items-center gap-3 min-h-[44px] px-3 rounded-xl text-[15px] font-medium transition ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}>
-            <Icon className="w-5 h-5 shrink-0" />{label}
-          </NavLink>
-        ))}
+        {["Operação", "Financeiro", "Cadastros", "Marketing", "Sistema"].map((g) => {
+          const items = ADMIN_NAV.filter(([to, , , grp]) => grp === g && (!allowedPaths(user) || allowedPaths(user).includes(to)));
+          if (!items.length) return null;
+          return (
+            <div key={g} className="pb-2">
+              <p className="px-3 pt-2 pb-1 text-[12px] font-semibold text-muted-foreground">{g}</p>
+              {items.map(([to, label, Icon]) => (
+                <NavLink key={to} to={to} end={to === "/"} onClick={onNavigate}
+                  className={({ isActive }) => `flex items-center gap-3 min-h-[38px] px-3 rounded-[8px] text-[14.5px] font-medium transition ${isActive ? "bg-foreground text-background" : "hover:bg-secondary"}`}>
+                  <Icon className="w-[18px] h-[18px] shrink-0" />{label}
+                </NavLink>
+              ))}
+            </div>
+          );
+        })}
         <div className="pt-3 mt-3 border-t border-border space-y-0.5">
           <a href={URLS.cliente} target="_blank" rel="noreferrer" className="flex items-center gap-3 min-h-[40px] px-3 rounded-xl text-sm text-muted-foreground hover:bg-secondary"><ExternalLink className="w-4 h-4" />Abrir app do cliente</a>
           <a href={URLS.parceiro} target="_blank" rel="noreferrer" className="flex items-center gap-3 min-h-[40px] px-3 rounded-xl text-sm text-muted-foreground hover:bg-secondary"><ExternalLink className="w-4 h-4" />Abrir painel do comerciante</a>

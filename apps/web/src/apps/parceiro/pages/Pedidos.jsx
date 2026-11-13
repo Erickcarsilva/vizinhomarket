@@ -15,7 +15,7 @@ export default function Pedidos() {
     <div className="max-w-6xl mx-auto px-5 py-8 space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Pedidos</p>
+          <p className="text-[13px] font-semibold text-muted-foreground">Pedidos</p>
           <h1 className="font-display text-4xl mt-2">{store.name}</h1>
         </div>
         <p className={`text-sm font-semibold px-4 py-2 rounded-full ${waiting ? "bg-accent text-accent-foreground" : "bg-secondary text-muted-foreground"}`}>

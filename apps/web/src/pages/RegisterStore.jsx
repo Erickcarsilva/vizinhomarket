@@ -41,7 +41,7 @@ export default function RegisterStore() {
 
   return (
     <div className="max-w-2xl mx-auto px-5 py-14">
-      <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Sem mensalidade</p>
+      <p className="text-[13px] font-semibold text-muted-foreground">Sem mensalidade</p>
       <h1 className="font-display font-light text-5xl mt-3 tracking-tight">Leve sua loja para o <em className="text-primary">VizinhoMarket</em>.</h1>
       <form onSubmit={submit} className="mt-10 space-y-5">
         <Input required placeholder="Nome da loja" value={form.name} onChange={set("name")} className="h-12 rounded-xl" />

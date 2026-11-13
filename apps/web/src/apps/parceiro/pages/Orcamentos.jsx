@@ -82,7 +82,7 @@ export default function Orcamentos() {
   return (
     <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Serviços</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Serviços</p>
         <h1 className="font-display text-4xl mt-2">Pedidos de orçamento</h1>
         <p className="text-sm text-muted-foreground mt-2">Telefone e endereço do cliente aparecem depois que ele aceita a proposta. A comissão é cobrada só de serviço concluído.</p>
       </div>

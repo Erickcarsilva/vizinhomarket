@@ -13,7 +13,7 @@ const clone = (p) => p ? {
   addon_groups: (p.addon_groups || []).map((g) => ({ ...g, addons: g.addons.map((a) => ({ ...a })) })),
 } : { ...blank };
 
-const Small = ({ children }) => <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-semibold">{children}</p>;
+const Small = ({ children }) => <p className="text-[13px] text-muted-foreground font-semibold">{children}</p>;
 const IconBtn = ({ onClick, label }) => (
   <button type="button" onClick={onClick} aria-label={label} className="w-9 h-9 shrink-0 rounded-full hover:bg-secondary text-muted-foreground hover:text-destructive flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
 );

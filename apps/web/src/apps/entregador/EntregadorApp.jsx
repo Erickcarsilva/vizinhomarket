@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { APP_VERSION } from "@/lib/version";
 import { useCourierLocation } from "./useCourierLocation";
 import PushToggle from "@/components/PushToggle";
+import Brand from "@/components/layout/Brand";
 
 const brl = (v) => (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const time = (d) => (d ? new Date(d).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "");
@@ -97,7 +98,7 @@ function Cadastro() {
   return (
     <div className="max-w-md mx-auto px-5 py-8 space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-accent font-semibold">Seja entregador</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Seja entregador</p>
         <h1 className="font-display text-3xl mt-1">Cadastro de entregador</h1>
         <p className="text-muted-foreground mt-2 text-sm">Seus dados são conferidos pela equipe antes da liberação. O CPF nunca aparece para lojas nem clientes.</p>
       </div>
@@ -176,7 +177,7 @@ function Corridas() {
           {active.data.map((o) => (
             <Link key={o.id} to={`/corrida/${o.id}`} className="block">
               <Card className="flex items-center gap-4 active:scale-[0.99] transition">
-                <div className="w-11 h-11 rounded-2xl bg-accent/15 text-accent flex items-center justify-center"><Bike className="w-5 h-5" /></div>
+                <div className="w-11 h-11 rounded-2xl bg-accent/15 text-marca flex items-center justify-center"><Bike className="w-5 h-5" /></div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold">{o.store?.name} · {o.code}</p>
                   <p className="text-sm text-muted-foreground">{STEP[o.status]}</p>
@@ -274,7 +275,7 @@ function Corrida() {
     <div className="px-4 py-5 space-y-4 max-w-lg mx-auto pb-28">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-accent font-semibold">{o.code}</p>
+          <p className="text-[13px] font-semibold text-muted-foreground">{o.code}</p>
           <h1 className="font-display text-2xl">{STEP[o.status]}</h1>
         </div>
         <p className="font-display text-2xl text-primary">{brl(o.courier_fee)}</p>
@@ -458,12 +459,12 @@ function CourierLayout() {
   const { data: me } = useCourierProfile();
   const loc = useCourierLocation(me?.status === "approved" && Boolean(me?.is_online));
   const NAV = [["/", "Corridas", Bike], ["/ganhos", "Ganhos", Wallet], ["/historico", "Histórico", History], ["/conta", "Conta", User]];
-  useEffect(() => { document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#14231C"); }, []);
+  useEffect(() => { document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#14201A"); }, []);
   return (
     <div className="min-h-screen pb-20">
-      <header className="sticky top-0 z-40 bg-[#14231C] text-white h-14 px-4 flex items-center justify-between">
-        <span className="font-display text-lg tracking-tight text-white">Vizinho<span className="text-[#F2B79B]">Market</span></span>
-        <span className="text-[11px] uppercase tracking-[0.2em] text-white">Entregador</span>
+      <header className="sticky top-0 z-40 bg-[#14201A] text-white h-14 px-4 flex items-center justify-between">
+        <Brand size="sm" onDark />
+        <span className="text-[12px] font-semibold px-2 py-1 rounded-md bg-white/10 text-white">Entregador</span>
       </header>
       <main><Outlet context={{ loc }} /></main>
       <nav className="fixed bottom-0 inset-x-0 z-40 bg-card border-t border-border grid grid-cols-4 pb-[env(safe-area-inset-bottom)]" aria-label="Menu">

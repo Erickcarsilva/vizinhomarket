@@ -8,7 +8,7 @@ export default function NaoEncontrada() {
   return (
     <div className="max-w-md mx-auto px-4 py-20 text-center">
       <span className="mx-auto w-16 h-16 rounded-full bg-[#EAF6EF] text-marca flex items-center justify-center"><MapPinOff className="w-7 h-7" aria-hidden="true" /></span>
-      <h1 className="font-display text-2xl text-marca mt-5">Página não encontrada</h1>
+      <h1 className="font-display text-2xl mt-5">Página não encontrada</h1>
       <p className="text-muted-foreground mt-2 break-words">O endereço <strong className="font-semibold text-foreground">{pathname}</strong> não existe no VizinhoMarket.</p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <Link to="/" className="btn-acao">Ver as lojas</Link>

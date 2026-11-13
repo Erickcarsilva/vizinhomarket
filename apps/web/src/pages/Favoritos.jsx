@@ -27,7 +27,7 @@ export default function Favoritos() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 pb-10 space-y-3">
-      <h1 className="font-display text-2xl text-marca">Favoritos</h1>
+      <h1 className="font-display text-2xl">Favoritos</h1>
       {loading ? (
         <p className="text-[13px] text-muted-foreground">Carregando favoritos…</p>
       ) : products.length === 0 ? (
@@ -44,7 +44,7 @@ export default function Favoritos() {
               {p.image_url ? (
                 <Image src={p.image_url} alt="" className="w-[60px] h-[60px] shrink-0 rounded-[14px] object-cover bg-[#EAF6EF]" />
               ) : (
-                <div aria-hidden="true" className="w-[60px] h-[60px] shrink-0 rounded-[14px] bg-[#EAF6EF] flex items-center justify-center font-display text-2xl text-marca">{(p.name || "?")[0]}</div>
+                <div aria-hidden="true" className="w-[60px] h-[60px] shrink-0 rounded-[14px] bg-[#EAF6EF] flex items-center justify-center font-display text-2xl">{(p.name || "?")[0]}</div>
               )}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{p.name}</p>

@@ -41,11 +41,11 @@ const TOPICS = [
 export default function Faq() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 pb-10">
-      <h1 className="font-display text-2xl text-marca mb-6">Dúvidas frequentes</h1>
+      <h1 className="font-display text-2xl mb-6">Dúvidas frequentes</h1>
       <div className="space-y-8">
         {TOPICS.map((topic) => (
           <section key={topic.title}>
-            <h2 className="font-display text-xl text-marca mb-1">{topic.title}</h2>
+            <h2 className="font-display text-xl mb-1">{topic.title}</h2>
             <Accordion type="single" collapsible>
               {topic.items.map((it, i) => (
                 <AccordionItem key={i} value={`${topic.title}-${i}`}>

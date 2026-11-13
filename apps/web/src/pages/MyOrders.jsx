@@ -31,7 +31,7 @@ export default function MyOrders() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 pb-10">
-      <h1 className="font-display text-2xl text-marca">Meus pedidos</h1>
+      <h1 className="font-display text-2xl">Meus pedidos</h1>
       {isLoading ? (
         <p className="text-[13px] text-muted-foreground mt-2">Carregando pedidos…</p>
       ) : orders.length === 0 && servicos.length === 0 ? (

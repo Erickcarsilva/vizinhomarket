@@ -25,7 +25,7 @@ export default function Vitrine() {
 
   return (
     <div className="max-w-6xl mx-auto pb-10">
-      <h1 className="font-display text-2xl text-marca px-4 sm:px-6 pt-4">Todas as lojas da cidade</h1>
+      <h1 className="font-display text-2xl px-4 sm:px-6 pt-4">Todas as lojas da cidade</h1>
       <CategoryTabs value={category} onChange={setCategory} available={present} />
       {cities.length > 1 && <div className="pt-3"><CityPills value={city} onChange={setCity} cities={cities} /></div>}
       <section className="px-4 sm:px-6 pt-5" aria-live="polite">

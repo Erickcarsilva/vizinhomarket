@@ -39,7 +39,7 @@ export default function RateOrder({ order, onSaved }) {
 
   return (
     <div className="rounded-lg bg-card border border-border p-4">
-      <p className="font-display text-xl text-marca" id={`nota-${order.id}`}>Como foi seu pedido?</p>
+      <p className="font-display text-xl" id={`nota-${order.id}`}>Como foi seu pedido?</p>
       <div className="flex items-center gap-1 mt-2" role="radiogroup" aria-labelledby={`nota-${order.id}`}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={`${n} ${n === 1 ? "estrela" : "estrelas"} (${NOMES[n]})`} onClick={() => setRating(n)}

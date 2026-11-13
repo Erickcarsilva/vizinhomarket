@@ -24,7 +24,7 @@ export default function Financeiro() {
   return (
     <div className="max-w-5xl mx-auto px-5 py-8 space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Financeiro</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Financeiro</p>
         <h1 className="font-display text-4xl mt-2">Comissões e faturas</h1>
         <p className="text-sm text-muted-foreground mt-2">Sem mensalidade: você paga só a comissão dos pedidos entregues. Pedidos pagos pelo app já têm a comissão descontada no repasse; os pagos na entrega entram na fatura do mês, paga por Pix.</p>
       </div>

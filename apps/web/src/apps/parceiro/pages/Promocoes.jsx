@@ -36,7 +36,7 @@ export default function Promocoes() {
   return (
     <div className="max-w-5xl mx-auto px-5 py-8 space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Marketing</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Marketing</p>
         <h1 className="font-display text-4xl mt-2">Promoções e cupons</h1>
         <p className="text-sm text-muted-foreground mt-2">O desconto do cupom da loja sai do valor da loja, e a comissão é calculada sobre o valor com desconto.</p>
       </div>
@@ -61,7 +61,7 @@ export default function Promocoes() {
           <div className="rounded-2xl border border-border bg-card divide-y divide-border">
             {list.map((c) => (
               <div key={c.id} className="p-4 flex items-center gap-3">
-                <Tag className="w-5 h-5 text-accent shrink-0" />
+                <Tag className="w-5 h-5 text-marca shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold font-mono">{c.code}</p>
                   <p className="text-xs text-muted-foreground">{describe(c)} · usado {c.redemptions}×{c.max_redemptions ? ` de ${c.max_redemptions}` : ""}{c.ends_at ? ` · até ${new Date(c.ends_at).toLocaleDateString("pt-BR")}` : ""}</p>

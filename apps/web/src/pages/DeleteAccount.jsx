@@ -23,7 +23,7 @@ export default function DeleteAccount() {
   if (done) {
     return (
       <div className="max-w-md mx-auto px-5 py-28 text-center">
-        <h1 className="font-display text-2xl text-marca">Conta excluída</h1>
+        <h1 className="font-display text-2xl">Conta excluída</h1>
         <p className="text-[15px] text-muted-foreground mt-1">Seus dados pessoais foram apagados. Obrigado por ter usado o VizinhoMarket.</p>
         <a href="/" className="btn-acao mt-6">Voltar ao início</a>
       </div>
@@ -33,7 +33,7 @@ export default function DeleteAccount() {
   return (
     <div className="max-w-xl mx-auto px-5 py-14 space-y-6">
       <div>
-        <h1 className="font-display text-2xl text-marca">Excluir conta do VizinhoMarket</h1>
+        <h1 className="font-display text-2xl">Excluir conta do VizinhoMarket</h1>
       </div>
       <div className="bg-card border border-border rounded-lg p-6 space-y-3 text-sm leading-relaxed">
         <p><strong>O que é apagado:</strong> nome, telefone, e-mail de acesso, endereços salvos e o comentário das suas avaliações.</p>

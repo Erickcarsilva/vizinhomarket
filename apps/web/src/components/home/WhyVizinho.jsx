@@ -12,7 +12,7 @@ export default function WhyVizinho() {
   return (
     <section className="max-w-6xl mx-auto px-5 mt-20 mb-4">
       <div className="rounded-3xl bg-secondary/60 border border-border/60 p-8 md:p-12">
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Por que o VizinhoMarket</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Por que o VizinhoMarket</p>
         <h2 className="font-display text-3xl md:text-4xl mt-3 max-w-xl">Comércio local, mais perto de você.</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
           {ITEMS.map(({ icon: Icon, title, desc }) => (

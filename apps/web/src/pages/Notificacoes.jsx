@@ -69,7 +69,7 @@ export default function Notificacoes() {
   return (
     <div className="max-w-2xl mx-auto px-5 py-12 space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Notificações</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Notificações</p>
         <h1 className="font-display text-4xl mt-2">Alertas de novos pedidos</h1>
         <p className="text-muted-foreground mt-3">Escolha como você quer ser avisado quando chegar um pedido novo na sua loja.</p>
       </div>

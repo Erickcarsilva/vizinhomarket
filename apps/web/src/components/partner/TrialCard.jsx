@@ -21,7 +21,7 @@ export default function TrialCard({ store }) {
   return (
     <div className="rounded-3xl bg-primary text-primary-foreground p-6 md:p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <p className="text-xs uppercase tracking-[0.25em] opacity-70">{store?.status === "pending" ? "Aguardando aprovação" : store?.status === "suspended" ? "Loja suspensa" : "Sem mensalidade · você só paga quando vende"}</p>
+        <p className="text-[13px] font-semibold  opacity-70">{store?.status === "pending" ? "Aguardando aprovação" : store?.status === "suspended" ? "Loja suspensa" : "Sem mensalidade · você só paga quando vende"}</p>
         <p className="text-sm opacity-80">{label}</p>
       </div>
       <div className={`grid grid-cols-2 md:grid-cols-4 gap-6 mt-6 ${isLoading ? "opacity-50" : ""}`}>

@@ -27,7 +27,7 @@ export default function Entregas() {
   return (
     <div className="max-w-6xl mx-auto px-5 py-8 space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Entregas</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Entregas</p>
         <h1 className="font-display text-4xl mt-2">Saídas e entregas</h1>
         <p className="text-sm text-muted-foreground mt-2">Para concluir, peça ao cliente o código de 4 números que aparece no app dele.</p>
       </div>

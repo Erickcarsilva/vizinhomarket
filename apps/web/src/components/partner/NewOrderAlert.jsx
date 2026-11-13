@@ -101,7 +101,7 @@ export default function NewOrderAlert({ orders, ready = true }) {
     <>
       {!armed && (
         <button type="button" onClick={arm} className="w-full rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3 text-left flex items-center gap-3">
-          <BellRing className="w-5 h-5 text-accent shrink-0" />
+          <BellRing className="w-5 h-5 text-marca shrink-0" />
           <span className="text-sm"><strong>Toque aqui para ativar os alertas de pedido.</strong> Som, aviso na tela e tela sempre acesa enquanto o painel estiver aberto.</span>
         </button>
       )}

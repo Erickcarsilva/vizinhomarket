@@ -43,7 +43,7 @@ export default function ProductOptions({ product, open, onOpenChange, onConfirm 
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-2xl p-0 bg-background">
         <div className="px-5 pt-6 pb-4 border-b border-border">
-          <SheetTitle className="font-display text-2xl text-marca">{product.name}</SheetTitle>
+          <SheetTitle className="font-display text-2xl">{product.name}</SheetTitle>
           {product.description ? <SheetDescription className="mt-1">{product.description}</SheetDescription> : <SheetDescription className="sr-only">Escolha as opções</SheetDescription>}
         </div>
 

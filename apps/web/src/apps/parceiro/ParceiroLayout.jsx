@@ -36,7 +36,7 @@ function Sidebar({ store, stores, pickStore, counts, onNavigate, isOwner }) {
     <div className="flex flex-col h-full">
       <div className="px-5 pt-6 pb-4 border-b border-border">
         <Brand size="md" />
-        <p className="text-[11px] uppercase tracking-[0.2em] text-accent font-semibold mt-1">Painel do comerciante</p>
+        <p className="text-[13px] font-semibold text-muted-foreground mt-1">Painel do comerciante</p>
         {stores.length > 1 ? (
           <select value={store?.id} onChange={(e) => pickStore(e.target.value)} className="mt-4 w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
             {stores.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -52,7 +52,7 @@ function Sidebar({ store, stores, pickStore, counts, onNavigate, isOwner }) {
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
         {NAV.filter((n) => (isOwner || !n[4]) && (store?.status !== "pending" || !n[5]) && (!n[6] || (n[6] === "services") === Boolean(store?.is_service))).map(([to, label, Icon, countKey]) => (
           <NavLink key={to} to={to} end={to === "/"} onClick={onNavigate}
-            className={({ isActive }) => `flex items-center gap-3 min-h-[44px] px-3 rounded-xl text-[15px] font-medium transition ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}>
+            className={({ isActive }) => `flex items-center gap-3 min-h-[42px] px-3 rounded-[8px] text-[15px] font-medium transition ${isActive ? "bg-foreground text-background" : "hover:bg-secondary"}`}>
             <Icon className="w-5 h-5 shrink-0" />
             <span className="flex-1">{label}</span>
             {countKey && counts[countKey] > 0 && <span className="min-w-[22px] h-[22px] px-1.5 rounded-full bg-accent text-accent-foreground text-xs font-bold flex items-center justify-center">{counts[countKey]}</span>}

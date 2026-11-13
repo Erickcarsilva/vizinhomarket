@@ -50,7 +50,7 @@ export default function OrderTracking() {
   if (isLoading) return <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-5" aria-busy="true"><div className="h-6 w-1/3 rounded bg-secondary animate-pulse" /><div className="h-32 mt-4 rounded-lg bg-secondary animate-pulse" /></div>;
   if (!order) return (
     <div className="max-w-md mx-auto px-4 py-20 text-center space-y-3">
-      <h1 className="font-display text-2xl text-marca">Pedido não encontrado</h1>
+      <h1 className="font-display text-2xl">Pedido não encontrado</h1>
       <p className="text-muted-foreground">Confira se você entrou com a mesma conta usada no pedido.</p>
       <Link to="/meus-pedidos" className="btn-contorno">Ver meus pedidos</Link>
     </div>
@@ -63,7 +63,7 @@ export default function OrderTracking() {
         <div>
           <Link to="/meus-pedidos" className="inline-flex items-center gap-1 text-sm font-semibold text-marca"><ChevronLeft className="w-4 h-4" aria-hidden="true" />Meus pedidos</Link>
           <p className="text-[13px] text-muted-foreground mt-3">Pedido {order.code} · <Link to={`/loja/${order.store_id}`} className="underline underline-offset-2 hover:text-foreground">{order.store_name}</Link></p>
-          <h1 className={`font-display text-[28px] leading-tight mt-1 ${cancelled ? "text-[#C2331A]" : "text-marca"}`} aria-live="polite">
+          <h1 className={`font-display text-[28px] leading-tight mt-1 ${cancelled ? "text-[#C2331A]" : ""}`} aria-live="polite">
             {cancelled ? "Pedido cancelado" : statusLabel(order.status, order.fulfillment)}
           </h1>
           {cancelled ? (
@@ -129,7 +129,7 @@ export default function OrderTracking() {
       </div>
 
       <aside className={`${card} h-fit space-y-3 text-sm min-w-0`} aria-label="Resumo do pedido">
-        <h2 className="font-display text-[20px] text-marca">Resumo</h2>
+        <h2 className="font-display text-[20px]">Resumo</h2>
         {order.items.map((i, n) => (
           <div key={n} className="flex justify-between gap-3">
             <span className="min-w-0 break-words">{i.quantity}× {i.name}{i.addons?.length ? <span className="block text-[13px] text-muted-foreground">+ {i.addons.join(", ")}</span> : null}</span>

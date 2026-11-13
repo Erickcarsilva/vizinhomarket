@@ -29,7 +29,7 @@ export default function Equipe() {
   return (
     <div className="max-w-3xl mx-auto px-5 py-8 space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Equipe</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Equipe</p>
         <h1 className="font-display text-4xl mt-2">Quem usa o painel</h1>
         <p className="text-sm text-muted-foreground mt-2">O atendente recebe os pedidos (com o alarme), cuida das entregas e do cardápio. Ele não vê comissões, faturas e relatórios, e não muda os dados da loja, as taxas nem a chave Pix.</p>
       </div>

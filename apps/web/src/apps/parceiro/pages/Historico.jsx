@@ -36,7 +36,7 @@ export default function Historico() {
   return (
     <div className="max-w-5xl mx-auto px-5 py-8 space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Histórico</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Histórico</p>
         <h1 className="font-display text-4xl mt-2">Pedidos entregues</h1>
       </div>
       <button type="button" disabled={exporting} onClick={async () => {

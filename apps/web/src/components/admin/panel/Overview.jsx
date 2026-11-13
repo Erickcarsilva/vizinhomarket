@@ -44,18 +44,21 @@ export default function Overview({ goTo }) {
     <div className="space-y-6">
       <Seg options={[["hoje", "Hoje"], ["7d", "7 dias"], ["mes", "Este mês"], ["30d", "30 dias"]]} value={range} onChange={setRange} />
       {alerts.length > 0 && (
-        <div className="space-y-2">
-          {alerts.map(([, text, tab]) => (
-            <button key={tab} type="button" onClick={() => goTo(tab)} className="w-full text-left rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm font-medium hover:bg-accent/15">
-              {text} →
+        <section aria-label="Pendências" className="rounded-[10px] border border-border divide-y divide-border">
+          <p className="px-4 py-2.5 text-[13px] font-semibold text-muted-foreground bg-secondary rounded-t-[10px]">Pendências para resolver</p>
+          {alerts.map(([count, text, tab]) => (
+            <button key={tab} type="button" onClick={() => goTo(tab)} className="w-full flex items-center gap-3 text-left px-4 py-3 text-sm hover:bg-secondary/60">
+              {tab !== "comissoes" && <span className="min-w-[28px] h-6 px-2 rounded-md bg-accent text-accent-foreground text-[13px] font-bold flex items-center justify-center">{count}</span>}
+              <span className="flex-1 font-medium">{text}</span>
+              <span aria-hidden="true" className="text-muted-foreground">→</span>
             </button>
           ))}
-        </div>
+        </section>
       )}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {tiles.map(([label, value, sub]) => (
           <Card key={label} className="p-4">
-            <p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
+            <p className="text-[13px] font-medium text-muted-foreground">{label}</p>
             <p className={`font-display text-2xl mt-2 ${isLoading ? "opacity-40" : ""}`}>{value}</p>
             {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
           </Card>

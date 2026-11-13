@@ -11,7 +11,7 @@ import CartItems from "@/components/checkout/CartItems";
 import ChoiceGroup from "@/components/checkout/ChoiceGroup";
 import SavedAddresses from "@/components/checkout/SavedAddresses";
 
-const Label = ({ children }) => <h2 className="font-display text-[20px] leading-tight text-marca mb-3">{children}</h2>;
+const Label = ({ children }) => <h2 className="font-display text-[20px] leading-tight mb-3">{children}</h2>;
 const campo = "h-12 rounded-lg bg-card text-[15px]";
 
 export default function Checkout() {
@@ -48,7 +48,7 @@ export default function Checkout() {
     return (
       <div className="max-w-md mx-auto px-4 py-24 text-center">
         <span className="mx-auto w-16 h-16 rounded-full bg-[#EAF6EF] text-marca flex items-center justify-center"><ShoppingBag className="w-7 h-7" aria-hidden="true" /></span>
-        <h1 className="font-display text-2xl text-marca mt-5">Sua sacola está vazia</h1>
+        <h1 className="font-display text-2xl mt-5">Sua sacola está vazia</h1>
         <p className="text-muted-foreground mt-2">Escolha uma loja e adicione o que quiser pedir.</p>
         <Link to="/" className="btn-acao mt-6">Ver as lojas</Link>
       </div>
@@ -146,7 +146,7 @@ export default function Checkout() {
     <form onSubmit={submit} className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-8 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px] gap-8">
       <div className="space-y-7 min-w-0">
         <div>
-          <h1 className="font-display text-2xl text-marca">Sua sacola</h1>
+          <h1 className="font-display text-2xl">Sua sacola</h1>
           <p className="text-[15px] mt-1 break-words">de <strong className="font-semibold">{cart.store.name}</strong></p>
           <Link to={`/loja/${cart.store.id}`} className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-marca underline underline-offset-4"><ChevronLeft className="w-4 h-4" aria-hidden="true" />Continuar comprando</Link>
           <div className="mt-3"><CartItems /></div>
@@ -209,7 +209,7 @@ export default function Checkout() {
         </div>
       </div>
       <aside className="lg:sticky lg:top-24 h-fit bg-card border border-border rounded-lg p-5 space-y-3 min-w-0" aria-label="Resumo do pedido">
-        <h2 className="font-display text-[20px] text-marca">Resumo</h2>
+        <h2 className="font-display text-[20px]">Resumo</h2>
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>{brl(subtotal)}</span></div>
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Entrega</span><span>{byZone && !zone ? "escolha o bairro" : fee ? brl(fee) : "Grátis"}</span></div>
         {coupon && (

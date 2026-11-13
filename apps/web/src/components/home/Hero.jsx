@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 export default function Hero({ query, onQuery }) {
   return (
     <section className="max-w-6xl mx-auto px-5 pt-14 pb-10 md:pt-24 md:pb-14">
-      <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-xs uppercase tracking-[0.3em] text-accent font-semibold mb-5 hidden">
+      <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-[13px] font-semibold text-muted-foreground mb-5 hidden">
         Marketplace local
       </motion.p>
       <motion.h1

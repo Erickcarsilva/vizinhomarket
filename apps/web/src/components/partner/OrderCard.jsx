@@ -72,15 +72,15 @@ export default function OrderCard({ order, onChanged }) {
           Recebi o pagamento ({PAYMENT[order.payment_method]})
         </button>
       )}
-      <div className="flex items-center justify-between pt-2 border-t border-border">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
         <span className="font-display text-xl">{brl(order.total)}</span>
         {open && (
           <div className="flex gap-2">
-            <button disabled={busy} onClick={() => { setMode("cancel"); setInput(""); }} className="h-9 px-4 rounded-full text-sm border border-border hover:bg-secondary transition disabled:opacity-40">
+            <button disabled={busy} onClick={() => { setMode("cancel"); setInput(""); }} className="h-10 px-4 rounded-[10px] text-sm whitespace-nowrap border border-border hover:bg-secondary transition disabled:opacity-40">
               {order.status === "CREATED" ? "Recusar" : "Cancelar"}
             </button>
             {next && (
-              <button disabled={busy} onClick={() => move(next)} className="h-9 px-4 rounded-full text-sm bg-primary text-primary-foreground font-semibold hover:opacity-90 transition disabled:opacity-40">
+              <button disabled={busy} onClick={() => move(next)} className="h-10 px-4 rounded-[10px] text-sm whitespace-nowrap bg-primary text-primary-foreground font-semibold hover:opacity-90 transition disabled:opacity-40">
                 {nextActionLabel(order)}
               </button>
             )}

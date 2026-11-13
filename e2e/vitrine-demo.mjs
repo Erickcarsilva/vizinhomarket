@@ -9,7 +9,8 @@ import { CLI, launchOptions } from './config.mjs';
 const out = process.argv[2] || 'prints-demo';
 mkdirSync(out, { recursive: true });
 const city = { id: 'c1', name: 'Sidrolândia', timezone: 'America/Campo_Grande', slug: 'sidrolandia-ms', state: 'MS', active: true };
-const cats = [['alimentacao', 'Restaurantes e lanches'], ['mercado', 'Mercado'], ['pet', 'Pet shop'], ['bebidas', 'Bebidas'], ['farmacia', 'Farmácia e saúde'], ['servicos', 'Serviços']]
+const cats = [['alimentacao', 'Restaurantes e lanches'], ['mercado', 'Mercado'], ['pet', 'Pet shop'], ['bebidas', 'Bebidas'], ['farmacia', 'Farmácia e saúde'], ['servicos', 'Serviços'],
+  ['eletronicos', 'Eletrônicos'], ['moda', 'Moda e acessórios'], ['construcao', 'Construção e materiais'], ['beleza', 'Beleza e cuidados'], ['autopecas', 'Autopeças']]
   .map(([slug, name], i) => ({ id: `k${i}`, slug, name, kind: slug === 'servicos' ? 'services' : 'goods', attributes_schema: [] }));
 const hours = [0, 1, 2, 3, 4, 5, 6].flatMap((d) => [{ weekday: d, opens: '00:00', closes: '12:00' }, { weekday: d, opens: '12:00', closes: '00:00' }]);
 const mk = (id, name, slug, fee, rating, prep, extra = {}) => ({
@@ -27,6 +28,11 @@ const stores = [
   mk('s4', 'Pet Amigo', 'pet', 6, 4.7, 30),
   mk('s5', 'Disk Bebidas Gelada', 'bebidas', 4, 4.5, 20),
   mk('s6', 'Elétrica do Zé', 'servicos', 0, 5.0, 0),
+  mk('s7', 'Drogaria Central', 'farmacia', 5, 4.8, 25),
+  mk('s8', 'Cell Assistência e Acessórios', 'eletronicos', 8, null, 50),
+  mk('s9', 'Casa do Construtor', 'construcao', 15, 4.4, 90),
+  mk('s10', 'Studio Bela', 'beleza', 0, 4.9, 35),
+  mk('s11', 'Auto Peças Avenida', 'autopecas', 10, null, 60, { hours: [] }),
 ];
 const prod = (id, sid, section, name, price, desc = '') => ({ id, store_id: sid, section, name, description: desc, image_url: null, price, unit: 'un', stock: null,
   available: true, age_restricted: false, attributes: {}, sort: 0, created_at: '2026-10-01', variants: [], addon_groups: [] });
@@ -57,11 +63,13 @@ await ctx.route('https://demo.supabase.co/**', async (route) => {
   return route.fulfill({ status: 200, headers: { ...h, 'Content-Range': `0-${rows.length}/${rows.length}` }, body: JSON.stringify(single ? rows[0] || null : rows) });
 });
 const page = await ctx.newPage();
+const W = Number(process.env.VM_LARGURA || 390);
+await page.setViewportSize({ width: W, height: W > 800 ? 900 : 844 });
 const shots = [['/', 'inicio'], ['/loja/s1', 'loja'], ['/busca', 'busca'], ['/categorias', 'categorias']];
 for (const [path, name] of shots) {
   await page.goto(`${CLI}${path}`);
   await page.waitForTimeout(1500);
-  await page.screenshot({ path: `${out}/${name}.png`, fullPage: false });
+  await page.screenshot({ path: `${out}/${name}.png`, fullPage: process.env.VM_PAGINA_INTEIRA === '1' });
 }
 await page.goto(`${CLI}/loja/s1`);
 await page.waitForTimeout(1200);

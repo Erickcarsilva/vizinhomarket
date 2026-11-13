@@ -30,14 +30,6 @@ import Avaliacoes from "@/pages/Avaliacoes";
 import Orcamento from "@/pages/Orcamento";
 import Atendimento from "@/pages/Atendimento";
 import { URLS } from "@/lib/appConfig";
-// Letras do App do Cliente servidas pelo próprio site (só entram no build do cliente).
-import "@fontsource/figtree/latin-400.css";
-import "@fontsource/figtree/latin-500.css";
-import "@fontsource/figtree/latin-600.css";
-import "@fontsource/figtree/latin-700.css";
-import "@fontsource/lora/latin-500.css";
-import "@fontsource/lora/latin-600.css";
-import "@fontsource/lora/latin-700.css";
 
 // Endereços antigos de lojista/admin agora moram nos painéis próprios.
 const GoTo = ({ href }) => { window.location.replace(href); return null; };

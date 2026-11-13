@@ -5,11 +5,11 @@ import { brl } from "@/lib/constants";
 import { isFavorite, toggleFavorite } from "@/lib/favorites";
 import { hasOptions, startingPrice } from "@/components/store/ProductOptions";
 
-// Botão de adicionar: terracota; com a loja fechada fica cinza-areia (legível, mas claramente indisponível).
+// Botão de adicionar: placa verde; com a loja fechada fica cinza (legível, mas claramente indisponível).
 function AddButton({ onAdd, disabled, inCart, name }) {
   return (
     <button type="button" onClick={onAdd} disabled={disabled} aria-label="Adicionar" title={disabled ? "Loja fechada" : `Adicionar ${name}`}
-      className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm active:scale-95 transition-transform disabled:bg-secondary disabled:text-muted-foreground disabled:shadow-none disabled:border disabled:border-border">
+      className="w-10 h-10 rounded-[10px] bg-primary text-primary-foreground flex items-center justify-center active:scale-95 transition-transform disabled:bg-secondary disabled:text-muted-foreground">
       {inCart ? <span className="text-sm font-bold">{inCart}<span className="sr-only"> na sacola</span></span> : <Plus className="w-[18px] h-[18px]" strokeWidth={2.4} aria-hidden="true" />}
     </button>
   );
@@ -20,22 +20,22 @@ export default function ProductRow({ product, disabled, onAdd, inCart }) {
   useEffect(() => setFav(isFavorite(product.id)), [product.id]);
   const favBtn = (cls) => (
     <button type="button" onClick={(e) => { e.stopPropagation(); setFav(toggleFavorite(product.id)); }} aria-label="Favoritar" aria-pressed={fav}
-      className={`rounded-full bg-card border border-border flex items-center justify-center ${cls}`}>
-      <Heart className={`w-4 h-4 ${fav ? "fill-primary text-primary" : "text-muted-foreground"}`} aria-hidden="true" />
+      className={`rounded-[10px] bg-card flex items-center justify-center hover:bg-secondary ${cls}`}>
+      <Heart className={`w-[18px] h-[18px] ${fav ? "fill-[#C2331A] text-[#C2331A]" : "text-muted-foreground"}`} aria-hidden="true" />
     </button>
   );
   const from = hasOptions(product) && (product.variants || []).some((v) => v.available);
   return (
-    <div data-produto={product.name} className="flex gap-4 py-4 border-b border-[#E8ECE9] last:border-0">
+    <div data-produto={product.name} className="flex gap-4 py-4 border-b border-border last:border-0">
       <div className="flex-1 min-w-0">
         <h3 className="text-base font-semibold leading-snug break-words">{product.name}</h3>
         {product.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{product.description}</p>}
-        <p className="mt-2 text-[15px] font-bold">{from ? <><span className="text-[13px] font-normal text-muted-foreground mr-1">a partir de</span>{brl(startingPrice(product))}</> : brl(product.price)}</p>
+        <p className="mt-2 text-[16px] font-bold">{from ? <><span className="text-[13px] font-normal text-muted-foreground mr-1">a partir de</span>{brl(startingPrice(product))}</> : brl(product.price)}</p>
       </div>
       {product.image_url ? (
         <div className="relative shrink-0 self-start">
-          {favBtn("absolute -top-2 -left-2 z-10 w-8 h-8 shadow-sm")}
-          <Image src={product.image_url} alt="" className="w-24 h-24 rounded-lg object-cover bg-[#EAF6EF]" />
+          {favBtn("absolute top-1 left-1 z-10 w-8 h-8")}
+          <Image src={product.image_url} alt="" className="w-24 h-24 rounded-[10px] object-cover bg-secondary" />
           <div className="absolute -bottom-2 -right-2"><AddButton onAdd={onAdd} disabled={disabled} inCart={inCart} name={product.name} /></div>
         </div>
       ) : (

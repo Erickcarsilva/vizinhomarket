@@ -18,13 +18,13 @@ export default function Atendimento() {
     try { await base44.support.reply(id, text); setText(""); qc.invalidateQueries({ queryKey: ["ticket", id] }); } catch (err) { setError(err.message); }
   };
   if (isLoading) return <div className="max-w-3xl mx-auto px-4 pt-6"><div className="h-24 rounded-lg bg-secondary animate-pulse" /></div>;
-  if (!t) return <div className="max-w-md mx-auto px-4 py-20 text-center"><h1 className="font-display text-2xl text-marca">Atendimento não encontrado</h1></div>;
+  if (!t) return <div className="max-w-md mx-auto px-4 py-20 text-center"><h1 className="font-display text-2xl">Atendimento não encontrado</h1></div>;
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 pb-10 space-y-4">
       <Link to="/suporte" className="inline-flex items-center gap-1 text-sm font-semibold text-marca"><ChevronLeft className="w-4 h-4" aria-hidden="true" />Ajuda</Link>
       <div>
         <p className="text-[13px] text-muted-foreground">{TICKET_STATUS[t.status]}{t.order?.code ? ` · pedido ${t.order.code}` : ""}</p>
-        <h1 className="font-display text-2xl text-marca">{t.subject}</h1>
+        <h1 className="font-display text-2xl">{t.subject}</h1>
       </div>
       <div className="space-y-2">
         {t.messages.map((m) => (

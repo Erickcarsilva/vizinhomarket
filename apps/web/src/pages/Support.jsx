@@ -33,7 +33,7 @@ export default function Support() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 pb-10 space-y-8">
       <div>
-        <h1 className="font-display text-2xl text-marca">Tire suas dúvidas</h1>
+        <h1 className="font-display text-2xl">Tire suas dúvidas</h1>
         <p className="text-[15px] text-muted-foreground mt-1">Lojistas e entregadores — encontre respostas e fale com a equipe VizinhoMarket.</p>
       </div>
 

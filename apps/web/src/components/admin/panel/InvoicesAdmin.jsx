@@ -45,11 +45,11 @@ export default function InvoicesAdmin() {
       </div>
       <p className="text-xs text-muted-foreground">A fatura soma os pedidos <strong>entregues</strong> no mês. Gerar de novo atualiza as faturas em aberto e não mexe nas já pagas.</p>
       {generated != null && <p className="text-sm text-primary">{generated} fatura(s) gerada(s) ou atualizada(s).</p>}
-      {!pixKey && <p className="text-xs text-accent">Dica: cadastre a sua chave Pix em Configurações para ela sair na mensagem de cobrança.</p>}
+      {!pixKey && <p className="text-xs text-marca">Dica: cadastre a sua chave Pix em Configurações para ela sair na mensagem de cobrança.</p>}
       <ErrorLine error={error} />
       <div className="grid grid-cols-2 gap-3">
-        <Card className="p-4"><p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground">A receber</p><p className="font-display text-2xl mt-1">{brl(sum("open"))}</p></Card>
-        <Card className="p-4"><p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Recebido</p><p className="font-display text-2xl mt-1">{brl(sum("paid"))}</p></Card>
+        <Card className="p-4"><p className="text-[13px] font-medium text-muted-foreground">A receber</p><p className="font-display text-2xl mt-1">{brl(sum("open"))}</p></Card>
+        <Card className="p-4"><p className="text-[13px] font-medium text-muted-foreground">Recebido</p><p className="font-display text-2xl mt-1">{brl(sum("paid"))}</p></Card>
       </div>
       {isLoading ? <Empty>Carregando…</Empty> : invoices.length === 0 ? <Empty>Nenhuma fatura de {monthName(ym)}. Toque em "Gerar" depois que o mês terminar.</Empty> : (
         <Card className="divide-y divide-border">

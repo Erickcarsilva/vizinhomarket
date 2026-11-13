@@ -35,7 +35,7 @@ export default function IndiqueLoja() {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
         <div className="w-16 h-16 rounded-full bg-[#EAF6EF] text-marca flex items-center justify-center mx-auto"><Check className="w-7 h-7" aria-hidden="true" /></div>
-        <h1 className="font-display text-2xl text-marca mt-5">Obrigado pela indicação!</h1>
+        <h1 className="font-display text-2xl mt-5">Obrigado pela indicação!</h1>
         <p className="text-muted-foreground mt-4">Vamos entrar em contato com a loja para convidá-la a fazer parte do VizinhoMarket.</p>
         <Link to="/" className="btn-contorno mt-6">Voltar para as lojas</Link>
       </div>
@@ -45,7 +45,7 @@ export default function IndiqueLoja() {
   return (
     <form onSubmit={submit} className="max-w-2xl mx-auto px-4 sm:px-6 pt-4 pb-10 space-y-6">
       <div>
-        <h1 className="font-display text-2xl text-marca">Conhece um comércio legal?</h1>
+        <h1 className="font-display text-2xl">Conhece um comércio legal?</h1>
         <p className="text-[15px] text-muted-foreground mt-1">Indique para a gente. Entraremos em contato para convidar a loja a integrar o VizinhoMarket.</p>
       </div>
       <div className="space-y-4 bg-card border border-border rounded-lg p-4 sm:p-5">

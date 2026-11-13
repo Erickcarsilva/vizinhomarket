@@ -44,12 +44,12 @@ export default function Profile() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 pb-10 space-y-5">
       <div>
-        <h1 className="font-display text-2xl text-marca">Meu perfil</h1>
+        <h1 className="font-display text-2xl">Meu perfil</h1>
         {user?.email && <p className="text-[15px] text-muted-foreground break-words">{user.email}</p>}
       </div>
 
       <section className="bg-card border border-border rounded-lg p-4 sm:p-5 space-y-4">
-        <h2 className="font-display text-xl text-marca">Dados pessoais</h2>
+        <h2 className="font-display text-xl">Dados pessoais</h2>
         <label className="block text-sm font-medium">Nome
           <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5 h-12 rounded-lg text-[15px]" />
         </label>
@@ -67,7 +67,7 @@ export default function Profile() {
       </section>
 
       <section className="bg-card border border-border rounded-lg p-4 sm:p-5 space-y-4">
-        <h2 className="font-display text-xl text-marca">Endereços de entrega</h2>
+        <h2 className="font-display text-xl">Endereços de entrega</h2>
         <div className="divide-y divide-[#E8ECE9]">
           {loadingAddr && <p className="text-sm text-muted-foreground py-2">Carregando…</p>}
           {!loadingAddr && addresses.length === 0 && <p className="text-sm text-muted-foreground py-2">Nenhum endereço salvo. Os endereços usados nos pedidos aparecem aqui.</p>}
@@ -88,7 +88,7 @@ export default function Profile() {
 
       <section className="bg-card border border-border rounded-lg p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl text-marca">Pedidos recentes</h2>
+          <h2 className="font-display text-xl">Pedidos recentes</h2>
           <Link to="/meus-pedidos" className="text-sm font-semibold text-marca underline underline-offset-4">Ver todos</Link>
         </div>
         {orders.length === 0 ? (

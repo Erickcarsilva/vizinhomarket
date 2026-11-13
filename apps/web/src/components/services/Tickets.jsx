@@ -21,7 +21,7 @@ export default function Tickets() {
   };
   return (
     <section className="space-y-4" aria-label="Meus atendimentos">
-      <h2 className="font-display text-xl text-marca">Fale com a equipe</h2>
+      <h2 className="font-display text-xl">Fale com a equipe</h2>
       <form onSubmit={submit} className="bg-card border border-border rounded-lg p-4 space-y-3">
         <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })} aria-label="Assunto" className="w-full h-11 rounded-lg border border-input bg-background px-3">
           {KINDS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}

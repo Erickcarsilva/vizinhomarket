@@ -1,155 +1,95 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap');
+/* =============================================================================================
+   VizinhoMarket — Design System (documentado em docs/DESIGN.md)
+   Conceito: "a rua comercial da cidade no celular". Elementos do comércio de rua brasileiro
+   traduzidos para a tela: toldo (borda ondulada, assinatura da marca), letreiro (títulos em
+   Bricolage Grotesque) e etiqueta (selos de informação). Cada categoria tem a sua cor
+   (lib/categoryStyle.js); a marca em si é verde-vizinho + amarelo-toldo + tinta.
+   Letras servidas pelo próprio site (sem Google Fonts): importadas em main.jsx.
+   ============================================================================================= */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* Tokens comuns a TODOS os produtos (cliente, comerciante, admin, entregador). */
   :root {
-    --background: 40 33% 97%;
-    --foreground: 155 22% 11%;
-    --card: 40 40% 99%;
-    --card-foreground: 155 22% 11%;
-    --popover: 40 40% 99%;
-    --popover-foreground: 155 22% 11%;
-    --primary: 156 42% 20%;
-    --primary-foreground: 40 33% 97%;
-    --secondary: 40 24% 92%;
-    --secondary-foreground: 155 22% 11%;
-    --muted: 40 22% 93%;
-    --muted-foreground: 150 8% 40%;
-    --accent: 16 68% 52%;
-    --accent-foreground: 40 33% 97%;
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 40 16% 86%;
-    --input: 40 16% 84%;
-    --ring: 156 42% 20%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.9rem;
-    --font-heading: 'Fraunces', Georgia, serif;
-    --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Fraunces', Georgia, serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
-
-
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-
-  body {
-    @apply bg-background text-foreground font-body;
-  }
-}
-
-/* App do Cliente — "feira do bairro, bem arrumada" (proposta aprovada em 23/10/2026).
-   Marfim de fundo, verde (--marca) como estrutura, terracota forte (--primary) só nas ações.
-   Lora só em momentos de marca (logotipo, nome da loja, títulos de seção); Figtree no resto.
-   Letras servidas pelo próprio site (@fontsource, importadas em apps/cliente/ClienteApp.jsx).
-   Os painéis do comerciante e do admin não usam esta classe e não mudam. Contrastes conferidos (AA). */
-@layer base {
-  /* --marca e --marca-destaque: as duas cores do logotipo. Nos painéis são iguais às de hoje (verde e terracota). */
-  :root { --marca: 156 42% 20%; --marca-destaque: 16 68% 52%; }
-  /* App do Cliente — identidade de delivery: fundo branco, verde vivo da marca, amarelo para destaque/promo e
-     coral só no logotipo. Letras sem serifa e títulos pesados. Contrastes conferidos (AA) para texto normal. */
-  .tema-cliente {
     --background: 0 0% 100%;
-    --foreground: 155 18% 10%;         /* quase preto esverdeado #141E19 */
+    --foreground: 150 23% 10%;          /* tinta  #14201A — 16,8:1 sobre branco */
     --card: 0 0% 100%;
-    --card-foreground: 155 18% 10%;
+    --card-foreground: 150 23% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 155 18% 10%;
-    --primary: 153 88% 27%;            /* verde ação #08834A — branco sobre ele 4,8:1 */
+    --popover-foreground: 150 23% 10%;
+    --primary: 155 81% 23%;             /* verde-vizinho #0B6B43 — ação; branco sobre ele 6,6:1 */
     --primary-foreground: 0 0% 100%;
-    --marca: 153 88% 23%;              /* verde marca #077043 — 6,4:1 sobre o branco */
-    --marca-destaque: 12 87% 52%;      /* coral do logotipo #EE5223 */
-    --secondary: 140 16% 95%;          /* cinza-verde claro #F0F4F1 */
-    --secondary-foreground: 155 18% 10%;
-    --muted: 140 16% 95%;
-    --muted-foreground: 155 6% 38%;    /* #5B6660 — 5,9:1 sobre o branco */
-    --accent: 44 100% 58%;             /* amarelo #FFC628 (fundo de selo, nunca texto sobre branco) */
-    --accent-foreground: 155 18% 10%;
-    --destructive: 6 76% 44%;          /* #C4321B */
+    --marca: 155 81% 23%;
+    --marca-destaque: 42 100% 55%;      /* amarelo-toldo #FFC21A — só preenchimento, nunca texto sobre branco */
+    --secondary: 150 12% 95%;           /* chão #F0F3F1 — superfícies e campos */
+    --secondary-foreground: 150 23% 10%;
+    --muted: 150 12% 95%;
+    --muted-foreground: 150 7% 36%;     /* #55615B — 6,3:1 sobre branco */
+    --accent: 42 100% 55%;
+    --accent-foreground: 150 23% 10%;
+    --destructive: 6 75% 42%;           /* #BB301C */
     --destructive-foreground: 0 0% 100%;
-    --border: 140 10% 89%;             /* #E1E7E3 */
-    --input: 150 5% 57%;               /* borda de campo #8C9691 — 3,1:1 */
-    --ring: 153 88% 27%;
-    --radius: 0.75rem;
-    --font-heading: 'Figtree', system-ui, sans-serif;
-    --font-body: 'Figtree', system-ui, sans-serif;
-    --font-display: 'Figtree', system-ui, sans-serif;
-    --sombra-flutuante: 0 8px 24px rgb(20 30 25 / 0.12);
-    --sombra-cartao: 0 1px 2px rgb(20 30 25 / 0.06), 0 2px 8px rgb(20 30 25 / 0.06);
+    --border: 150 9% 88%;               /* #DDE3E0 — divisórias finas */
+    --input: 150 6% 58%;                /* borda de campo #8D9792 — 3,1:1 */
+    --ring: 155 81% 23%;
+    --chart-1: 155 81% 23%;
+    --chart-2: 42 100% 50%;
+    --chart-3: 210 55% 40%;
+    --chart-4: 14 80% 48%;
+    --chart-5: 280 45% 45%;
+    --radius: 0.625rem;                 /* 10 px: placa de loja, não bolha */
+    --font-heading: 'Bricolage Grotesque Variable', system-ui, sans-serif;
+    --font-display: 'Bricolage Grotesque Variable', system-ui, sans-serif;
+    --font-body: 'Figtree Variable', system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sombra-flutuante: 0 10px 30px rgb(20 32 26 / 0.16);
+    --sidebar-background: 150 12% 97%;
+    --sidebar-foreground: 150 23% 10%;
+    --sidebar-primary: 155 81% 23%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 150 12% 93%;
+    --sidebar-accent-foreground: 150 23% 10%;
+    --sidebar-border: 150 9% 88%;
+    --sidebar-ring: 155 81% 23%;
   }
-  .tema-cliente body { font-variant-numeric: tabular-nums; caret-color: hsl(var(--primary)); -webkit-font-smoothing: antialiased; }
-  .tema-cliente .font-display { font-weight: 800; letter-spacing: -0.02em; }
-  .tema-cliente em { font-style: normal; }
+
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground font-body; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+  ::selection { background: hsl(155 81% 23% / 0.15); color: inherit; }
+  :focus-visible { outline: 2px solid hsl(var(--marca)); outline-offset: 2px; }
+
+  /* Letreiro: títulos com a fonte da marca, pesados e justos. Tamanhos contidos (nada de 6xl decorativo). */
+  .font-display { font-family: var(--font-display); font-weight: 750; letter-spacing: -0.025em; font-variation-settings: "opsz" 32; }
+  h1.font-display { line-height: 1.1; }
+  em { font-style: normal; }
+
+  /* Painéis (comerciante e admin): títulos de página menores e mais densos que no app. */
+  .painel h1.font-display { font-size: clamp(1.625rem, 1.2rem + 1.2vw, 2.125rem) !important; }
+  .painel h2.font-display { font-size: 1.25rem !important; }
+
+  /* App do Cliente */
+  .tema-cliente h1.font-display { font-size: 1.625rem; }
+  .tema-cliente h2.font-display { font-size: 1.25rem; line-height: 1.2; }
   .tema-cliente a.text-primary { color: hsl(var(--marca)); }
-  .tema-cliente h1.font-display { font-size: 1.625rem; line-height: 1.2; color: hsl(var(--foreground)); }
-  .tema-cliente h2.font-display { font-size: 1.25rem; line-height: 1.25; color: hsl(var(--foreground)); }
-  .tema-cliente .text-marca { color: hsl(var(--marca)); }
-  .tema-cliente .rounded-2xl, .tema-cliente .rounded-3xl { border-radius: 1rem; }
-  .tema-cliente .rounded-lg { border-radius: 0.75rem; }
-  .tema-cliente ::selection { background: hsl(153 88% 27% / 0.16); color: inherit; }
-  .tema-cliente :focus-visible { outline: 2px solid hsl(var(--marca)); outline-offset: 2px; }
-  .tema-cliente * { scrollbar-width: thin; scrollbar-color: hsl(140 10% 80%) transparent; }
 }
 
 @layer components {
-  /* Botões do cliente: principal (ação), secundário (contorno verde), desativado legível. */
-  .btn-acao { @apply inline-flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-primary text-primary-foreground text-[15px] font-bold transition-colors hover:bg-[#06683C] active:translate-y-px disabled:bg-secondary disabled:text-muted-foreground disabled:cursor-not-allowed; }
-  .btn-contorno { @apply inline-flex items-center justify-center gap-2 h-12 px-5 rounded-full border-2 border-marca text-marca text-[15px] font-bold transition-colors hover:bg-marca/5; }
-  .campo { @apply w-full h-12 px-3.5 rounded-lg bg-card border border-input text-[15px] text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0; }
+  /* Ação principal: placa verde, cantos de 10 px, texto forte. Uma por tela. */
+  .btn-acao { @apply inline-flex items-center justify-center gap-2 h-12 px-5 rounded-[10px] bg-primary text-primary-foreground text-[15px] font-bold transition-colors hover:bg-[#08583A] active:translate-y-px disabled:bg-secondary disabled:text-muted-foreground disabled:cursor-not-allowed; }
+  /* Ação secundária: contorno em tinta (neutra), para não competir com a principal. */
+  .btn-contorno { @apply inline-flex items-center justify-center gap-2 h-12 px-5 rounded-[10px] border border-foreground/25 text-foreground text-[15px] font-semibold transition-colors hover:bg-secondary; }
+  .campo { @apply w-full h-12 px-3.5 rounded-[10px] bg-card border border-input text-[15px] text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0; }
+  /* Sombra só no que flutua (sacola, menus). Cartões em lista não têm sombra. */
   .flutuante { box-shadow: var(--sombra-flutuante); }
-  .cartao { box-shadow: var(--sombra-cartao); }
+  /* Etiqueta: selo de informação real (aberto, entrega grátis, tempo). */
+  .etiqueta { @apply inline-flex items-center gap-1 h-6 px-2 rounded-md text-[12px] font-semibold whitespace-nowrap; }
+  /* Toldo: borda ondulada de toldo de loja — a assinatura da marca (ver components/brand/Toldo.jsx). */
+  .toldo-borda { height: 10px; background: radial-gradient(circle at 10px 0, var(--toldo-cor, hsl(var(--marca))) 10px, transparent 10.5px) 0 0 / 20px 10px repeat-x; }
+}
+
+@layer utilities {
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 }

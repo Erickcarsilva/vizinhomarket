@@ -12,10 +12,10 @@ export default function CartBar({ storeId }) {
     <AnimatePresence>
       {show && (
         <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="fixed bottom-[4.5rem] sm:bottom-5 inset-x-0 z-30 px-4 sm:px-6">
-          <Link to="/carrinho" className="max-w-md mx-auto flex items-center gap-3 h-14 px-4 rounded-lg bg-primary text-primary-foreground flutuante hover:bg-[#06683C] transition-colors">
+          <Link to="/carrinho" className="max-w-md mx-auto flex items-center gap-3 h-14 px-4 rounded-[12px] bg-foreground text-background flutuante hover:bg-[#22302A] transition-colors">
             <span className="relative">
               <ShoppingBag className="w-5 h-5" aria-hidden="true" />
-              <span className="absolute -top-2 -right-2.5 min-w-[18px] h-[18px] px-1 rounded-full bg-white text-primary text-[11px] font-bold leading-[18px] text-center">{count}</span>
+              <span className="absolute -top-2 -right-2.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FFC21A] text-foreground text-[11px] font-bold leading-[18px] text-center">{count}</span>
             </span>
             <span className="flex-1 text-[15px] font-semibold">Ver sacola<span className="sr-only">, {count} {count === 1 ? "item" : "itens"}</span></span>
             <span className="text-[15px] font-bold">{brl(subtotal)}</span>

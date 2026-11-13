@@ -21,7 +21,7 @@ export default function Servicos() {
   return (
     <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Serviços</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Serviços</p>
         <h1 className="font-display text-4xl mt-2">O que você faz</h1>
       </div>
       <form onSubmit={(e) => { e.preventDefault(); run(async () => { await base44.services.saveOffering(store.id, f); setF(EMPTY); }); }} className="rounded-2xl border border-border bg-card p-5 grid sm:grid-cols-2 gap-3">

@@ -37,7 +37,7 @@ export default function MobileMenu() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="w-[84%] sm:max-w-sm p-0 flex flex-col bg-background">
           <div className="flex items-center px-5 h-16 border-b border-border shrink-0">
-            <SheetTitle asChild><span><Brand size="md" className="font-bold" /></span></SheetTitle>
+            <SheetTitle asChild><span><Brand size="md" /></span></SheetTitle>
           </div>
           <nav aria-label="Mais opções" className="flex-1 overflow-y-auto px-2 py-2">
             <Group>Conta</Group>

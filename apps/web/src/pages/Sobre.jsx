@@ -11,7 +11,7 @@ export default function Sobre() {
   ];
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-4 pb-10">
-      <h1 className="font-display text-[28px] leading-tight text-marca">O comércio de Sidrolândia, a um toque.</h1>
+      <h1 className="font-display text-[28px] leading-tight">O comércio de Sidrolândia, a um toque.</h1>
       <p className="text-base text-[#3E4743] mt-4 leading-relaxed">
         O VizinhoMarket nasceu para reaproximar moradores e lojistas do bairro. Enquanto os grandes marketplaces
         cobram comissões altas e afastam o cliente da loja, nós fazemos o oposto: colocamos o comércio local na
@@ -26,7 +26,7 @@ export default function Sobre() {
               <div className="w-11 h-11 rounded-[12px] bg-[#EAF6EF] text-marca flex items-center justify-center">
                 <Icon className="w-5 h-5" aria-hidden="true" />
               </div>
-              <h2 className="font-display text-xl text-marca mt-3">{p.title}</h2>
+              <h2 className="font-display text-xl mt-3">{p.title}</h2>
               <p className="text-[15px] text-muted-foreground mt-1.5 leading-relaxed">{p.text}</p>
             </div>
           );
@@ -34,7 +34,7 @@ export default function Sobre() {
       </div>
 
       <section className="mt-10">
-        <h2 className="font-display text-2xl text-marca mb-3">Como funcionamos</h2>
+        <h2 className="font-display text-2xl mb-3">Como funcionamos</h2>
         <ol className="space-y-3 text-[15px] text-[#3E4743]">
           <li><strong className="text-foreground">1. Lojista se cadastra</strong> e, depois de aprovado, monta o catálogo. Sem mensalidade: paga só uma comissão sobre os pedidos entregues.</li>
           <li><strong className="text-foreground">2. O cliente navega pela vitrine</strong>, escolhe a loja e monta o pedido pelo catálogo.</li>

@@ -9,7 +9,7 @@ import { brl, isStoreListable } from "@/lib/constants";
 import { Image } from "@/components/ui/image";
 
 function Title({ children }) {
-  return <h2 className="font-display text-[22px] leading-tight text-marca mb-1">{children}</h2>;
+  return <h2 className="font-display text-[22px] leading-tight mb-1">{children}</h2>;
 }
 
 // Produto encontrado: linha com foto, nome, loja e preço.
@@ -18,7 +18,7 @@ function ProductRow({ p, store }) {
     <Link to={`/loja/${p.store_id}`} className="flex items-center gap-3.5 py-3 min-w-0 border-b border-[#E8ECE9] last:border-0 hover:bg-secondary/50 transition-colors">
       <span className="w-[60px] h-[60px] shrink-0 rounded-[14px] overflow-hidden bg-[#EAF6EF] flex items-center justify-center">
         {p.image_url ? <Image src={p.image_url} alt="" className="w-full h-full object-cover" />
-          : <span aria-hidden="true" className="font-display font-semibold text-[23px] text-marca">{(p.name || "?")[0]}</span>}
+          : <span aria-hidden="true" className="font-display font-semibold text-[23px]">{(p.name || "?")[0]}</span>}
       </span>
       <span className="flex-1 min-w-0 flex flex-col gap-0.5">
         <span className="text-base font-semibold leading-tight truncate">{p.name}</span>
@@ -51,7 +51,7 @@ export default function Busca() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-10">
-      <h1 className="font-display text-2xl text-marca mb-3">Buscar</h1>
+      <h1 className="font-display text-2xl mb-3">Buscar</h1>
       <SearchField value={q} onChange={setQ} autoFocus />
 
       {term && (

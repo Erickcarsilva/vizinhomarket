@@ -20,8 +20,8 @@
     "build:entregador": "vite build --mode entregador --outDir dist/entregador --emptyOutDir"
   },
   "dependencies": {
-    "@fontsource/figtree": "5.3.0",
-    "@fontsource/lora": "5.3.0",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/figtree": "^5.3.0",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-checkbox": "^1.1.4",
     "@radix-ui/react-dialog": "^1.1.6",

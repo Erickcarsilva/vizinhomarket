@@ -87,7 +87,7 @@ export default function EditStoreProfile() {
     <div className="max-w-3xl mx-auto px-5 py-12 space-y-8">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Perfil da loja</p>
+          <p className="text-[13px] font-semibold text-muted-foreground">Perfil da loja</p>
           <h1 className="font-display text-4xl mt-2">Como os clientes te veem</h1>
         </div>
       </div>

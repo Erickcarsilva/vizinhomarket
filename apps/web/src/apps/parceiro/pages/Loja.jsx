@@ -12,7 +12,7 @@ export default function Loja() {
     <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Minha loja</p>
+          <p className="text-[13px] font-semibold text-muted-foreground">Minha loja</p>
           <h1 className="font-display text-4xl mt-2">Funcionamento</h1>
           <p className="text-sm text-muted-foreground mt-2">Abrir e pausar a loja, horário, taxa de entrega, pedido mínimo, chave Pix e formas de entrega.</p>
         </div>

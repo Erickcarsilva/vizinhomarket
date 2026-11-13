@@ -37,7 +37,7 @@ export default function ServiceStore({ store }) {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-6 grid md:grid-cols-[minmax(0,1fr)_340px] gap-8">
       <section aria-label="Serviços oferecidos" className="space-y-3 min-w-0">
-        <h2 className="font-display text-[22px] text-marca">Serviços</h2>
+        <h2 className="font-display text-[22px]">Serviços</h2>
         {isLoading ? <div className="h-24 rounded-lg bg-secondary animate-pulse" /> : offerings.length === 0 ? (
           <p className="text-muted-foreground">O prestador ainda não listou os serviços. Descreva o que precisa e peça um orçamento.</p>
         ) : offerings.map((o) => (
@@ -53,7 +53,7 @@ export default function ServiceStore({ store }) {
         ))}
       </section>
       <form onSubmit={submit} className="h-fit md:sticky md:top-24 rounded-lg border border-border bg-card p-5 space-y-3" aria-label="Pedir orçamento">
-        <h2 className="font-display text-[20px] text-marca">Pedir orçamento</h2>
+        <h2 className="font-display text-[20px]">Pedir orçamento</h2>
         <p className="text-[13px] text-muted-foreground">Grátis e sem compromisso. O prestador responde com o valor; você decide se aceita. Seu telefone e endereço só são liberados depois do aceite.</p>
         <Textarea required value={f.description} onChange={(e) => setF({ ...f, description: e.target.value.slice(0, 2000) })} placeholder="Descreva o que precisa (o que é, onde, tamanho, urgência)" aria-label="Descrição do serviço" rows={4} className="rounded-lg text-[15px]" />
         <Input value={f.window} onChange={(e) => setF({ ...f, window: e.target.value.slice(0, 200) })} placeholder="Melhor dia e horário (opcional)" aria-label="Melhor dia e horário" className="h-11 rounded-lg" />

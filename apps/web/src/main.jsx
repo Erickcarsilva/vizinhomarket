@@ -2,6 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { reportError } from '@/api/base44Client'
+import '@fontsource-variable/bricolage-grotesque/wght.css'
+import '@fontsource-variable/figtree/wght.css'
 import '@/index.css'
 import { registerPwa } from '@/lib/pwa'
 
@@ -9,11 +11,11 @@ import { registerPwa } from '@/lib/pwa'
 window.addEventListener('error', (e) => reportError(e.error || e.message))
 window.addEventListener('unhandledrejection', (e) => reportError(e.reason))
 
-// App do Cliente tem tema próprio (classe tema-cliente em index.css); os painéis não.
-if (!['admin', 'parceiro', 'entregador'].includes(import.meta.env.VITE_APP)) {
-  document.documentElement.classList.add('tema-cliente')
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#FFFFFF')
-}
+// Mesmo sistema visual em todos os produtos; o App do Cliente tem ajustes próprios (classe tema-cliente),
+// os painéis do comerciante e do admin são mais densos (classe painel).
+if (['admin', 'parceiro'].includes(import.meta.env.VITE_APP)) document.documentElement.classList.add('painel')
+else if (import.meta.env.VITE_APP !== 'entregador') document.documentElement.classList.add('tema-cliente')
+document.querySelector('meta[name="theme-color"]')?.setAttribute('content', import.meta.env.VITE_APP === 'entregador' ? '#14201A' : '#0B6B43')
 
 // Cada site gera só o seu produto (VITE_APP vem do modo: cliente, parceiro, admin ou entregador).
 const load =

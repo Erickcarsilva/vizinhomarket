@@ -47,7 +47,7 @@ export default function Layout() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
           <div className="flex-1 min-w-0">
             <Link to="/" aria-label="VizinhoMarket, início" className="inline-block leading-none">
-              <Brand size="sm" className="text-[23px] font-bold" />
+              <Brand size="sm" />
             </Link>
             <DeliveryTo />
           </div>
@@ -80,7 +80,7 @@ export default function Layout() {
       <main className="flex-1 pb-20 sm:pb-0"><Outlet /></main>
       <footer className="border-t border-border mt-10 pb-20 sm:pb-0">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p><Brand size="sm" className="text-base font-bold" /> · Sidrolândia/MS · versão {APP_VERSION.split(" · ")[0]}</p>
+          <p><Brand size="sm" mark={false} className="text-base" /> · Sidrolândia/MS · versão {APP_VERSION.split(" · ")[0]}</p>
           <div className="flex gap-4">
             <Link to="/termos-uso" className="hover:text-foreground transition-colors">Termos</Link>
             <Link to="/privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>

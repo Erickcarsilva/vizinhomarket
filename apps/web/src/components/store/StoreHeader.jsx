@@ -2,7 +2,8 @@ import React from "react";
 import { Clock, MapPin, Star, Bike, ShoppingBasket } from "lucide-react";
 import { Image } from "@/components/ui/image";
 import { StoreLogo } from "@/components/home/StoreCard";
-import { CAT_COLOR } from "@/components/home/CategoryTabs";
+import { categoryStyle } from "@/lib/categoryStyle";
+import Toldo from "@/components/brand/Toldo";
 import { brl, categoryLabel, FULFILLMENT, deliveryFeeLabel } from "@/lib/constants";
 import { nextOpening } from "@/lib/hours";
 
@@ -25,11 +26,14 @@ export default function StoreHeader({ store }) {
           <Image src={store.cover_url} alt="" className="w-full h-full object-cover" />
         </div>
       ) : (
-        // Sem foto de capa: faixa na cor da categoria (a loja não fica com cara de página vazia).
-        <div aria-hidden="true" className="h-24 md:h-32" style={{ background: (CAT_COLOR[store.category] || ["#F0F4F1"])[0] }} />
+        // Sem foto de capa: fachada na cor da categoria, com o símbolo dela em marca d'água e a borda de toldo.
+        <div aria-hidden="true" className="relative h-24 md:h-32 overflow-hidden" style={{ background: categoryStyle(store.category).bg }}>
+          {React.createElement(categoryStyle(store.category).icon, { className: "absolute -right-3 -top-3 w-32 h-32 md:w-40 md:h-40", style: { color: categoryStyle(store.category).fg, opacity: 0.12 }, strokeWidth: 1.4 })}
+        </div>
       )}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 relative -mt-9">
-        <StoreLogo store={store} size={76} className="border-4 border-background rounded-[18px]" />
+      <Toldo color={store.cover_url ? "#FFFFFF" : categoryStyle(store.category).bg} className="-mt-px" />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 relative -mt-10">
+        <StoreLogo store={store} size={72} className="border-4 border-background" />
         <h1 className="font-display text-[26px] leading-tight mt-3 break-words">{store.name}</h1>
         <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground mt-1">
           {store.rating ? (
@@ -39,12 +43,12 @@ export default function StoreHeader({ store }) {
         </p>
 
         {store.is_open ? (
-          <p className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-marca">
-            <span className="w-2 h-2 rounded-full bg-marca" aria-hidden="true" /> Aberta agora
+          <p className="mt-3 etiqueta bg-[#DDF3E4] text-marca">
+            <span className="w-1.5 h-1.5 rounded-full bg-marca" aria-hidden="true" /> Aberta agora
           </p>
         ) : (
-          <div role="status" className="mt-3 rounded-lg border border-[#F5DFA0] bg-[#FFF6DB] px-3.5 py-2.5 text-sm">
-            <p className="font-semibold text-[#C2331A]">{store.is_paused ? "Loja pausada no momento" : "Fechada agora"}{opens ? ` · abre ${opens}` : ""}</p>
+          <div role="status" className="mt-3 rounded-[10px] bg-[#FFF3D1] px-3.5 py-2.5 text-sm">
+            <p className="font-semibold text-[#8A4B00]">{store.is_paused ? "Loja pausada no momento" : "Fechada agora"}{opens ? ` · abre ${opens}` : ""}</p>
             <p className="text-[#3E4743] mt-0.5">Você pode ver o cardápio, mas só dá para pedir quando ela abrir.</p>
           </div>
         )}
@@ -52,7 +56,7 @@ export default function StoreHeader({ store }) {
         {store.description && <p className="text-[15px] text-muted-foreground mt-3 max-w-2xl">{store.description}</p>}
 
         <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 mt-4 py-3 border-y border-border text-sm">
-          <Info icon={Clock}>{store.delivery_time_min || 40} min · {store.opening_hours || "Horário não informado"}</Info>
+          <Info icon={Clock}>{store.delivery_time_min ? `${store.delivery_time_min} min · ` : ""}{store.opening_hours || "Horário não informado"}</Info>
           <Info icon={Bike}>{deliveryFeeLabel(store)}</Info>
           {store.min_order ? <Info icon={ShoppingBasket}>Pedido mínimo {brl(store.min_order)}</Info> : null}
           {store.address && <Info icon={MapPin}>{store.address}</Info>}

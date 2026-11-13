@@ -29,7 +29,7 @@ export default function Orcamento() {
   };
 
   if (isLoading) return <div className="max-w-3xl mx-auto px-4 pt-6"><div className="h-32 rounded-lg bg-secondary animate-pulse" /></div>;
-  if (!r) return <div className="max-w-md mx-auto px-4 py-20 text-center"><h1 className="font-display text-2xl text-marca">Pedido não encontrado</h1><Link to="/meus-pedidos" className="btn-contorno mt-4">Meus pedidos</Link></div>;
+  if (!r) return <div className="max-w-md mx-auto px-4 py-20 text-center"><h1 className="font-display text-2xl">Pedido não encontrado</h1><Link to="/meus-pedidos" className="btn-contorno mt-4">Meus pedidos</Link></div>;
   const closed = ["CANCELLED", "DECLINED", "EXPIRED"].includes(r.status);
 
   return (
@@ -37,7 +37,7 @@ export default function Orcamento() {
       <Link to="/meus-pedidos" className="inline-flex items-center gap-1 text-sm font-semibold text-marca"><ChevronLeft className="w-4 h-4" aria-hidden="true" />Meus pedidos</Link>
       <div>
         <p className="text-[13px] text-muted-foreground">Orçamento {r.code} · {r.store?.name}{r.offering?.name ? ` · ${r.offering.name}` : ""}</p>
-        <h1 className="font-display text-[28px] text-marca leading-tight mt-1" aria-live="polite">{SERVICE_STATUS[r.status]}</h1>
+        <h1 className="font-display text-[28px] leading-tight mt-1" aria-live="polite">{SERVICE_STATUS[r.status]}</h1>
         {r.cancel_reason && closed && <p className="text-[15px] mt-1">Motivo: {r.cancel_reason}</p>}
       </div>
 
