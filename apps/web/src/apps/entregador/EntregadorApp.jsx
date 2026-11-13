@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, NavLink, Navigate, Outlet, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { Link, NavLink, Navigate, Outlet, Route, Routes, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bike, Wallet, History, User, MapPin, Navigation, Phone, Store, PackageCheck, AlertTriangle, Loader2, CheckCircle2, X, ChevronRight, Radio, LogOut, ShieldCheck } from "lucide-react";
 import AppShell from "@/apps/shared/AppShell";
@@ -48,6 +48,7 @@ function useCourierProfile() {
 }
 
 function CourierGate() {
+  const ctx = useOutletContext();
   const { data: me, isLoading, error } = useCourierProfile();
   if (isLoading) return <Spinner />;
   if (error) return <div className="p-6"><ErrorText error={error.message} /></div>;
@@ -62,7 +63,7 @@ function CourierGate() {
   if (me.status === "suspended") {
     return <Centered title="Acesso suspenso" icon={AlertTriangle}>Seu acesso às corridas está suspenso. Fale com o suporte para entender o motivo.</Centered>;
   }
-  return <Outlet context={me} />;
+  return <Outlet context={ctx} />;
 }
 
 function Centered({ title, icon: Icon, children }) {
@@ -138,7 +139,7 @@ function Corridas() {
   const qc = useQueryClient();
   const { data: me } = useCourierProfile();
   const online = Boolean(me?.is_online);
-  const loc = useCourierLocation(online);
+  const { loc } = useOutletContext() || {};
   const [error, setError] = useState("");
 
   const toggle = useMutation({
@@ -159,12 +160,12 @@ function Corridas() {
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${online ? "bg-white/15" : "bg-secondary"}`}><Radio className="w-6 h-6" /></div>
           <div className="flex-1">
             <p className="font-semibold text-lg">{online ? "Você está online" : "Você está offline"}</p>
-            <p className={`text-sm ${online ? "opacity-80" : "text-muted-foreground"}`}>{online ? "Recebendo corridas da sua cidade." : "Fique online para ver e aceitar corridas."}</p>
+            <p className={`text-sm ${online ? "text-primary-foreground" : "text-muted-foreground"}`}>{online ? "Recebendo corridas da sua cidade." : "Fique online para ver e aceitar corridas."}</p>
           </div>
         </div>
         <Btn tone={online ? "ghost" : "accent"} className={`w-full mt-4 ${online ? "!bg-white/10 !border-white/30 !text-primary-foreground" : ""}`} busy={toggle.isPending}
           onClick={() => { setError(""); toggle.mutate(!online); }}>{online ? "Ficar offline" : "Ficar online"}</Btn>
-        {online && loc.error && <p className="text-sm mt-3 bg-white/10 rounded-xl px-3 py-2">{loc.error}</p>}
+        {online && loc?.error && <p className="text-sm mt-3 bg-white/10 rounded-xl px-3 py-2">{loc.error}</p>}
       </Card>
       <ErrorText error={error} />
 
@@ -389,9 +390,9 @@ function Ganhos() {
       {isLoading ? <Spinner /> : error ? <ErrorText error={error.message} /> : (
         <>
           <Card className="bg-primary text-primary-foreground border-primary">
-            <p className="text-sm opacity-80">Ganho no período</p>
+            <p className="text-sm">Ganho no período</p>
             <p className="font-display text-5xl mt-1">{brl(data.earned)}</p>
-            <p className="text-sm opacity-80 mt-2">{data.deliveries} entrega(s) concluída(s)</p>
+            <p className="text-sm mt-2">{data.deliveries} entrega(s) concluída(s)</p>
           </Card>
           <div className="grid grid-cols-2 gap-3">
             <Card><p className="text-sm text-muted-foreground">Saldo a receber</p><p className="font-display text-2xl mt-1">{brl(data.balance)}</p></Card>
@@ -452,18 +453,21 @@ function Conta() {
 
 // ---------------------------------------------------------------- Estrutura
 function CourierLayout() {
+  // GPS fica aqui (sempre montado): segue enviando a posição na tela da corrida; para quando fica offline.
+  const { data: me } = useCourierProfile();
+  const loc = useCourierLocation(me?.status === "approved" && Boolean(me?.is_online));
   const NAV = [["/", "Corridas", Bike], ["/ganhos", "Ganhos", Wallet], ["/historico", "Histórico", History], ["/conta", "Conta", User]];
   useEffect(() => { document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#14231C"); }, []);
   return (
     <div className="min-h-screen pb-20">
       <header className="sticky top-0 z-40 bg-[#14231C] text-white h-14 px-4 flex items-center justify-between">
         <Brand size="sm" className="!text-white" />
-        <span className="text-[11px] uppercase tracking-[0.2em] opacity-70">Entregador</span>
+        <span className="text-[11px] uppercase tracking-[0.2em] text-white">Entregador</span>
       </header>
-      <main><Outlet /></main>
+      <main><Outlet context={{ loc }} /></main>
       <nav className="fixed bottom-0 inset-x-0 z-40 bg-card border-t border-border grid grid-cols-4 pb-[env(safe-area-inset-bottom)]" aria-label="Menu">
         {NAV.map(([to, label, Icon]) => (
-          <NavLink key={to} to={to} end={to === "/"} className={({ isActive }) => `h-16 flex flex-col items-center justify-center gap-1 text-[11px] font-semibold ${isActive ? "text-primary" : "text-muted-foreground"}`}>
+          <NavLink key={to} to={to} end={to === "/"} className={({ isActive }) => `h-16 flex flex-col items-center justify-center gap-1 text-[12px] font-semibold ${isActive ? "text-primary" : "text-foreground/75"}`}>
             <Icon className="w-5 h-5" />{label}
           </NavLink>
         ))}

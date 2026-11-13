@@ -176,7 +176,7 @@ try {
   await ent.waitForTimeout(1500);
   check('Retirada coloca o pedido em rota', (await one('select status, courier_id from orders where id = $1', [o.id])).status === 'IN_TRANSIT');
   check('Depois do aceite o entregador vê o endereço do cliente', await ent.getByText(/Rua das Flores/).first().isVisible().catch(() => false));
-  await ent.waitForTimeout(16000); // primeira posição enviada depois da retirada
+  await ent.waitForTimeout(25000); // reenvio periódico da posição (a cada 20 s) depois da retirada
   const pos = await one('select count(*)::int n from delivery_locations where order_id = $1', [o.id]);
   check('Posição do entregador registrada durante a entrega', pos.n >= 1, `posições=${pos.n}`);
   const { delivery_code: code } = await one('select delivery_code from order_secrets where order_id = $1', [o.id]);
@@ -232,7 +232,7 @@ try {
   await register(adm, 'admin@vizinhomarket.test', CLI);
   await db.query("insert into user_roles (user_id, role) select id, 'admin' from auth.users where email = 'admin@vizinhomarket.test'");
   await signIn(adm, ADM, 'admin@vizinhomarket.test');
-  for (const [path, text] of [['/financeiro', 'Pendências'], ['/reembolsos', 'Para decidir'], ['/atendimento', 'Abertos'], ['/cupons', 'BEMVINDO5'], ['/entregas', 'Entregas'], ['/categorias', 'Serviços']]) {
+  for (const [path, text] of [['/financeiro', 'Pendências'], ['/reembolsos', 'Para decidir'], ['/atendimento', 'Abertos'], ['/cupons', 'BEMVINDO5'], ['/entregas', 'Entregas'], ['/categorias', 'Criar (inativa)']]) {
     await adm.goto(`${ADM}${path}`);
     await adm.waitForTimeout(1500);
     check(`Admin abre ${path}`, await adm.getByText(text).first().isVisible().catch(() => false));
