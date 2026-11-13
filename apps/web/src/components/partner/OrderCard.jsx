@@ -8,7 +8,15 @@ export default function OrderCard({ order, onChanged }) {
   const [mode, setMode] = useState(null); // "code" | "cancel"
   const [input, setInput] = useState("");
   const [ageChecked, setAgeChecked] = useState(false);
-  const next = nextStatus(order);
+  const platform = order.fulfillment === "plataforma";
+  // Entrega pela plataforma: depois de pronto, quem anda com o pedido é o entregador (retirada e código no app dele).
+  const next = platform && ["READY", "IN_TRANSIT"].includes(order.status) ? null : nextStatus(order);
+  const offlineToCollect = order.payment_mode !== "online" && order.payment_status === "pending" && order.status !== "CREATED";
+  const confirmPaid = async () => {
+    setBusy(true); setError("");
+    try { await base44.entities.Order.confirmOfflinePayment(order.id); onChanged(); }
+    catch (e) { setError(e.message); } finally { setBusy(false); }
+  };
   const open = !["DELIVERED", "CANCELLED"].includes(order.status);
 
   const move = async (status, extra = {}) => {
@@ -49,8 +57,21 @@ export default function OrderCard({ order, onChanged }) {
       {order.notes && <p className="text-sm bg-secondary rounded-lg px-3 py-2">“{order.notes}”</p>}
       <div className="text-xs text-muted-foreground space-y-0.5">
         <p>{FULFILLMENT[order.fulfillment]}{order.address ? ` · ${order.address}` : ""}</p>
-        <p>{PAYMENT[order.payment_method]}{order.change_for ? ` · troco p/ ${brl(order.change_for)}` : ""}</p>
+        {order.payment_mode === "online" ? (
+          <p className="font-semibold text-emerald-700">Pago pelo app · não cobre do cliente</p>
+        ) : (
+          <p>{PAYMENT[order.payment_method]}{order.change_for ? ` · troco p/ ${brl(order.change_for)}` : ""}{order.payment_status === "paid" ? " · recebido" : ""}</p>
+        )}
+        {order.discount > 0 && <p>Cupom: −{brl(order.discount)} ({order.discount_funded_by === "store" ? "desconto da loja" : "bancado pelo VizinhoMarket"})</p>}
+        {platform && open && order.status !== "CREATED" && (
+          <p className="font-semibold text-foreground">{order.driver_id ? (order.status === "IN_TRANSIT" ? "Entregador a caminho do cliente" : "Entregador a caminho da loja") : "Procurando entregador da plataforma"}</p>
+        )}
       </div>
+      {offlineToCollect && (
+        <button type="button" disabled={busy} onClick={confirmPaid} className="w-full h-9 rounded-full text-sm border border-emerald-600/40 text-emerald-800 hover:bg-emerald-50 disabled:opacity-40">
+          Recebi o pagamento ({PAYMENT[order.payment_method]})
+        </button>
+      )}
       <div className="flex items-center justify-between pt-2 border-t border-border">
         <span className="font-display text-xl">{brl(order.total)}</span>
         {open && (

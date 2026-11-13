@@ -18,6 +18,7 @@ export default function Financeiro() {
     enabled: !!store,
   });
   const { data: invoices = [] } = useQuery({ queryKey: ["my-invoices", store?.id], queryFn: () => base44.partner.listInvoices(store.id), enabled: !!store });
+  const { data: bal } = useQuery({ queryKey: ["store-balance", store?.id], queryFn: () => base44.partner.balance(store.id), enabled: !!store });
   if (!store) return null;
   const delivered = (list.data?.pages || []).flatMap((p) => p.rows);
   return (
@@ -25,9 +26,17 @@ export default function Financeiro() {
       <div>
         <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Financeiro</p>
         <h1 className="font-display text-4xl mt-2">Comissões e faturas</h1>
-        <p className="text-sm text-muted-foreground mt-2">Sem mensalidade: você paga só a comissão dos pedidos entregues. No fim do mês, a fatura chega pelo WhatsApp e é paga por Pix.</p>
+        <p className="text-sm text-muted-foreground mt-2">Sem mensalidade: você paga só a comissão dos pedidos entregues. Pedidos pagos pelo app já têm a comissão descontada no repasse; os pagos na entrega entram na fatura do mês, paga por Pix.</p>
       </div>
       <TrialCard store={store} />
+
+      {bal && (
+        <section className="grid sm:grid-cols-3 gap-3" aria-label="Saldo">
+          <div className="rounded-2xl border border-border bg-card p-5"><p className="text-sm text-muted-foreground">A receber da plataforma</p><p className="font-display text-3xl mt-1">{brl(bal.to_receive)}</p><p className="text-xs text-muted-foreground mt-1">Pedidos pagos pelo app, já descontada a comissão.</p></div>
+          <div className="rounded-2xl border border-border bg-card p-5"><p className="text-sm text-muted-foreground">Comissão a pagar</p><p className="font-display text-3xl mt-1">{brl(bal.to_pay)}</p><p className="text-xs text-muted-foreground mt-1">Pedidos pagos na entrega ou direto à loja.</p></div>
+          <div className="rounded-2xl border border-border bg-card p-5"><p className="text-sm text-muted-foreground">Repasses recebidos</p><p className="font-display text-3xl mt-1">{brl(bal.payouts)}</p><p className="text-xs text-muted-foreground mt-1">Total já transferido para a loja.</p></div>
+        </section>
+      )}
 
       <section className="space-y-3">
         <h2 className="font-display text-2xl">Faturas</h2>

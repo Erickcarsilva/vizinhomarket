@@ -21,6 +21,9 @@ import Cardapio from "./pages/Cardapio";
 import Financeiro from "./pages/Financeiro";
 import Loja from "./pages/Loja";
 import Equipe from "./pages/Equipe";
+import Promocoes from "./pages/Promocoes";
+import Orcamentos from "./pages/Orcamentos";
+import Servicos from "./pages/Servicos";
 
 // Painel do Comerciante (site): pedidos, entregas, cardápio, comissões e dados da loja.
 export default function ParceiroApp() {
@@ -44,6 +47,9 @@ export default function ParceiroApp() {
             <Route path="/loja" element={<Loja />} />
             <Route path="/loja/aparencia" element={<EditStoreProfile />} />
             <Route path="/equipe" element={<Equipe />} />
+            <Route path="/promocoes" element={<Promocoes />} />
+            <Route path="/orcamentos" element={<Orcamentos />} />
+            <Route path="/servicos" element={<Servicos />} />
             <Route path="/alertas" element={<Notificacoes />} />
             <Route path="/cadastrar-loja" element={<RegisterStore />} />
             {/* endereços antigos */}

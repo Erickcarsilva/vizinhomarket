@@ -1,5 +1,5 @@
 import React from "react";
-import { useOutletContext } from "react-router-dom";
+import { Navigate, useOutletContext } from "react-router-dom";
 import { useStoreOrders, useTodayFinished } from "@/lib/useStoreOrders";
 import OrdersBoard from "@/components/partner/OrdersBoard";
 import TrialCard from "@/components/partner/TrialCard";
@@ -9,6 +9,7 @@ export default function Pedidos() {
   const { orders: active, refresh, isLoading } = useStoreOrders(store?.id);
   const finishedToday = useTodayFinished(store?.id);
   if (!store) return null;
+  if (store.is_service) return <Navigate to="/orcamentos" replace />;
   const waiting = active.filter((o) => o.status === "CREATED").length;
   return (
     <div className="max-w-6xl mx-auto px-5 py-8 space-y-8">

@@ -2,14 +2,14 @@
 import { supabase } from "@/api/supabase";
 import { applySort, fail } from "./shared";
 
-const PRODUCT_SELECT = "id, store_id, section, name, description, image_url, price, unit, stock, available, age_restricted, sort, created_at, " +
+const PRODUCT_SELECT = "id, store_id, section, name, description, image_url, price, unit, stock, available, age_restricted, attributes, sort, created_at, " +
   "variants:product_variants(id, name, price, available, sort), " +
   "addon_groups:product_addon_groups(id, name, min_select, max_select, sort, addons:product_addons(id, name, price, available, sort))";
 const bySort = (a, b) => (a.sort ?? 0) - (b.sort ?? 0);
 const productFromRow = (r) => r && ({
   id: r.id, store_id: r.store_id, name: r.name, description: r.description || "", image_url: r.image_url || "",
   price: Number(r.price), category: r.section || "", unit: r.unit, stock: r.stock == null ? null : Number(r.stock),
-  available: r.available, age_restricted: r.age_restricted, created_date: r.created_at,
+  available: r.available, age_restricted: r.age_restricted, attributes: r.attributes || {}, created_date: r.created_at,
   // Tamanhos (ex.: P/M/G) e grupos de adicionais (ex.: "Adicionais", mín. 0, máx. 3)
   variants: (r.variants || []).slice().sort(bySort).map((v) => ({ id: v.id, name: v.name, price: Number(v.price), available: v.available })),
   addon_groups: (r.addon_groups || []).slice().sort(bySort).map((g) => ({
@@ -58,6 +58,8 @@ const productToRow = (d) => {
   if (d.price !== undefined) row.price = Number(d.price);
   if (d.category !== undefined) row.section = d.category || null;
   if (d.stock !== undefined) row.stock = d.stock === "" || d.stock == null ? null : Number(d.stock);
+  // Atributos da categoria (o servidor confere tipo, opções e obrigatórios).
+  if (d.attributes !== undefined) row.attributes = Object.fromEntries(Object.entries(d.attributes || {}).filter(([, v]) => v !== "" && v != null));
   return row;
 };
 

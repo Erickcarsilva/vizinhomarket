@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const blank = { name: "", description: "", price: "", category: "", image_url: "", age_restricted: false, variants: [], addon_groups: [] };
+const blank = { name: "", description: "", price: "", category: "", image_url: "", age_restricted: false, attributes: {}, variants: [], addon_groups: [] };
 const clone = (p) => p ? {
-  ...p, price: p.price ?? "", age_restricted: !!p.age_restricted,
+  ...p, price: p.price ?? "", age_restricted: !!p.age_restricted, attributes: { ...(p.attributes || {}) },
   variants: (p.variants || []).map((v) => ({ ...v })),
   addon_groups: (p.addon_groups || []).map((g) => ({ ...g, addons: g.addons.map((a) => ({ ...a })) })),
 } : { ...blank };
@@ -21,6 +22,8 @@ const AddBtn = ({ onClick, children }) => (
 );
 
 export default function ProductForm({ storeId, product, open, onClose, onSaved }) {
+  const { data: storeInfo } = useQuery({ queryKey: ["store", storeId], queryFn: () => base44.entities.Store.get(storeId), enabled: !!storeId });
+  const schema = storeInfo?.attributes_schema || [];
   const [form, setForm] = useState(() => clone(product));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -61,7 +64,7 @@ export default function ProductForm({ storeId, product, open, onClose, onSaved }
     try {
       // Com tamanhos, o preço do produto vira o menor tamanho (usado no "a partir de").
       const price = hasSizes ? Math.min(...sizes.map((v) => Number(v.price))) : Number(form.price);
-      const data = { name: form.name, description: form.description, price, category: form.category, image_url: form.image_url, age_restricted: !!form.age_restricted, variants: form.variants, addon_groups: form.addon_groups };
+      const data = { name: form.name, description: form.description, price, category: form.category, image_url: form.image_url, age_restricted: !!form.age_restricted, attributes: form.attributes, variants: form.variants, addon_groups: form.addon_groups };
       if (product) await base44.entities.Product.update(product.id, data);
       else await base44.entities.Product.create({ ...data, store_id: storeId, available: true });
       onSaved();
@@ -90,6 +93,29 @@ export default function ProductForm({ storeId, product, open, onClose, onSaved }
             Foto {form.image_url && "✓"}
             <input type="file" accept="image/*" onChange={upload} className="block mt-1 text-sm" />
           </label>
+
+          {schema.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-border">
+              <Small>Detalhes da categoria</Small>
+              <div className="grid grid-cols-2 gap-3">
+                {schema.map((a) => {
+                  const v = form.attributes?.[a.key];
+                  const put = (val) => setForm((f) => ({ ...f, attributes: { ...f.attributes, [a.key]: val } }));
+                  if (a.type === "boolean") return (
+                    <label key={a.key} className="col-span-2 flex gap-2 items-center text-sm"><input type="checkbox" checked={!!v} onChange={(e) => put(e.target.checked)} />{a.label}{a.required ? " *" : ""}</label>
+                  );
+                  if (a.type === "select") return (
+                    <select key={a.key} value={v || ""} onChange={(e) => put(e.target.value)} aria-label={a.label} className="h-10 rounded-md border border-input bg-transparent px-3 text-sm">
+                      <option value="">{a.label}{a.required ? " *" : ""}</option>
+                      {(a.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  );
+                  return <Input key={a.key} type={a.type === "number" ? "number" : "text"} placeholder={`${a.label}${a.required ? " *" : ""}`} aria-label={a.label} value={v ?? ""}
+                    onChange={(e) => put(a.type === "number" ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value)} />;
+                })}
+              </div>
+            </div>
+          )}
 
           <label className="flex gap-2 items-start text-sm">
             <input type="checkbox" data-mais18 checked={!!form.age_restricted} onChange={(e) => setForm((f) => ({ ...f, age_restricted: e.target.checked }))} className="mt-1" />

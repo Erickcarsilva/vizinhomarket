@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { ClipboardList, Bike, History, UtensilsCrossed, Wallet, BarChart3, Store, Bell, LogOut, Menu, Plus, Users } from "lucide-react";
+import { ClipboardList, Bike, History, UtensilsCrossed, Wallet, BarChart3, Store, Bell, LogOut, Menu, Plus, Users, Tag, Briefcase, MessagesSquare } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/AuthContext";
 import { usePartnerStore } from "@/lib/usePartnerStore";
@@ -11,11 +11,15 @@ import { APP_VERSION } from "@/lib/version";
 
 // Campos: endereço, nome, ícone, contador, só o dono vê (o atendente cuida de pedidos, entregas e cardápio),
 // só depois da aprovação (loja em análise não recebe pedidos: vê só o que precisa para se preparar).
+// Último campo: só para lojas de produtos ("goods") ou só para prestadores de serviço ("services").
 const NAV = [
-  ["/", "Pedidos", ClipboardList, "orders", false, true],
-  ["/entregas", "Entregas", Bike, "deliveries", false, true],
-  ["/historico", "Pedidos entregues", History, null, true, true],
-  ["/cardapio", "Cardápio e preços", UtensilsCrossed],
+  ["/", "Pedidos", ClipboardList, "orders", false, true, "goods"],
+  ["/orcamentos", "Orçamentos", MessagesSquare, null, false, true, "services"],
+  ["/entregas", "Entregas", Bike, "deliveries", false, true, "goods"],
+  ["/historico", "Pedidos entregues", History, null, true, true, "goods"],
+  ["/cardapio", "Cardápio e preços", UtensilsCrossed, null, false, false, "goods"],
+  ["/servicos", "Serviços oferecidos", Briefcase, null, false, false, "services"],
+  ["/promocoes", "Promoções", Tag, null, true, true, "goods"],
   ["/financeiro", "Comissões e faturas", Wallet, null, true, true],
   ["/relatorios", "Relatórios", BarChart3, null, true, true],
   ["/loja", "Minha loja", Store, null, true],
@@ -46,7 +50,7 @@ function Sidebar({ store, stores, pickStore, counts, onNavigate, isOwner }) {
         )}
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        {NAV.filter((n) => (isOwner || !n[4]) && (store?.status !== "pending" || !n[5])).map(([to, label, Icon, countKey]) => (
+        {NAV.filter((n) => (isOwner || !n[4]) && (store?.status !== "pending" || !n[5]) && (!n[6] || (n[6] === "services") === Boolean(store?.is_service))).map(([to, label, Icon, countKey]) => (
           <NavLink key={to} to={to} end={to === "/"} onClick={onNavigate}
             className={({ isActive }) => `flex items-center gap-3 min-h-[44px] px-3 rounded-xl text-[15px] font-medium transition ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}>
             <Icon className="w-5 h-5 shrink-0" />

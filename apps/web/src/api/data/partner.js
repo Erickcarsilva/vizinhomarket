@@ -48,7 +48,9 @@ export const partner = {
   },
   // Pedidos em andamento (os que exigem ação): poucos por natureza, sem corte de histórico.
   async activeOrders(storeId) {
-    const { data, error } = await supabase.from("orders").select(ORDER_SELECT).eq("store_id", storeId).not("status", "in", ACTIVE).order("created_at", { ascending: false }).limit(500);
+    // Pedido online só aparece para a loja depois que o banco confirma o pagamento.
+    const { data, error } = await supabase.from("orders").select(ORDER_SELECT).eq("store_id", storeId).not("status", "in", ACTIVE)
+      .or("payment_mode.eq.offline,payment_status.in.(paid,refunded,partially_refunded)").order("created_at", { ascending: false }).limit(500);
     fail(error);
     return data.map(orderFromRow);
   },
@@ -73,5 +75,22 @@ export const partner = {
     const { data, error } = await supabase.from("invoices").select("id, period_start, period_end, orders_count, gross_amount, commission_total, status, paid_at").eq("store_id", storeId).order("period_start", { ascending: false });
     fail(error);
     return data.map((r) => ({ ...r, gross_amount: Number(r.gross_amount), commission_total: Number(r.commission_total) }));
+  },
+  // Saldo no razão: a receber da plataforma (pedidos pagos pelo app) e a pagar (comissão de pedidos pagos na entrega).
+  async balance(storeId) {
+    const { data, error } = await supabase.rpc("store_balance", { p_store_id: storeId });
+    fail(error);
+    return { to_receive: Number(data.to_receive), to_pay: Number(data.to_pay), payouts: Number(data.payouts) };
+  },
+  async coupons(storeId) {
+    const { data, error } = await supabase.from("coupons").select("id, code, description, kind, value, max_discount, min_subtotal, starts_at, ends_at, max_redemptions, per_user_limit, first_order_only, active, redemptions")
+      .eq("store_id", storeId).order("created_at", { ascending: false });
+    fail(error);
+    return data;
+  },
+  async saveCoupon(storeId, c) {
+    const { data, error } = await supabase.rpc("upsert_coupon", { p: { ...c, store_id: storeId, funded_by: "store" } });
+    fail(error);
+    return data;
   },
 };
