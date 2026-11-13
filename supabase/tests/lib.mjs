@@ -56,6 +56,7 @@ export async function setupDb() {
 // Cenário comum: cidade, bairro, admin, 2 lojas aprovadas abertas 24 h, clientes.
 export async function baseScenario(t) {
   const { q, as, su, mk } = t;
+  await q("update public.platform_settings set value = 'true' where key = 'platform_delivery_enabled'");
   const admin = await mk('admin');
   await q("insert into public.user_roles (user_id, role) values ($1, 'admin')", [admin.id]);
   const [{ id: city }] = await q("select id from public.cities where slug = 'sidrolandia-ms'");

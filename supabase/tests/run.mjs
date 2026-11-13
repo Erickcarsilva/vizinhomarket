@@ -53,6 +53,7 @@ const [{ id: city }] = await q("select id from public.cities where slug = 'sidro
 const [{ id: bairro1 }] = await q("insert into public.neighborhoods (city_id, name) values ($1, 'Centro') returning id", [city]);
 const [{ id: bairro2 }] = await q("insert into public.neighborhoods (city_id, name) values ($1, 'Bairro Distante') returning id", [city]);
 const cat = Object.fromEntries((await q('select slug, id from public.categories')).map(r => [r.slug, r.id]));
+await q("update public.platform_settings set value = 'true' where key = 'platform_delivery_enabled'");
 
 // Perfil criado pelo gatilho de cadastro
 await ok('Gatilho de cadastro cria o perfil', async () => eq((await q('select count(*) c from public.profiles'))[0].c, 9));
@@ -249,12 +250,20 @@ await as(courP);
 await fails('Entregador pendente não vê corridas', () => q('select * from public.list_available_deliveries()'), 'não aprovado');
 await fails('Entregador pendente não aceita corrida', () => q('select public.claim_delivery($1)', [order1]), 'não aprovado');
 await as(cour1);
+await fails('Entregador offline não vê corridas', () => q('select * from public.list_available_deliveries()'), 'online');
+await q('select public.courier_set_online(true)');
+await as(cour2); await q('select public.courier_set_online(true)');
+await as(cour1);
 await ok('Lista de corridas não expõe endereço nem telefone do cliente', async () => {
   const rows = await q('select * from public.list_available_deliveries()');
   const cols = Object.keys(rows[0] || {});
   return rows.length === 1 && !cols.some(c => /address_line$|phone|customer_name/.test(c)) && cols.includes('customer_neighborhood');
 });
-await ok('Entregador 1 aceita a corrida', async () => { await q('select public.claim_delivery($1)', [order1]); return true; });
+await ok('Entregador 1 aceita a corrida e confirma a retirada', async () => {
+  await q('select public.claim_delivery($1)', [order1]);
+  await q('select public.confirm_pickup($1)', [order1]);
+  return true;
+});
 await as(cour2);
 await fails('Entregador 2 não aceita a mesma corrida (aceite atômico)', () => q('select public.claim_delivery($1)', [order1]), 'já foi assumida');
 await ok('Entregador 2 não vê o pedido', async () => eq((await q('select count(*) c from public.orders where id = $1', [order1]))[0].c, 0));

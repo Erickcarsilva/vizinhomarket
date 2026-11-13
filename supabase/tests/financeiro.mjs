@@ -202,7 +202,7 @@ await ok('Entrega da plataforma offline: loja deve comissão + taxa; entregador 
   await as(A.owner);
   await q("select public.advance_order_status($1, 'ACCEPTED')", [id]);
   await q("select public.advance_order_status($1, 'READY')", [id]);
-  await as(cour); await q('select public.claim_delivery($1)', [id]);
+  await as(cour); await q('select public.courier_set_online(true)'); await q('select public.claim_delivery($1)', [id]); await q('select public.confirm_pickup($1)', [id]);
   await su(); const [{ delivery_code }] = await q('select delivery_code from public.order_secrets where order_id = $1', [id]);
   await as(cour); await q('select public.confirm_delivery($1, $2)', [id, delivery_code]);
   eq(await ledgerSum("account = 'store_receivable' and order_id = $1", [id]), 10); // 4 comissão + 6 entrega

@@ -6,7 +6,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test:db": "node supabase/tests/run.mjs && node supabase/tests/financeiro.mjs && node supabase/tests/gateway.mjs",
+    "test:db": "node supabase/tests/run.mjs && node supabase/tests/financeiro.mjs && node supabase/tests/gateway.mjs && node supabase/tests/logistica.mjs",
     "test:db:base": "node supabase/tests/run.mjs",
     "test:db:financeiro": "node supabase/tests/financeiro.mjs",
     "test:gateway": "node supabase/tests/gateway.mjs"
