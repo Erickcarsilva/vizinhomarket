@@ -39,7 +39,7 @@ export default function StoreHeader({ store }) {
           {store.rating ? (
             <><Star className="w-3.5 h-3.5 fill-[#F2A900] text-[#F2A900]" aria-hidden="true" /><span className="font-semibold text-foreground"><span className="sr-only">Nota </span>{store.rating.toFixed(1).replace(".", ",")}</span><span aria-hidden="true">·</span></>
           ) : <><span className="font-semibold text-marca">Nova</span><span aria-hidden="true">·</span></>}
-          <span>{categoryLabel(store.category)}</span>
+          <span>{(store.category_name || categoryLabel(store.category))}</span>
         </p>
 
         {store.is_open ? (

@@ -317,3 +317,14 @@ Erick revisa o relatório de 21/10 e autoriza juntar o ramo `correcoes-pre-pilot
 
 ### Resultados
 Ver `docs/RELATORIO_TESTES.md`. Situação e pendências: `docs/STATUS_PILOTO.md`.
+
+## 13/11/2026 — Reposicionamento visual
+O visual anterior (serifas, marfim, terracota, caixa alta espaçada) parecia loja de roupa/cama e banho. Nova identidade
+"a rua comercial da cidade no celular": toldo como assinatura, verde-vizinho + amarelo-toldo, cor e símbolo próprios por categoria
+(todas com o mesmo peso), Bricolage Grotesque + Figtree empacotadas (sem Google Fonts), raio 10 px, sombra só no que flutua.
+Detalhes e justificativas: `docs/DESIGN.md`.
+- Reformulados: página inicial, categorias, busca/resultados, página da loja, cartões de loja e produto, sacola; painéis do lojista
+  e do admin (menu por área, pendências com quantidade, botões dos pedidos); app do entregador (marca, cabeçalho).
+- Corrigido junto: tempo de entrega inventado ("40 min") quando a loja não informa; "Entrega grátis" em prestador de serviço;
+  nome da categoria vindo do banco (categoria nova criada pelo admin aparecia como o código, ex.: "farmacia").
+- Sem mudança em regra comercial, financeira, checkout, autenticação ou permissões.

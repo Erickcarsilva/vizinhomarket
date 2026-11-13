@@ -64,7 +64,7 @@ export default function StoreCard({ store }) {
       <span className="flex-1 min-w-0 flex flex-col gap-0.5">
         <span className={`text-[16px] font-semibold leading-tight truncate ${open ? "" : "text-muted-foreground"}`}>{store.name}</span>
         <span className="text-[13px] text-muted-foreground truncate">
-          {open ? categoryLabel(store.category) : `${store.is_paused ? "Pausada no momento" : opens ? `Abre ${opens}` : "Fechada agora"} · ${categoryLabel(store.category)}`}
+          {open ? (store.category_name || categoryLabel(store.category)) : `${store.is_paused ? "Pausada no momento" : opens ? `Abre ${opens}` : "Fechada agora"} · ${(store.category_name || categoryLabel(store.category))}`}
         </span>
         {open && (
           <span className="flex items-center gap-2 text-[13px] text-muted-foreground whitespace-nowrap overflow-hidden mt-0.5">
@@ -95,7 +95,7 @@ export function StoreTile({ store }) {
         <div className="relative px-3 pb-3 -mt-6">
           <StoreLogo store={store} size={48} className="border-2 border-card" />
           <p className="text-[15px] font-semibold leading-tight mt-2 truncate group-hover:underline underline-offset-2">{store.name}</p>
-          <p className="text-[12.5px] text-muted-foreground truncate">{categoryLabel(store.category)}</p>
+          <p className="text-[12.5px] text-muted-foreground truncate">{(store.category_name || categoryLabel(store.category))}</p>
           <p className="flex items-center gap-2 text-[12.5px] text-muted-foreground mt-1.5 whitespace-nowrap overflow-hidden">
             <Rating store={store} />
             {store.delivery_time_min ? <>{sep}<span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" aria-hidden="true" />{store.delivery_time_min} min</span></> : null}
