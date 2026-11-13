@@ -2,18 +2,20 @@
 // Definido na hora de gerar: npm run build:cliente | build:parceiro | build:admin
 export const APP = import.meta.env.VITE_APP || "cliente";
 
-export const APP_LABEL = { cliente: "", parceiro: "Painel do comerciante", admin: "Painel administrativo" }[APP];
+export const APP_LABEL = { cliente: "", parceiro: "Painel do comerciante", admin: "Painel administrativo", entregador: "App do entregador" }[APP];
 
 // Endereços dos três produtos (para links entre eles). Podem ser trocados nas variáveis VITE_URL_*.
-const DEV = { cliente: "http://localhost:5173", parceiro: "http://localhost:5174", admin: "http://localhost:5175" };
+const DEV = { cliente: "http://localhost:5173", parceiro: "http://localhost:5174", admin: "http://localhost:5175", entregador: "http://localhost:5176" };
 const PROD = {
   cliente: "https://vizinhomarket-teste.netlify.app",
   parceiro: "https://vizinhomarket-parceiro.netlify.app",
   admin: "https://vizinhomarket-admin.netlify.app",
+  entregador: "https://vizinhomarket-entregador.netlify.app",
 };
 const base = import.meta.env.DEV ? DEV : PROD;
 export const URLS = {
   cliente: import.meta.env.VITE_URL_CLIENTE || base.cliente,
   parceiro: import.meta.env.VITE_URL_PARCEIRO || base.parceiro,
   admin: import.meta.env.VITE_URL_ADMIN || base.admin,
+  entregador: import.meta.env.VITE_URL_ENTREGADOR || base.entregador,
 };

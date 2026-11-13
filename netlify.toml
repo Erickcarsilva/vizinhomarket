@@ -3,6 +3,7 @@
 #   site do cliente      → PRODUTO = cliente
 #   site do comerciante  → PRODUTO = parceiro
 #   site do admin        → PRODUTO = admin
+#   site do entregador   → PRODUTO = entregador
 [build]
   base = "apps/web"
   command = "npm run build:netlify"

@@ -13,6 +13,7 @@ import { auth } from "./data/auth";
 import { account } from "./data/account";
 import { partner } from "./data/partner";
 import { admin } from "./data/admin";
+import { courier } from "./data/courier";
 import { integrations, reportError } from "./data/files";
 
 export { reportError };
@@ -24,6 +25,7 @@ export const base44 = {
   account,
   partner,
   admin,
+  courier,
   integrations,
   app: { async getPublicSettings() { return {}; } },
 };
