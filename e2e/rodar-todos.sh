@@ -1,6 +1,6 @@
 #!/bin/bash
 # Roda todas as suítes ponta a ponta, cada uma num banco de teste recém-criado.
-# Pré-requisitos: Postgres de teste no ar (VM_PG_*), sites gerados (build-e2e.sh) e servidos nas portas 4173/4174/4175,
+# Pré-requisitos: Postgres de teste no ar (VM_PG_*), sites gerados (build-e2e.sh) e servidos nas portas 4173/4174/4175/4176,
 # binário do PostgREST (VM_POSTGREST) e dependências instaladas (npm ci nesta pasta).
 # Uso: bash e2e/rodar-todos.sh [pasta para prints]
 set -u
@@ -8,7 +8,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(cd "$HERE/.." && pwd)
 SHOTS=${1:-$HERE/prints}
 mkdir -p "$SHOTS"
-SUITES=${VM_SUITES:-"pedido-completo bloco1 admin telas push"}
+SUITES=${VM_SUITES:-"pedido-completo bloco1 admin telas push marketplace concorrencia"}
 status=0
 restart_api() {
   pkill -f "node $HERE/server.mjs" 2>/dev/null; pkill -x postgrest 2>/dev/null; sleep 1

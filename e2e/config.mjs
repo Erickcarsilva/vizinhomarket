@@ -6,6 +6,7 @@ const env = process.env;
 export const CLI = env.VM_URL_CLIENTE || 'http://localhost:4173';   // app do cliente
 export const PAR = env.VM_URL_PARCEIRO || 'http://localhost:4174';  // painel do comerciante
 export const ADM = env.VM_URL_ADMIN || 'http://localhost:4175';     // painel admin
+export const ENT = env.VM_URL_ENTREGADOR || 'http://localhost:4176'; // app do entregador
 export const API = env.VM_URL_API || 'http://localhost:54321';      // API de teste (server.mjs)
 export const PG = {
   host: env.VM_PG_HOST || 'localhost',

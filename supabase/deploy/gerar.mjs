@@ -11,19 +11,23 @@ const mig = join(here, '..', 'migrations');
 const files = readdirSync(mig).filter((f) => f.endsWith('.sql')).sort();
 const CRON = '202610200002_supabase_platform_agendamentos.sql';
 const AVISO = '202610220004_supabase_platform_aviso_pedido.sql'; // usa pg_net: fica na Parte 2, como o pg_cron
+const ENUM = '202611130001_pagamento_online_tipo.sql'; // "alter type ... add value": fora da transação
+const PLAT09 = '202611130007_supabase_platform_pagamentos.sql'; // pg_cron + pg_net dos pagamentos: Parte 4
+const NOVOS09 = ['202611130002_financeiro.sql', '202611130004_logistica.sql', '202611130005_servicos_categorias_lgpd.sql', '202611130006_admin_operacao.sql'];
 const read = (f) => readFileSync(join(mig, f), 'utf8').trimEnd();
 const block = (f) => `-- ================= migrations/${f} =================\n${read(f)}\n`;
 const hoje = '22/10/2026';
-const geradoEm = '23/10/2026'; // banco completo e 08
+const geradoEm = '13/11/2026'; // banco completo e 09
 
-const completo = `-- VizinhoMarket — banco COMPLETO (instalação do zero), com Blocos 1 e 2, totais no servidor, Farmácia inativa, favoritos, bairros, atendentes e correções de 23/10. Gerado em ${geradoEm}.
+const completo = `-- VizinhoMarket — banco COMPLETO (instalação do zero): marketplace com pagamentos, razão financeiro, cupons, logística,
+-- entregadores, serviços, categorias com atributos e LGPD. Gerado em ${geradoEm}.
 -- Gerado por supabase/deploy/gerar.mjs a partir de supabase/migrations (não edite à mão).
 -- Colar no SQL Editor do Supabase e clicar em Run.
 
--- PARTE 1 (tudo ou nada)
+-- PARTE 1 (tudo ou nada). O "add value" do tipo de pagamento roda dentro da transação (Postgres 12+); o valor novo só é usado depois.
 begin;
 
-${files.filter((f) => f !== CRON && f !== AVISO).map(block).join('\n')}
+${files.filter((f) => ![CRON, AVISO, PLAT09].includes(f)).map(block).join('\n')}
 commit;
 
 -- PARTE 2: agendamentos (pg_cron). Se der erro aqui, a Parte 1 já está salva:
@@ -34,7 +38,10 @@ ${read(CRON).split('\n').filter((l) => !l.startsWith('--')).join('\n').trim()}
 -- e rode só esta parte de novo. Depois cadastre o endereço da função (veja 06_aviso_pedido_novo.sql).
 ${read(AVISO).trim()}
 
--- Conferência: tabelas = 29, categorias = 9, agendamentos = 2, funcoes_totais = 3, farmacia_ativa = false
+-- PARTE 4: pagamentos e limpezas agendadas (pg_cron + pg_net). Se der erro, ative as extensões e rode só esta parte.
+${read(PLAT09).trim()}
+
+-- Conferência: tabelas = 45, categorias = 18, agendamentos = 5, funcoes_totais = 3, farmacia_ativa = false
 select (select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE') as tabelas,
        (select count(*) from public.categories) as categorias,
        (select count(*) from cron.job where jobname like 'vm-%') as agendamentos,
@@ -111,4 +118,31 @@ select exists (select 1 from information_schema.columns where table_schema = 'pu
        exists (select 1 from pg_proc where proname = 'confirm_delivery' and pronargs = 3) as entrega_com_documento;
 `;
 writeFileSync(join(here, '08_correcoes_servidor.sql'), at08);
-console.log('gerados: vizinhomarket_banco_completo.sql, 04_atualizacao_totais_farmacia.sql, 05_atualizacao_favoritos_bairros_equipe.sql, 06_aviso_pedido_novo.sql, 08_correcoes_servidor.sql');
+// 09: marketplace (13/11/2026)
+const at09 = `-- VizinhoMarket — ATUALIZAÇÃO 09: marketplace completo (13/11/2026).
+-- Pagamento online com gateway, razão financeiro imutável, cupons, estornos, repasses, conciliação, suporte,
+-- logística com entregadores (online/offline, aceite em duas etapas, posição só na entrega), serviços profissionais,
+-- atributos por categoria, LGPD (exportação e consentimentos) e chaves de operação do admin.
+-- Gerado por supabase/deploy/gerar.mjs (não edite à mão). Pré-requisito: 08 aplicado. Não apaga dados.
+-- Depois de aplicar, nada muda para o cliente até o admin ligar "Pagamento pelo app" e "Entrega pela plataforma".
+
+-- PARTE 0 (fora da transação)
+${read(ENUM)}
+
+-- PARTE 1 (tudo ou nada)
+begin;
+
+${NOVOS09.map(block).join('\n')}
+commit;
+
+-- PARTE 2: agendamentos e ligações do Supabase (pg_cron + pg_net). Se der erro aqui, a Parte 1 já está salva.
+${read(PLAT09).trim()}
+
+-- Conferência: razao = true, cupons = true, servicos = true, entregadores_online = true
+select (to_regclass('public.ledger_entries') is not null) as razao,
+       (to_regclass('public.coupons') is not null) as cupons,
+       (to_regclass('public.service_requests') is not null) as servicos,
+       exists (select 1 from pg_proc where proname = 'courier_set_online') as entregadores_online;
+`;
+writeFileSync(join(here, '09_atualizacao_marketplace.sql'), at09);
+console.log('gerados: vizinhomarket_banco_completo.sql, 04_atualizacao_totais_farmacia.sql, 05_atualizacao_favoritos_bairros_equipe.sql, 06_aviso_pedido_novo.sql, 08_correcoes_servidor.sql, 09_atualizacao_marketplace.sql');

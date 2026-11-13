@@ -12,6 +12,7 @@ import { PG } from './config.mjs';
 const root = process.env.VM_REPO || new URL('..', import.meta.url).pathname;
 const dep = (f) => readFileSync(join(root, 'supabase/deploy', f), 'utf8');
 const part1 = (sql) => sql.split('-- PARTE 2')[0];
+const semPlataforma = (sql) => sql.split('-- PARTE 2:')[0]; // 09: só as partes 0 e 1 (pg_cron/pg_net não existem aqui)
 const boot = readFileSync(join(root, 'e2e/bootstrap.sql'), 'utf8').replace(/create role (\w+) ([^;]+);/g, (m, r, rest) =>
   `do $$ begin if not exists (select 1 from pg_roles where rolname = '${r}') then create role ${r} ${rest}; end if; end $$;`);
 const stubs = `
@@ -45,7 +46,8 @@ const expected = (r) => r.tabelas === 28 && r.categorias === 9 && r.funcoes_tota
 const expected05 = (r) => r.tabelas === 29 && r.categorias === 9 && r.funcoes_totais === 3 && r.farmacia_ativa === false && r.favoritos && r.funcoes_novas === 6;
 
 let c = await fresh('deploy_completo');
-try { await c.query(part1(dep('vizinhomarket_banco_completo.sql'))); const r = (await c.query(conf)).rows[0]; check('Banco completo instala do zero', expected05(r), JSON.stringify(r)); }
+const expected09 = (r) => r.tabelas === 45 && r.categorias === 18 && r.funcoes_totais === 3 && r.farmacia_ativa === false && r.favoritos && r.funcoes_novas === 6;
+try { await c.query(part1(dep('vizinhomarket_banco_completo.sql'))); const r = (await c.query(conf)).rows[0]; check('Banco completo instala do zero', expected09(r), JSON.stringify(r)); }
 catch (e) { check('Banco completo instala do zero', false, e.message); }
 await c.end();
 
@@ -89,6 +91,12 @@ try {
   const r2 = (await c.query(conf08)).rows[0];
   check('Rodar o 08 de novo não quebra nada', ok08(r2), JSON.stringify(r2));
 } catch (e) { check('Atualizações 07 e 08 aplicadas sobre o 06', false, e.message.split('\n')[0]); }
+// 09 (marketplace) por cima do 08: a instalação de quem já está no ar chega ao mesmo banco do completo.
+try {
+  await c.query(semPlataforma(dep('09_atualizacao_marketplace.sql')));
+  const r = (await c.query(conf)).rows[0];
+  check('Atualização 09 (marketplace) aplicada sobre o 08 chega ao mesmo banco do completo', r.tabelas === 45 && r.categorias === 18, JSON.stringify(r));
+} catch (e) { check('Atualização 09 (marketplace) aplicada sobre o 08', false, e.message.split('\n')[0]); }
 await c.end();
 for (const d of ['deploy_completo', 'deploy_04']) await admin.query(`drop database if exists ${d} with (force)`);
 await admin.end();

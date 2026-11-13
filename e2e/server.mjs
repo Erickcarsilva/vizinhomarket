@@ -7,6 +7,8 @@ import { spawn } from 'node:child_process';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
 import { PG } from './config.mjs';
+import { createPayment, handleWebhook, processRefunds } from '../supabase/functions/_shared/pagamentos/core.mjs';
+import { sandboxProvider } from '../supabase/functions/_shared/pagamentos/providers.mjs';
 
 const SECRET = 'segredo-de-teste-local-com-mais-de-32-caracteres';
 const PGRST_PORT = 3001;
@@ -46,7 +48,7 @@ const session = (email) => {
 const body = (req) => new Promise((ok) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => { try { ok(b ? JSON.parse(b) : {}); } catch { ok({}); } }); });
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, apikey, content-type, prefer, x-client-info, accept-profile, content-profile, x-supabase-api-version, range',
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type, prefer, x-client-info, accept-profile, content-profile, x-supabase-api-version, range, x-region',
   'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
   'Access-Control-Expose-Headers': 'content-range, content-location',
 };
@@ -88,6 +90,54 @@ async function auth(req, res, path) {
   return authErr(res, `não implementado no teste: ${path}`, 404);
 }
 
+// ---------- Funções de pagamento (as mesmas regras das Edge Functions, com o gateway de SIMULAÇÃO) ----------
+const sandbox = sandboxProvider({ secret: 'segredo-sandbox-e2e' });
+async function rpcService(fn, args) {
+  const c = await db.connect();
+  try {
+    await c.query('begin');
+    await c.query('set local role service_role');
+    const keys = Object.keys(args);
+    const call = 'public.' + fn + '(' + keys.map((k, i) => k + ' => $' + (i + 1)).join(', ') + ')';
+    const vals = keys.map((k) => (args[k] !== null && typeof args[k] === 'object' ? JSON.stringify(args[k]) : args[k]));
+    const r = fn === 'svc_refunds_to_process'
+      ? (await c.query('select * from ' + call, vals)).rows
+      : (await c.query('select ' + call + ' as r', vals)).rows[0].r;
+    await c.query('commit');
+    return r;
+  } catch (e) {
+    await c.query('rollback').catch(() => {});
+    const err = new Error(e.message); err.code = e.code; throw err;
+  } finally { c.release(); }
+}
+const readRaw = (req) => new Promise((ok) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => ok(b)); });
+async function functions(req, res, name) {
+  const raw = await readRaw(req);
+  if (name === 'pagamentos') {
+    let userId = null;
+    try { userId = jwt.verify((req.headers.authorization || '').replace('Bearer ', ''), SECRET).sub || null; } catch { userId = null; }
+    let b = {}; try { b = JSON.parse(raw || '{}'); } catch { b = {}; }
+    const r = await createPayment({ userId, orderId: b.order_id }, {
+      rpc: rpcService, provider: sandbox, notificationUrl: 'http://localhost:' + PORT + '/functions/v1/pagamentos-webhook?provider=sandbox',
+      getPayer: async (id) => ({ id, email: 'cliente@teste.local', name: 'Cliente' }),
+    });
+    return send(res, r.status, r.body);
+  }
+  if (name === 'pagamentos-webhook') {
+    const r = await handleWebhook({ headers: req.headers, rawBody: raw, url: 'http://x' + req.url }, { rpc: rpcService, provider: sandbox });
+    return send(res, r.status, r.body);
+  }
+  if (name === 'pagamentos-estornos') return send(res, 200, await processRefunds({ rpc: rpcService, providers: () => sandbox }));
+  // Simulador do banco (só no teste): "paga" o Pix assinando o webhook como o gateway faria.
+  if (name === 'sandbox-pagar') {
+    const b = JSON.parse(raw || '{}');
+    const body = JSON.stringify({ event_id: 'ev-' + Date.now() + '-' + Math.random(), provider_payment_id: b.provider_payment_id, status: b.status || 'paid', paid_amount: b.paid_amount });
+    const r = await handleWebhook({ headers: { 'x-sandbox-signature': await sandbox.sign(body) }, rawBody: body, url: 'http://x' }, { rpc: rpcService, provider: sandbox });
+    return send(res, r.status, r.body);
+  }
+  return send(res, 404, { error: 'função não existe no teste' });
+}
+
 http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204, cors); return res.end(); }
   const u = new URL(req.url, 'http://x');
@@ -103,6 +153,7 @@ http.createServer(async (req, res) => {
     p.on('error', (e) => send(res, 502, { message: e.message }));
     return req.pipe(p);
   }
+  if (u.pathname.startsWith('/functions/v1/')) return functions(req, res, u.pathname.slice('/functions/v1/'.length)).catch((e) => send(res, 500, { error: e.message }));
   if (u.pathname === '/anon-key') return send(res, 200, { anonKey });
   send(res, 404, { message: 'não encontrado' });
 }).listen(PORT, () => console.log(`API de teste em http://localhost:${PORT}  anonKey=${anonKey}`));
