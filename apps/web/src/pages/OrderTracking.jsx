@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Copy, Check, Loader2, ChevronLeft } from "lucide-react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { brl, FULFILLMENT, PAYMENT } from "@/lib/constants";
+import { brl, FULFILLMENT, PAYMENT, PAYMENT_ONLINE, PAYMENT_STATUS } from "@/lib/constants";
 import StatusTimeline, { statusLabel } from "@/components/order/StatusTimeline";
 import RateOrder from "@/components/order/RateOrder";
+import OnlinePayment from "@/components/order/OnlinePayment";
+import DriverInfo from "@/components/order/DriverInfo";
+import RefundRequest from "@/components/order/RefundRequest";
 
 // O que cada etapa quer dizer para o cliente.
 const AVISO = {
@@ -21,11 +24,12 @@ const card = "rounded-lg bg-card border border-border p-4";
 
 export default function OrderTracking() {
   const { id } = useParams();
+  const [search] = useSearchParams();
   const qc = useQueryClient();
   const { data: order, isLoading, refetch } = useQuery({ queryKey: ["order", id], queryFn: () => base44.entities.Order.get(id) });
   const open = order && !["DELIVERED", "CANCELLED"].includes(order.status);
   const { data: code } = useQuery({ queryKey: ["order-code", id], queryFn: () => base44.entities.Order.deliveryCode(id), enabled: !!open });
-  const { data: pix } = useQuery({ queryKey: ["order-pix", id], queryFn: () => base44.entities.Order.paymentInfo(id), enabled: !!open && order?.payment_method === "pix" });
+  const { data: pix } = useQuery({ queryKey: ["order-pix", id], queryFn: () => base44.entities.Order.paymentInfo(id), enabled: !!open && order?.payment_method === "pix" && order?.payment_mode !== "online" });
   const [copied, setCopied] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
@@ -68,6 +72,15 @@ export default function OrderTracking() {
           )}
         </div>
 
+        {open && order.payment_mode === "online" && order.payment_status !== "paid" && (
+          <OnlinePayment order={order} onRefresh={refetch} autoStart={search.get("pagar") === "1"} />
+        )}
+        {order.payment_mode === "online" && order.payment_status === "paid" && open && (
+          <p className="text-sm rounded-lg bg-[#E3EFE6] text-[#1F4D3A] px-3 py-2 font-semibold">Pagamento confirmado pelo banco.</p>
+        )}
+
+        <DriverInfo order={order} />
+
         {open && code && (
           <div className="rounded-lg border-2 border-marca bg-card p-4">
             <p className="text-sm font-semibold text-marca">Código de entrega</p>
@@ -76,7 +89,7 @@ export default function OrderTracking() {
           </div>
         )}
 
-        {open && order.payment_method === "pix" && (
+        {open && order.payment_method === "pix" && order.payment_mode !== "online" && (
           <div className={`${card} space-y-2`}>
             <p className="text-[15px] font-semibold">Pagamento por Pix, direto para a loja</p>
             {pix?.pix_key ? (
@@ -102,11 +115,15 @@ export default function OrderTracking() {
             <button type="button" onClick={cancel} disabled={cancelling} className="btn-contorno h-11 border-border text-foreground disabled:opacity-60">
               {cancelling && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}Cancelar pedido
             </button>
-            <p className="text-[13px] text-muted-foreground mt-2">Dá para cancelar até a loja aceitar o pedido.</p>
+            <p className="text-[13px] text-muted-foreground mt-2">Dá para cancelar até a loja aceitar o pedido.{order.payment_mode === "online" && order.payment_status === "paid" ? " O valor pago volta automaticamente." : ""}</p>
             {cancelError && <p role="alert" className="text-sm text-destructive mt-2">{cancelError}</p>}
           </div>
         )}
         {order.status === "DELIVERED" && <RateOrder order={order} onSaved={refetch} />}
+        {order.status === "DELIVERED" && <RefundRequest order={order} />}
+        {cancelled && order.payment_mode === "online" && ["paid", "refunded", "partially_refunded"].includes(order.payment_status) && (
+          <p className="text-sm rounded-lg bg-card border border-border px-3 py-2">{order.payment_status === "refunded" ? `Valor de ${brl(order.refunded_amount)} devolvido.` : "O valor pago está sendo devolvido automaticamente para a mesma forma de pagamento."}</p>
+        )}
       </div>
 
       <aside className={`${card} h-fit space-y-3 text-sm min-w-0`} aria-label="Resumo do pedido">
@@ -119,12 +136,14 @@ export default function OrderTracking() {
         ))}
         <div className="border-t border-border pt-3 space-y-1.5">
           <div className="flex justify-between text-muted-foreground"><span>Entrega</span><span>{order.delivery_fee ? brl(order.delivery_fee) : "Grátis"}</span></div>
+          {order.discount > 0 && <div className="flex justify-between text-[#1F6B47]"><span>Desconto</span><span>− {brl(order.discount)}</span></div>}
           <div className="flex justify-between font-bold text-base"><span>Total</span><span>{brl(order.total)}</span></div>
         </div>
         <div className="border-t border-border pt-3 space-y-1 text-muted-foreground">
           <p>{FULFILLMENT[order.fulfillment]}</p>
           {order.address && <p className="break-words">{order.address}</p>}
-          <p>Pagamento: {PAYMENT[order.payment_method]}{order.change_for ? ` (troco p/ ${brl(order.change_for)})` : ""}</p>
+          <p>Pagamento: {order.payment_mode === "online" ? PAYMENT_ONLINE[order.payment_method] || "Pelo app" : PAYMENT[order.payment_method]}{order.change_for ? ` (troco p/ ${brl(order.change_for)})` : ""}</p>
+          <p>Situação do pagamento: {PAYMENT_STATUS[order.payment_status] || order.payment_status}</p>
         </div>
       </aside>
     </div>

@@ -27,6 +27,8 @@ import Faq from "@/pages/Faq";
 import IndiqueLoja from "@/pages/IndiqueLoja";
 import Busca from "@/pages/Busca";
 import Avaliacoes from "@/pages/Avaliacoes";
+import Orcamento from "@/pages/Orcamento";
+import Atendimento from "@/pages/Atendimento";
 import { URLS } from "@/lib/appConfig";
 // Letras do App do Cliente servidas pelo próprio site (só entram no build do cliente).
 import "@fontsource/figtree/latin-400.css";
@@ -73,6 +75,8 @@ export default function ClienteApp() {
             <Route path="/favoritos" element={<Favoritos />} />
             <Route path="/avaliacoes" element={<Avaliacoes />} />
             <Route path="/indique-loja" element={<IndiqueLoja />} />
+            <Route path="/orcamento/:id" element={<Orcamento />} />
+            <Route path="/atendimento/:id" element={<Atendimento />} />
           </Route>
           {["/lojista", "/cadastrar-loja", "/gerenciar-produtos", "/financeiro", "/relatorios", "/editar-perfil"].map((p) => (
             <Route key={p} path={p} element={<GoTo href={URLS.parceiro} />} />

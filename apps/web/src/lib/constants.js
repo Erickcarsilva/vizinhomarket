@@ -1,4 +1,4 @@
-import { UtensilsCrossed, ShoppingBasket, PawPrint, Wrench, ShoppingBag, Wine, Smartphone } from "lucide-react";
+import { UtensilsCrossed, ShoppingBasket, PawPrint, Wrench, ShoppingBag, Wine, Smartphone, Store, Shirt, Lamp, Hammer, Sparkles, BookOpen, Flower2, Puzzle, Sprout, Briefcase } from "lucide-react";
 
 // Nomes iguais aos do banco (tabela categories). Farmácia fica fora do piloto (regras sanitárias). Ver migração 202610210003.
 export const CATEGORIES = [
@@ -9,6 +9,16 @@ export const CATEGORIES = [
   { id: "autopecas", label: "Autopeças", icon: Wrench },
   { id: "eletronicos", label: "Eletrônicos", icon: Smartphone },
   { id: "lojas", label: "Lojas e variedades", icon: ShoppingBag },
+  { id: "conveniencia", label: "Conveniência", icon: Store },
+  { id: "moda", label: "Moda e acessórios", icon: Shirt },
+  { id: "casa", label: "Casa e decoração", icon: Lamp },
+  { id: "construcao", label: "Construção e materiais", icon: Hammer },
+  { id: "beleza", label: "Beleza e cuidados", icon: Sparkles },
+  { id: "papelaria", label: "Papelaria e livraria", icon: BookOpen },
+  { id: "flores", label: "Floricultura e presentes", icon: Flower2 },
+  { id: "brinquedos", label: "Brinquedos", icon: Puzzle },
+  { id: "agro", label: "Agropecuária", icon: Sprout },
+  { id: "servicos", label: "Serviços", icon: Briefcase },
 ];
 export const categoryLabel = (id) => CATEGORIES.find((c) => c.id === id)?.label || id;
 
@@ -53,6 +63,11 @@ export const FULFILLMENT = {
 export const FULFILLMENT_CHOICES = ["loja", "retirada"];
 
 export const PAYMENT = { pix: "Pix", cartao: "Cartão na maquininha", dinheiro: "Dinheiro" };
+export const PAYMENT_ONLINE = { pix: "Pix pelo app", cartao_online: "Cartão pelo app" };
+export const PAYMENT_STATUS = {
+  pending: "A pagar na entrega", awaiting_payment: "Aguardando pagamento", paid: "Pago", failed: "Pagamento recusado",
+  expired: "Pagamento não concluído", refunded: "Estornado", partially_refunded: "Estornado em parte",
+};
 
 export const brl = (v) => (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 

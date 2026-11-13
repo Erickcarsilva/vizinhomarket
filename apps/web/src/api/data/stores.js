@@ -4,9 +4,9 @@ import { parseHours, hoursText, isOpenNow } from "@/lib/hours";
 import { applySort, categories, defaultCity, fail } from "./shared";
 
 export const STORE_SELECT = "id, city_id, category_id, name, slug, description, logo_url, cover_url, phone_public, address_line, neighborhood_id, " +
-  "is_paused, accepts_pickup, accepts_store_delivery, accepts_platform_delivery, delivery_fee_default, min_order, prep_time_min, " +
+  "is_paused, accepts_pickup, accepts_store_delivery, accepts_platform_delivery, accepts_online_payment, delivery_fee_default, min_order, prep_time_min, lat, lng, " +
   "status, rating_avg, rating_count, approved_at, created_by, created_at, updated_at, " +
-  "category:categories(slug, name), city:cities(name, timezone), hours:store_hours(weekday, opens, closes), zones:delivery_zones(fee)";
+  "category:categories(slug, name, kind, attributes_schema), city:cities(name, timezone), hours:store_hours(weekday, opens, closes), zones:delivery_zones(fee)";
 
 export const storeFromRow = (r) => r && ({
   id: r.id,
@@ -20,6 +20,10 @@ export const storeFromRow = (r) => r && ({
   city: r.city?.name || "",
   city_id: r.city_id,
   category: r.category?.slug || "",
+  category_name: r.category?.name || "",
+  is_service: r.category?.kind === "services",
+  attributes_schema: r.category?.attributes_schema || [],
+  accepts_online_payment: Boolean(r.accepts_online_payment),
   category_id: r.category_id,
   hours: r.hours || [],
   opening_hours: hoursText(r.hours),

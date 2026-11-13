@@ -14,6 +14,8 @@ import { account } from "./data/account";
 import { partner } from "./data/partner";
 import { admin } from "./data/admin";
 import { courier } from "./data/courier";
+import { services } from "./data/services";
+import { support } from "./data/support";
 import { integrations, reportError } from "./data/files";
 
 export { reportError };
@@ -26,6 +28,8 @@ export const base44 = {
   partner,
   admin,
   courier,
+  services,
+  support,
   integrations,
   app: { async getPublicSettings() { return {}; } },
 };

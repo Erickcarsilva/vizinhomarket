@@ -31,7 +31,7 @@ export function CartProvider({ children }) {
   const add = (store, product, option = {}) =>
     setCart((c) => {
       const base = c.store?.id === store.id ? c : {
-        store: { id: store.id, name: store.name, delivery_fee: store.delivery_fee || 0, min_order: store.min_order || 0, delivery_modes: store.delivery_modes || ["loja"] },
+        store: { id: store.id, name: store.name, delivery_fee: store.delivery_fee || 0, min_order: store.min_order || 0, delivery_modes: store.delivery_modes || ["loja"], accepts_online_payment: Boolean(store.accepts_online_payment) },
         items: [],
       };
       const addons = option.addons || [];

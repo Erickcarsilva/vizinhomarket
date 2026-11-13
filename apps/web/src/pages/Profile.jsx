@@ -109,6 +109,17 @@ export default function Profile() {
       </section>
 
       <section className="px-1 pt-2 space-y-1.5">
+        <h2 className="font-semibold text-[15px]">Seus dados</h2>
+        <p className="text-sm text-muted-foreground">Baixe uma cópia de tudo o que o VizinhoMarket guarda sobre você (cadastro, endereços, pedidos, avaliações e atendimentos).</p>
+        <button type="button" disabled={busy} onClick={() => run(async () => {
+          const data = await base44.support.exportMyData();
+          const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+          const a = document.createElement("a"); a.href = url; a.download = `meus-dados-vizinhomarket-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }, "Arquivo com seus dados gerado.")} className="text-sm font-semibold text-marca underline underline-offset-4">Baixar meus dados</button>
+      </section>
+
+      <section className="px-1 pt-2 space-y-1.5">
         <h2 className="font-semibold text-[15px]">Excluir minha conta</h2>
         <p className="text-sm text-muted-foreground">Apaga seus dados pessoais e endereços. Os pedidos ficam guardados sem o seu nome, porque a loja precisa deles para a contabilidade.</p>
         <Link to="/excluir-conta" className="inline-block text-sm text-destructive underline underline-offset-4">Quero excluir minha conta</Link>

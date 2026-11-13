@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, ShoppingBag, ChevronLeft } from "lucide-react";
+import { Loader2, ShoppingBag, ChevronLeft, Tag, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useCart } from "@/lib/CartContext";
-import { brl, FULFILLMENT, PAYMENT } from "@/lib/constants";
+import { brl, FULFILLMENT, PAYMENT, PAYMENT_ONLINE } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import CartItems from "@/components/checkout/CartItems";
@@ -23,7 +23,13 @@ export default function Checkout() {
   const { data: addresses = [] } = useQuery({ queryKey: ["my-addresses"], queryFn: () => base44.account.listAddresses() });
   // Bairros atendidos pela loja (se ela cadastrou taxa por bairro).
   const { data: zones = [] } = useQuery({ queryKey: ["zones", cart.store?.id], queryFn: () => base44.geo.storeZones(cart.store.id), enabled: !!cart.store?.id });
-  const [form, setForm] = useState({ name: "", phone: "", address: "", neighborhood_id: "", fulfillment: modes[0], payment: "pix", change_for: "", notes: "" });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", neighborhood_id: "", fulfillment: modes[0], payment: "pix", change_for: "", notes: "", pay_mode: "offline", online_method: "pix" });
+  const { data: config } = useQuery({ queryKey: ["public-config"], queryFn: () => base44.support.config(), staleTime: 300000 });
+  const onlineAvailable = Boolean(config?.online_payments_enabled && cart.store?.accepts_online_payment);
+  // Cupom: o desconto vem do servidor (simulação do pedido), nunca de conta feita aqui.
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState(null); // { code, discount }
+  const [couponState, setCouponState] = useState({ busy: false, error: "" });
   // Preenche com o que está salvo na conta, sem apagar o que a pessoa já digitou.
   useEffect(() => {
     const def = addresses.find((a) => a.is_default) || addresses[0];
@@ -52,7 +58,9 @@ export default function Checkout() {
   const byZone = !pickup && zones.length > 0;
   const zone = zones.find((z) => z.neighborhood_id === form.neighborhood_id);
   const fee = pickup ? 0 : byZone ? (zone?.fee ?? 0) : cart.store.delivery_fee;
-  const total = subtotal + fee;
+  const discount = coupon?.discount || 0;
+  const total = Math.max(subtotal + fee - discount, 0);
+  const online = onlineAvailable && form.pay_mode === "online";
   const belowMin = subtotal < (cart.store.min_order || 0);
   const valid = form.name && form.phone && (pickup || form.address) && (!byZone || zone) && !belowMin;
 
@@ -64,8 +72,9 @@ export default function Checkout() {
         store_id: cart.store.id, idempotency_key: idempotencyKey,
         customer_name: form.name, customer_phone: form.phone, address: pickup ? "" : form.address,
         neighborhood_id: byZone ? form.neighborhood_id : null,
-        fulfillment: form.fulfillment, payment_method: form.payment,
-        change_for: form.payment === "dinheiro" && form.change_for ? Number(form.change_for) : undefined,
+        fulfillment: form.fulfillment, payment_method: online ? form.online_method : form.payment,
+        payment_mode: online ? "online" : "offline", coupon_code: coupon?.code || null,
+        change_for: !online && form.payment === "dinheiro" && form.change_for ? Number(form.change_for) : undefined,
         notes: form.notes,
         expected_total: total,
         items: cart.items.map((i) => ({ product_id: i.product_id, variant_id: i.variant_id || null, addon_ids: i.addon_ids || [], quantity: i.quantity })),
@@ -75,7 +84,7 @@ export default function Checkout() {
         base44.account.updateProfile({ full_name: form.name, phone: form.phone }).catch(() => {});
       }
       clear();
-      navigate(`/pedido/${order.id}`);
+      navigate(`/pedido/${order.id}${online ? "?pagar=1" : ""}`);
     } catch (err) {
       setSending(false);
       if (err?.code === "VMAGE") { setAge((a) => ({ ...a, needed: true })); return; }
@@ -84,11 +93,32 @@ export default function Checkout() {
         let d = null;
         try { d = JSON.parse(err.details || "null"); } catch { d = null; }
         if (d) reprice(d.items, pickup || byZone ? undefined : d.fee);
+        if (d && coupon) setCoupon((c) => c && { ...c, discount: Number(d.discount) || 0 });
         if (byZone) qc.invalidateQueries({ queryKey: ["zones", cart.store.id] });
         setError(`${err.message}${d ? ` Novo total: ${brl(Number(d.total))}.` : ""}`);
         return;
       }
+      if (err?.code === "VMCPN") { setCoupon(null); setCouponState({ busy: false, error: err.message }); return; }
       setError(err?.message || "Não foi possível registrar seu pedido. Tente novamente.");
+    }
+  };
+  const quoteArgs = () => ({
+    store_id: cart.store.id, fulfillment: form.fulfillment, address: pickup ? "" : form.address, neighborhood_id: byZone ? form.neighborhood_id : null,
+    payment_mode: online ? "online" : "offline", payment_method: online ? form.online_method : form.payment,
+    items: cart.items.map((i) => ({ product_id: i.product_id, variant_id: i.variant_id || null, addon_ids: i.addon_ids || [], quantity: i.quantity })),
+  });
+  const applyCoupon = async (code = couponInput) => {
+    const clean = String(code || "").trim().toUpperCase();
+    if (!clean) return;
+    setCouponState({ busy: true, error: "" });
+    try {
+      const q = await base44.entities.Order.quote({ ...quoteArgs(), coupon_code: clean });
+      if (!q.discount) { setCoupon(null); setCouponState({ busy: false, error: "Este cupom não dá desconto neste pedido." }); return; }
+      setCoupon({ code: clean, discount: q.discount });
+      setCouponState({ busy: false, error: "" });
+    } catch (err) {
+      setCoupon(null);
+      setCouponState({ busy: false, error: err?.message || "Não foi possível aplicar o cupom." });
     }
   };
   const submit = (e) => { e.preventDefault(); placeOrder(); };
@@ -143,16 +173,47 @@ export default function Checkout() {
           <Textarea placeholder="Observações (opcional)" aria-label="Observações (opcional)" value={form.notes} onChange={set("notes")} className="rounded-lg bg-card text-[15px]" />
         </div>
         <div className="space-y-3">
-          <Label>Pagamento na {pickup ? "retirada" : "entrega"}</Label>
-          <ChoiceGroup label="Forma de pagamento" options={Object.entries(PAYMENT)} value={form.payment} onChange={set("payment")} />
-          {form.payment === "dinheiro" && <Input type="number" inputMode="decimal" placeholder="Troco para quanto? (opcional)" aria-label="Troco para quanto? (opcional)" value={form.change_for} onChange={set("change_for")} className={`${campo} max-w-xs`} />}
+          <Label>Pagamento</Label>
+          {onlineAvailable && (
+            <ChoiceGroup label="Quando pagar" options={[["online", "Pagar agora pelo app"], ["offline", `Pagar na ${pickup ? "retirada" : "entrega"}`]]}
+              value={form.pay_mode} onChange={(v) => { set("pay_mode")(v); if (coupon) setTimeout(() => applyCoupon(coupon.code), 0); }} />
+          )}
+          {online ? (
+            <>
+              <ChoiceGroup label="Forma de pagamento pelo app" options={Object.entries(PAYMENT_ONLINE)} value={form.online_method} onChange={set("online_method")} />
+              <p className="text-[13px] text-muted-foreground">O pagamento é confirmado pelo banco. A loja só começa a preparar depois da confirmação. Se o pedido for cancelado, o valor volta automaticamente.</p>
+              {config?.payment_sandbox && <p className="text-[13px] font-semibold text-[#7A3A1F]">Ambiente de teste: nenhum valor real é cobrado.</p>}
+            </>
+          ) : (
+            <>
+              {!onlineAvailable && <p className="text-[13px] text-muted-foreground -mt-1">Pagamento na {pickup ? "retirada" : "entrega"}{form.payment === "pix" ? ", por Pix direto para a loja" : ""}.</p>}
+              <ChoiceGroup label="Forma de pagamento" options={Object.entries(PAYMENT)} value={form.payment} onChange={set("payment")} />
+              {form.payment === "dinheiro" && <Input type="number" inputMode="decimal" placeholder="Troco para quanto? (opcional)" aria-label="Troco para quanto? (opcional)" value={form.change_for} onChange={set("change_for")} className={`${campo} max-w-xs`} />}
+            </>
+          )}
         </div>
       </div>
       <aside className="lg:sticky lg:top-24 h-fit bg-card border border-border rounded-lg p-5 space-y-3 min-w-0" aria-label="Resumo do pedido">
         <h2 className="font-display text-[20px] text-marca">Resumo</h2>
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>{brl(subtotal)}</span></div>
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Entrega</span><span>{byZone && !zone ? "escolha o bairro" : fee ? brl(fee) : "Grátis"}</span></div>
+        {coupon && (
+          <div className="flex justify-between text-sm text-[#1F6B47]"><span className="flex items-center gap-1"><Tag className="w-3.5 h-3.5" aria-hidden="true" />Cupom {coupon.code}</span><span>− {brl(discount)}</span></div>
+        )}
         <div className="flex justify-between pt-3 border-t border-border"><span className="font-semibold">Total</span><span className="text-[22px] font-bold">{brl(total)}</span></div>
+        {coupon ? (
+          <button type="button" onClick={() => { setCoupon(null); setCouponInput(""); }} className="text-[13px] text-muted-foreground flex items-center gap-1 underline underline-offset-2"><X className="w-3.5 h-3.5" aria-hidden="true" />Remover cupom</button>
+        ) : (
+          <div className="space-y-1.5">
+            <div className="flex gap-2">
+              <Input value={couponInput} onChange={(e) => setCouponInput(e.target.value.toUpperCase().slice(0, 30))} placeholder="Cupom de desconto" aria-label="Cupom de desconto" className="h-11 rounded-lg bg-background text-[15px] uppercase" />
+              <button type="button" disabled={!couponInput.trim() || couponState.busy || (!pickup && !form.address)} onClick={() => applyCoupon()} className="btn-contorno h-11 px-4 shrink-0 disabled:opacity-50">
+                {couponState.busy && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}Aplicar
+              </button>
+            </div>
+            {couponState.error && <p role="alert" className="text-[13px] text-destructive">{couponState.error}</p>}
+          </div>
+        )}
         {belowMin && <p className="text-sm font-semibold text-[#7A3A1F]">Pedido mínimo desta loja: {brl(cart.store.min_order)}. Faltam {brl((cart.store.min_order || 0) - subtotal)}.</p>}
         {age.needed && (
           <div data-idade className="rounded-lg border border-[#E2C9B8] bg-[#F6E9E0] text-[#4A2A1A] p-4 space-y-3 text-sm">
@@ -172,7 +233,7 @@ export default function Checkout() {
         )}
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <button disabled={!valid || sending || age.needed} className="btn-acao w-full h-[52px] text-base">
-          {sending && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />} Fazer pedido · {brl(total)}
+          {sending && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />} {online ? "Ir para o pagamento" : "Fazer pedido"} · {brl(total)}
         </button>
         {!valid && !sending && !age.needed && (
           <p className="text-[13px] text-muted-foreground text-center">

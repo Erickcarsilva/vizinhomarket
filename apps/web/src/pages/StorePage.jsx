@@ -7,6 +7,7 @@ import StoreHeader from "@/components/store/StoreHeader";
 import ProductRow from "@/components/store/ProductRow";
 import CartBar from "@/components/store/CartBar";
 import ProductOptions, { hasOptions } from "@/components/store/ProductOptions";
+import ServiceStore from "@/components/services/ServiceStore";
 
 export default function StorePage() {
   const { id } = useParams();
@@ -17,6 +18,7 @@ export default function StorePage() {
   const { data: products = [] } = useQuery({
     queryKey: ["products", id],
     queryFn: () => base44.entities.Product.filter({ store_id: id, available: true }, "category", 500),
+    enabled: Boolean(store) && !store.is_service,
   });
 
   if (isLoading) return <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-5" aria-busy="true"><div className="w-[76px] h-[76px] rounded-[18px] bg-secondary animate-pulse" /><div className="h-7 w-2/3 mt-4 rounded bg-secondary animate-pulse" /><div className="h-4 w-1/3 mt-3 rounded bg-secondary animate-pulse" /></div>;
@@ -27,6 +29,8 @@ export default function StorePage() {
       <Link to="/" className="btn-contorno">Ver as lojas da cidade</Link>
     </div>
   );
+
+  if (store.is_service) return <div className="pb-16"><StoreHeader store={store} /><ServiceStore store={store} /></div>;
 
   const sameStoreOrConfirm = () => {
     if (cart.store && cart.store.id !== store.id) {
