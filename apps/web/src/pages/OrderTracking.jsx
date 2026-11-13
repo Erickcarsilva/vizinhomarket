@@ -9,6 +9,7 @@ import RateOrder from "@/components/order/RateOrder";
 import OnlinePayment from "@/components/order/OnlinePayment";
 import DriverInfo from "@/components/order/DriverInfo";
 import RefundRequest from "@/components/order/RefundRequest";
+import PushToggle from "@/components/PushToggle";
 
 // O que cada etapa quer dizer para o cliente.
 const AVISO = {
@@ -80,6 +81,7 @@ export default function OrderTracking() {
         )}
 
         <DriverInfo order={order} />
+        {open && <PushToggle title="Avisar quando o pedido andar" description="Receba um aviso quando a loja aceitar, quando sair para entrega e quando chegar." compact />}
 
         {open && code && (
           <div className="rounded-lg border-2 border-marca bg-card p-4">

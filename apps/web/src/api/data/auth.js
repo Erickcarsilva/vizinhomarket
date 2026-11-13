@@ -5,9 +5,10 @@ import { fail, translateAuth } from "./shared";
 async function me() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) { const e = new Error("Faça login para continuar"); e.status = 401; throw e; }
-  const [{ data: profile }, { data: roles }] = await Promise.all([
+  const [{ data: profile }, { data: roles }, { data: scopes }] = await Promise.all([
     supabase.from("profiles").select("full_name, phone, age_confirmed").eq("id", user.id).maybeSingle(),
     supabase.from("user_roles").select("role").eq("user_id", user.id),
+    supabase.from("staff_scopes").select("scope").eq("user_id", user.id),
   ]);
   const list = (roles || []).map((r) => r.role);
   return {
@@ -15,6 +16,8 @@ async function me() {
     full_name: profile?.full_name || user.user_metadata?.full_name || "",
     phone: profile?.phone || "", age_confirmed: profile?.age_confirmed || false,
     roles: list, role: list.includes("admin") ? "admin" : "user",
+    // Equipe interna por área (financeiro, atendimento, operacao). O servidor confere de novo em cada função.
+    scopes: (scopes || []).map((s) => s.scope),
   };
 }
 

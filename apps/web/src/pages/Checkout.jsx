@@ -30,6 +30,7 @@ export default function Checkout() {
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState(null); // { code, discount }
   const [couponState, setCouponState] = useState({ busy: false, error: "" });
+  const [cpf, setCpf] = useState("");
   // Preenche com o que está salvo na conta, sem apagar o que a pessoa já digitou.
   useEffect(() => {
     const def = addresses.find((a) => a.is_default) || addresses[0];
@@ -61,13 +62,19 @@ export default function Checkout() {
   const discount = coupon?.discount || 0;
   const total = Math.max(subtotal + fee - discount, 0);
   const online = onlineAvailable && form.pay_mode === "online";
+  // Alguns gateways exigem o CPF de quem paga online: pedimos só nesse caso e só se ainda não estiver na conta.
+  const needsCpf = online && config?.payment_requires_document && !profile?.has_document;
   const belowMin = subtotal < (cart.store.min_order || 0);
-  const valid = form.name && form.phone && (pickup || form.address) && (!byZone || zone) && !belowMin;
+  const valid = form.name && form.phone && (pickup || form.address) && (!byZone || zone) && !belowMin && (!needsCpf || cpf.replace(/\D/g, "").length === 11);
 
   const placeOrder = async () => {
     setSending(true);
     setError("");
     try {
+      if (needsCpf) {
+        await base44.account.setDocument(cpf);
+        qc.invalidateQueries({ queryKey: ["my-profile"] });
+      }
       const order = await base44.entities.Order.create({
         store_id: cart.store.id, idempotency_key: idempotencyKey,
         customer_name: form.name, customer_phone: form.phone, address: pickup ? "" : form.address,
@@ -183,6 +190,12 @@ export default function Checkout() {
               <ChoiceGroup label="Forma de pagamento pelo app" options={Object.entries(PAYMENT_ONLINE)} value={form.online_method} onChange={set("online_method")} />
               <p className="text-[13px] text-muted-foreground">O pagamento é confirmado pelo banco. A loja só começa a preparar depois da confirmação. Se o pedido for cancelado, o valor volta automaticamente.</p>
               {config?.payment_sandbox && <p className="text-[13px] font-semibold text-[#7A3A1F]">Ambiente de teste: nenhum valor real é cobrado.</p>}
+              {needsCpf && (
+                <label className="block text-sm">CPF de quem paga (exigido pelo banco para o pagamento online)
+                  <Input value={cpf} onChange={(e) => setCpf(e.target.value.replace(/[^\d.-]/g, "").slice(0, 14))} inputMode="numeric" placeholder="000.000.000-00" className={`${campo} mt-1 max-w-xs`} />
+                  <span className="block text-[12px] text-muted-foreground mt-1">Fica guardado só na sua conta e é enviado só ao banco que processa o pagamento.</span>
+                </label>
+              )}
             </>
           ) : (
             <>

@@ -1,9 +1,12 @@
 import { supabase } from "@/api/supabase";
+import { APP } from "@/lib/appConfig";
 
 // Aviso no celular/computador mesmo com o painel fechado (Web Push).
 // Precisa da chave pública VAPID no site (VITE_VAPID_PUBLIC_KEY) e da função novo-pedido no Supabase.
 const PUBLIC_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY || "").trim();
-const SW_URL = "/sw-pedidos.js";
+// Painel do comerciante: service worker só do alarme. Cliente e entregador: o service worker do PWA (sw.js).
+const SW_URL = APP === "parceiro" ? "/sw-pedidos.js" : "/sw.js";
+const PUSH_APP = APP === "parceiro" ? "partner" : APP === "entregador" ? "courier" : "customer";
 
 const b64ToBytes = (b64) => {
   const pad = "=".repeat((4 - (b64.length % 4)) % 4);
@@ -29,7 +32,7 @@ async function saveSubscription(sub) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Faça login para ativar o aviso");
   const token = JSON.stringify(sub.toJSON ? sub.toJSON() : sub);
-  const { error } = await supabase.from("push_tokens").insert({ user_id: user.id, app: "partner", token });
+  const { error } = await supabase.from("push_tokens").insert({ user_id: user.id, app: PUSH_APP, token });
   if (error && error.code !== "23505") throw new Error(error.message); // 23505 = este aparelho já estava cadastrado
 }
 
@@ -52,7 +55,7 @@ export async function disablePush() {
   const sub = reg && (await reg.pushManager.getSubscription());
   if (!sub) return "off";
   const token = JSON.stringify(sub.toJSON ? sub.toJSON() : sub);
-  await supabase.from("push_tokens").delete().eq("app", "partner").eq("token", token);
+  await supabase.from("push_tokens").delete().eq("app", PUSH_APP).eq("token", token);
   await sub.unsubscribe().catch(() => {});
   return "off";
 }

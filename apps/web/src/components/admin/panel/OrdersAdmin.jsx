@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, MessageCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { allPages, downloadCsv, ORDER_COLUMNS } from "@/lib/csv";
 import { brl, STATUS, FULFILLMENT, PAYMENT } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Card, Btn, Seg, Empty, ErrorLine, useAction, fmtDate, waLink } from "./ui";
@@ -27,8 +28,18 @@ export default function OrdersAdmin() {
   const isLoading = list.isLoading;
   const { busy, error, run } = useAction(() => qc.invalidateQueries({ queryKey: ["admin-orders"] }));
 
+  const [exporting, setExporting] = useState(false);
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const all = await allPages((page) => base44.admin.listOrders({ status: status === "todos" ? null : status, storeId: storeId || null, from: since[period]()?.toISOString(), page }));
+      downloadCsv(`pedidos-${status}-${period}.csv`, ORDER_COLUMNS, all);
+    } finally { setExporting(false); }
+  };
+
   return (
     <div className="space-y-4">
+      <Btn onClick={exportCsv} busy={exporting}>Baixar planilha (CSV)</Btn>
       <Seg value={status} onChange={setStatus} options={[["open", "Em andamento"], ["CREATED", "Esperando aceite"], ["DELIVERED", "Entregues"], ["CANCELLED", "Cancelados"], ["todos", "Todos"]]} />
       <div className="flex flex-wrap gap-2">
         <Seg value={period} onChange={setPeriod} options={[["hoje", "Hoje"], ["7d", "7 dias"], ["30d", "30 dias"], ["tudo", "Tudo"]]} />

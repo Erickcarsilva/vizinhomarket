@@ -40,6 +40,7 @@ export default function Register() {
     try {
       const res = await base44.auth.register({ email, password });
       if (res && res.needsVerification === false) {
+        await recordConsents();
         window.location.href = safeReturnTo();
         return;
       }
@@ -51,6 +52,12 @@ export default function Register() {
     }
   };
 
+  // Registra o aceite dos termos e da política (versão e data) na conta — prova do consentimento (LGPD).
+  const recordConsents = async () => {
+    try { await Promise.all([base44.support.consent("terms", "2026-11", true), base44.support.consent("privacy", "2026-11", true)]); }
+    catch { /* não impede o cadastro; o aceite também está no formulário */ }
+  };
+
   const handleVerify = async () => {
     setError("");
     setLoading(true);
@@ -59,6 +66,7 @@ export default function Register() {
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
       }
+      await recordConsents();
       window.location.href = safeReturnTo();
     } catch (err) {
       setError(err.message || "Código de verificação inválido");

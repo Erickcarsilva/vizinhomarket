@@ -1,11 +1,19 @@
 import React, { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, Store, ShoppingBag, Users, Bike, Wallet, Settings, AlertTriangle, LogOut, Menu, ExternalLink, Landmark, Undo2, LifeBuoy, Tag, MapPinned, Shapes } from "lucide-react";
+import { LayoutDashboard, Store, ShoppingBag, Users, Bike, Wallet, Settings, AlertTriangle, LogOut, Menu, ExternalLink, Landmark, Undo2, LifeBuoy, Tag, MapPinned, Shapes, Building2, UserCog } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/AuthContext";
 import Brand from "@/components/layout/Brand";
 import { APP_VERSION } from "@/lib/version";
 import { URLS } from "@/lib/appConfig";
+
+// Quem não é admin vê só as telas da sua área (o servidor também confere).
+export const SCOPE_PATHS = {
+  financeiro: ["/financeiro", "/reembolsos"],
+  atendimento: ["/atendimento", "/reembolsos", "/pedidos"],
+  operacao: ["/entregas", "/pedidos"],
+};
+export const allowedPaths = (user) => (user?.role === "admin" ? null : [...new Set((user?.scopes || []).flatMap((s) => SCOPE_PATHS[s] || []))]);
 
 export const ADMIN_NAV = [
   ["/", "Visão geral", LayoutDashboard],
@@ -20,6 +28,8 @@ export const ADMIN_NAV = [
   ["/atendimento", "Atendimento", LifeBuoy],
   ["/cupons", "Cupons e campanhas", Tag],
   ["/categorias", "Categorias", Shapes],
+  ["/cidades", "Cidades", Building2],
+  ["/equipe", "Equipe e permissões", UserCog],
   ["/config", "Configurações", Settings],
   ["/registros", "Erros e histórico", AlertTriangle],
 ];
@@ -33,7 +43,7 @@ function Sidebar({ onNavigate }) {
         <p className="text-[11px] uppercase tracking-[0.2em] text-accent font-semibold mt-1">Painel administrativo</p>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        {ADMIN_NAV.map(([to, label, Icon]) => (
+        {ADMIN_NAV.filter(([to]) => !allowedPaths(user) || allowedPaths(user).includes(to)).map(([to, label, Icon]) => (
           <NavLink key={to} to={to} end={to === "/"} onClick={onNavigate}
             className={({ isActive }) => `flex items-center gap-3 min-h-[44px] px-3 rounded-xl text-[15px] font-medium transition ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}>
             <Icon className="w-5 h-5 shrink-0" />{label}

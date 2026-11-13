@@ -3,6 +3,7 @@ import { useOutletContext, Link } from "react-router-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { allPages, downloadCsv, ORDER_COLUMNS } from "@/lib/csv";
 import { useStoreSummary } from "@/lib/useStoreOrders";
 import { brl, STATUS, PAYMENT } from "@/lib/constants";
 
@@ -18,6 +19,7 @@ export default function Historico() {
   const { store } = useOutletContext();
   const [period, setPeriod] = useState("7d");
   const [show, setShow] = useState("DELIVERED");
+  const [exporting, setExporting] = useState(false);
   const { from, to } = useMemo(() => ({ from: since[period]().toISOString(), to: new Date(Date.now() + 60000).toISOString() }), [period]);
   const { data: s } = useStoreSummary(store?.id, from, to);
   const list = useInfiniteQuery({
@@ -37,6 +39,13 @@ export default function Historico() {
         <p className="text-xs uppercase tracking-[0.25em] text-accent font-semibold">Histórico</p>
         <h1 className="font-display text-4xl mt-2">Pedidos entregues</h1>
       </div>
+      <button type="button" disabled={exporting} onClick={async () => {
+        setExporting(true);
+        try {
+          const all = await allPages((page) => base44.partner.listPage({ storeId: store.id, status: show, from, to, page }));
+          downloadCsv(`pedidos-${store.slug || "loja"}-${period}.csv`, ORDER_COLUMNS.filter(([k]) => k !== "store_name"), all);
+        } finally { setExporting(false); }
+      }} className="h-9 px-4 rounded-full border border-border text-sm font-semibold disabled:opacity-50">{exporting ? "Gerando…" : "Baixar planilha (CSV)"}</button>
       <div className="flex gap-1.5 overflow-x-auto pb-1">
         {[["hoje", "Hoje"], ["7d", "7 dias"], ["mes", "Este mês"], ["30d", "30 dias"]].map(([k, l]) => <button key={k} type="button" onClick={() => setPeriod(k)} className={pill(period === k)}>{l}</button>)}
       </div>

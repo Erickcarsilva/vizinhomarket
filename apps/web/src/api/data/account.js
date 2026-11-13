@@ -6,10 +6,12 @@ export const account = {
   async getProfile() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
-    const { data, error } = await supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle();
+    const { data, error } = await supabase.from("profiles").select("full_name, phone, document").eq("id", user.id).maybeSingle();
     fail(error);
-    return { full_name: data?.full_name || "", phone: data?.phone || "" };
+    // O CPF não volta para a tela: só se já está cadastrado.
+    return { full_name: data?.full_name || "", phone: data?.phone || "", has_document: Boolean(data?.document) };
   },
+  async setDocument(cpf) { fail((await supabase.rpc("set_my_document", { p_cpf: cpf })).error); },
   // Declaração de maioridade (itens +18). A data só é conferida no servidor; não fica guardada.
   async confirmAge(birthDate) {
     const { error } = await supabase.rpc("confirm_age", { p_birth_date: birthDate });

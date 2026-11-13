@@ -6,6 +6,10 @@ import { fail } from "./shared";
 const rpc = async (fn, args = {}) => { const { data, error } = await supabase.rpc(fn, args); fail(error); return data; };
 
 export const adminOps = {
+  listCities: () => rpc("admin_list_cities"),
+  saveCity: (id, name, state, timezone, active) => rpc("admin_upsert_city", { p_id: id, p_name: name, p_state: state, p_timezone: timezone, p_active: active }),
+  listStaff: () => rpc("admin_list_staff"),
+  setStaffScope: (email, scope, granted) => rpc("admin_set_staff_scope", { p_email: email, p_scope: scope, p_granted: granted }),
   async payments({ status, limit = 100 } = {}) {
     let q = supabase.from("payments").select("id, provider, method, amount, status, paid_amount, refunded_amount, failure_reason, created_at, paid_at, order:orders(code, store:stores(name))");
     if (status) q = q.eq("status", status);

@@ -6,7 +6,11 @@ import PageNotFound from "@/lib/PageNotFound";
 import Login from "@/pages/Login";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
-import AdminLayout, { ADMIN_NAV } from "./AdminLayout";
+import AdminLayout, { ADMIN_NAV, allowedPaths } from "./AdminLayout";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/lib/AuthContext";
+import CitiesAdmin from "@/components/admin/panel/CitiesAdmin";
+import StaffAdmin from "@/components/admin/panel/StaffAdmin";
 import Overview from "@/components/admin/panel/Overview";
 import StoresAdmin from "@/components/admin/panel/StoresAdmin";
 import OrdersAdmin from "@/components/admin/panel/OrdersAdmin";
@@ -26,6 +30,10 @@ const TAB_PATH = { visao: "/", lojas: "/lojas", pedidos: "/pedidos", usuarios: "
 
 function Page({ children }) {
   const { pathname } = useLocation();
+  const { user } = useAuth();
+  const allowed = allowedPaths(user);
+  // Equipe por área: fora da sua área, vai para a primeira tela permitida.
+  if (allowed && !allowed.includes(pathname)) return <Navigate to={allowed[0] || "/login"} replace />;
   const title = (ADMIN_NAV.find(([to]) => to === pathname) || [null, "Painel"])[1];
   return (
     <div className="max-w-6xl mx-auto px-5 py-8 space-y-6">
@@ -65,6 +73,8 @@ export default function AdminApp() {
             <Route path="/atendimento" element={<Page><SupportAdmin /></Page>} />
             <Route path="/cupons" element={<Page><CouponsAdmin /></Page>} />
             <Route path="/categorias" element={<Page><CategoriesAdmin /></Page>} />
+            <Route path="/cidades" element={<Page><CitiesAdmin /></Page>} />
+            <Route path="/equipe" element={<Page><StaffAdmin /></Page>} />
             <Route path="/config" element={<Page><SettingsAdmin /></Page>} />
             <Route path="/registros" element={<Page><LogsAdmin /></Page>} />
           </Route>

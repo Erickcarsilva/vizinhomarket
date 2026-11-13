@@ -13,6 +13,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { APP_VERSION } from "@/lib/version";
 import { useCourierLocation } from "./useCourierLocation";
+import PushToggle from "@/components/PushToggle";
 
 const brl = (v) => (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const time = (d) => (d ? new Date(d).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "");
@@ -167,6 +168,7 @@ function Corridas() {
         {online && loc?.error && <p className="text-sm mt-3 bg-white/10 rounded-xl px-3 py-2">{loc.error}</p>}
       </Card>
       <ErrorText error={error} />
+      {online && <PushToggle title="Aviso de corrida nova" description="Receba um aviso quando surgir corrida na sua cidade, mesmo com o app fechado." compact />}
 
       {(active.data || []).length > 0 && (
         <section className="space-y-3">

@@ -17,13 +17,13 @@ export function RequireLogin() {
   return <Outlet />;
 }
 
-// Exige papel de administrador.
+// Exige papel de administrador ou alguma área da equipe interna (o menu mostra só o que a área pode usar).
 export function RequireAdmin() {
   const { user, isAuthenticated, isLoadingAuth, logout } = useAuth();
   const loc = useLocation();
   if (isLoadingAuth) return <Spinner />;
   if (!isAuthenticated) return <Navigate to={`/login?returnTo=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
-  if (user?.role !== "admin") {
+  if (user?.role !== "admin" && !(user?.scopes || []).length) {
     return (
       <div className="min-h-screen flex items-center justify-center px-5">
         <div className="max-w-md text-center space-y-4">
