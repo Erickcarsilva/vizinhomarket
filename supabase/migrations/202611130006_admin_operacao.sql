@@ -44,3 +44,40 @@ end $$;
 
 revoke execute on function public.admin_set_setting(text, jsonb), public.admin_set_store_online_payment(uuid, boolean, text, text) from public, anon, authenticated;
 grant execute on function public.admin_set_setting(text, jsonb), public.admin_set_store_online_payment(uuid, boolean, text, text) to authenticated;
+
+-- Visão geral do admin com as pendências dos módulos novos.
+create or replace function public.admin_overview(p_from timestamptz default date_trunc('month', now()), p_to timestamptz default now())
+returns jsonb
+language plpgsql stable security definer set search_path = public, auth as $$
+declare res jsonb;
+begin
+  perform public._require_admin();
+  select jsonb_build_object(
+    'orders', count(*),
+    'delivered', count(*) filter (where status = 'DELIVERED'),
+    'cancelled', count(*) filter (where status = 'CANCELLED'),
+    'auto_cancelled', count(*) filter (where status = 'CANCELLED' and cancel_reason like 'A loja não respondeu%'),
+    'open', count(*) filter (where status not in ('DELIVERED', 'CANCELLED')),
+    'gmv', coalesce(sum(total) filter (where status = 'DELIVERED'), 0),
+    'commission', coalesce(sum(commission_amount) filter (where status = 'DELIVERED'), 0),
+    'avg_accept_min', round(avg(extract(epoch from (accepted_at - created_at)) / 60) filter (where accepted_at is not null)::numeric, 1),
+    'online_share', round(100.0 * count(*) filter (where payment_mode = 'online' and status = 'DELIVERED') / nullif(count(*) filter (where status = 'DELIVERED'), 0), 1)
+  ) into res
+  from public.orders where created_at between p_from and p_to;
+  return res || jsonb_build_object(
+    'stores_pending', (select count(*) from public.stores where status = 'pending'),
+    'stores_approved', (select count(*) from public.stores where status = 'approved'),
+    'stores_suspended', (select count(*) from public.stores where status = 'suspended'),
+    'couriers_pending', (select count(*) from public.couriers where status = 'pending'),
+    'couriers_online', (select count(*) from public.couriers where status = 'approved' and is_online),
+    'users', (select count(*) from auth.users),
+    'invoices_open', (select coalesce(sum(commission_total), 0) from public.invoices where status = 'open'),
+    'refunds_pending', (select count(*) from public.refunds where status in ('requested', 'failed')),
+    'tickets_open', (select count(*) from public.support_tickets where status in ('open', 'waiting_store')),
+    'deliveries_unassigned', (select count(*) from public.orders where fulfillment = 'platform_delivery' and status = 'READY' and courier_id is null),
+    'payments_review', (select count(*) from public.payments where status = 'review'),
+    'services_open', (select count(*) from public.service_requests where status in ('REQUESTED', 'QUOTED', 'ACCEPTED', 'SCHEDULED'))
+  );
+end $$;
+revoke execute on function public.admin_overview(timestamptz, timestamptz) from public, anon;
+grant execute on function public.admin_overview(timestamptz, timestamptz) to authenticated;

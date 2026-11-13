@@ -22,7 +22,7 @@ import CouponsAdmin from "@/components/admin/panel/CouponsAdmin";
 import DeliveriesAdmin from "@/components/admin/panel/DeliveriesAdmin";
 import CategoriesAdmin from "@/components/admin/panel/CategoriesAdmin";
 
-const TAB_PATH = { visao: "/", lojas: "/lojas", pedidos: "/pedidos", usuarios: "/usuarios", entregadores: "/entregadores", comissoes: "/comissoes", config: "/config", registros: "/registros" };
+const TAB_PATH = { visao: "/", lojas: "/lojas", pedidos: "/pedidos", usuarios: "/usuarios", entregadores: "/entregadores", comissoes: "/comissoes", config: "/config", registros: "/registros", reembolsos: "/reembolsos", atendimento: "/atendimento", entregas: "/entregas", financeiro: "/financeiro" };
 
 function Page({ children }) {
   const { pathname } = useLocation();

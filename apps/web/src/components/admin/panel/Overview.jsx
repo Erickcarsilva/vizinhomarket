@@ -27,12 +27,17 @@ export default function Overview({ goTo }) {
     ["Vendas das lojas", brl(n("gmv")), "pedidos entregues"],
     ["Sua comissão", brl(n("commission")), "pedidos entregues"],
     ["Cancelados", `${n("cancelled")} (${cancelRate}%)`, `${n("auto_cancelled")} sem resposta da loja`],
+    ["Pagos pelo app", o?.online_share != null ? `${String(o.online_share).replace(".", ",")}%` : "—", `${n("couriers_online")} entregador(es) online agora`],
     ["Tempo médio de aceite", o?.avg_accept_min != null ? `${String(o.avg_accept_min).replace(".", ",")} min` : "—", "do pedido ao aceite"],
   ];
   const alerts = [
     [n("stores_pending"), "loja(s) aguardando aprovação", "lojas"],
     [n("couriers_pending"), "entregador(es) aguardando aprovação", "entregadores"],
     [n("invoices_open") > 0 ? 1 : 0, `${brl(n("invoices_open"))} em faturas a receber`, "comissoes"],
+    [n("refunds_pending"), "reembolso(s) para decidir ou com falha", "reembolsos"],
+    [n("tickets_open"), "atendimento(s) aguardando resposta", "atendimento"],
+    [n("deliveries_unassigned"), "pedido(s) pronto(s) sem entregador", "entregas"],
+    [n("payments_review"), "pagamento(s) em revisão (valor divergente)", "financeiro"],
   ].filter(([c]) => c > 0);
 
   return (
