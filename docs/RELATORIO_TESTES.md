@@ -33,7 +33,7 @@ o Supabase real, gateways reais ou aparelhos físicos — isso está listado no 
 | `admin` (painel administrativo) | **30/30** |
 | `telas` (volume de 600+ pedidos, busca, favoritos, bairros) | **43/43** |
 | `push` (aviso de pedido novo, Web Push com serviço falso) | **10/10** |
-| `marketplace` (cupom + Pix pelo app em sandbox → loja só vê depois do "banco" → preparo → entregador: cadastro, online, oferta sem dados do cliente, aceite, retirada, posição registrada, código, ganhos → razão fecha em zero e loja com R$ 29,44 a receber → orçamento de serviço → 6 telas novas do admin → acessibilidade axe e celular sem rolagem lateral em 6 telas) | **43/44** na última execução concluída; a falha restante era contraste de cor no cabeçalho do app do entregador (corrigida em seguida — ver o resultado final abaixo) |
+| `marketplace` (cupom + Pix pelo app em sandbox → loja só vê depois do "banco" → preparo → entregador: cadastro, online, oferta sem dados do cliente, aceite, retirada, posição registrada, código, ganhos → razão fecha em zero e loja com R$ 29,44 a receber → orçamento de serviço → 6 telas novas do admin → acessibilidade axe e celular sem rolagem lateral em 6 telas) | **44/44** (execuções 24 e 25 do CI) |
 | Travas do script de zerar | **4/4** |
 | Arquivos de instalação (`validar-deploy.mjs`: completo do zero, 03→04→05→06→07→08→**09**) | **10/10** (local) |
 | PWA (`pwa-check.mjs`: manifest, service worker, offline, POST não atendido pelo cache) | **4/4** (local) |
@@ -57,7 +57,11 @@ Execução final do CI depois das correções: ver a seção 6.
 | Contraste insuficiente no app do entregador | cabeçalho/menu | cores ajustadas |
 
 ## 6. Execução final
-(preenchida abaixo)
+- **Execução 24 do CI** (commit `8c36787`, todas as correções de código): os dois trabalhos **verdes** — banco 396/396, deploy em dia,
+  lint/build dos 4 produtos, auditoria 0; ponta a ponta 23/23, 22/22, 30/30, 43/43, 10/10, **44/44**, concorrência 11/11, travas 4/4.
+- **Execução 25** (só documentação): `telas` 42/43 — a tela de favoritos registrou um "409 Conflict" no console. Causa: duas
+  sincronizações de favoritos simultâneas no login gravando o mesmo item (o app já tratava o erro, mas o navegador registrava).
+  Corrigido deixando a sincronização com uma execução por vez (`lib/favorites.js`). Resultado da execução seguinte: ver a seção 8.
 
 ## 7. Não verificado (depende de ambiente real)
 - Aplicação do `09` no Supabase real; pg_cron, pg_net, realtime e storage reais.
@@ -65,3 +69,6 @@ Execução final do CI depois das correções: ver a seção 6.
 - E-mail real de cadastro/recuperação; Web Push em aparelhos reais; instalação do PWA em Android/iOS físicos.
 - Teste de carga com tráfego HTTP real (os testes de concorrência cobrem as disputas por dados; volume de 1.350 pedidos coberto em `telas`/`run.mjs`).
 - Restauração de backup no Supabase real (ensaio local 9/9 em 21/10).
+
+## 8. Execução depois da correção dos favoritos
+(registrada no fim do trabalho)

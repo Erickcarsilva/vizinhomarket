@@ -31,7 +31,14 @@ export const toggleFavorite = (id) => {
 };
 
 // Junta os do navegador com os da conta e devolve a lista final.
-export async function syncFavorites() {
+// Uma sincronização por vez: chamadas simultâneas (ex.: login + troca de tela) reaproveitam a que já está rodando,
+// sem tentar gravar o mesmo favorito duas vezes.
+let inFlight = null;
+export function syncFavorites() {
+  if (!inFlight) inFlight = doSync().finally(() => { inFlight = null; });
+  return inFlight;
+}
+async function doSync() {
   if (!(await userId())) return read();
   const load = async () => {
     const { data, error } = await supabase.from("favorites").select("product_id").order("created_at");
