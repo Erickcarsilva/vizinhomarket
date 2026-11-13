@@ -75,7 +75,7 @@ const FILTERS = [
 ];
 
 function Rail({ children, label }) {
-  return <div role="list" aria-label={label} className="flex gap-3 overflow-x-auto no-scrollbar px-4 sm:px-6 pb-1 snap-x">{children}</div>;
+  return <div role="group" aria-label={label} className="flex gap-3 overflow-x-auto no-scrollbar px-4 sm:px-6 pb-1 snap-x">{children}</div>;
 }
 
 // Uma "rua" do marketplace (Comida, Mercado, Saúde, Lojas, Serviços): até 4 lojas e o atalho para ver todas.
