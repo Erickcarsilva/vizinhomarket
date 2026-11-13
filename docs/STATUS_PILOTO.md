@@ -28,6 +28,11 @@ Legenda: **I** implementado · **T** testado automaticamente · **S** validado e
 | Entregador: cadastro, aprovação, online/offline, ofertas, aceite atômico, retirada, código, problema, ganhos, histórico | ✔ | ✔ banco + concorrência + e2e* | — | — | Termos do entregador (jurídico) — E |
 | Admin: visão geral, lojas, pedidos, usuários, entregadores, entregas (reatribuição) | ✔ | ✔ e2e | — | — | |
 | Admin: pagamentos, conciliação, saldos/repasses, reembolsos, atendimento, cupons, categorias, chaves de operação | ✔ | ✔ banco + e2e* | — | — | |
+| Admin: cidades (expansão) e equipe interna por área (financeiro, atendimento, operação) | ✔ | ✔ banco + e2e* | — | — | MFA para admin — E |
+| Avisos no celular: cliente (andamento do pedido) e entregador (corrida nova) | ✔ | ✔ banco + função | — | — | Chaves VAPID e função `avisos` publicada — E |
+| Planilha (CSV) de pedidos para lojista e admin | ✔ | ✔ e2e* | — | — | |
+| CPF do pagador no pagamento online (quando o gateway exige) | ✔ | ✔ banco | — | — | |
+| Teste de carga (25 usuários simultâneos) | ✔ | ✔ CI | — | — | Carga em ambiente real |
 | Financeiro: razão imutável, idempotência, estornos, conciliação | ✔ | ✔ banco + concorrência | ✔ interno | — | Extrato real do gateway — 3º |
 | PWA (cliente e entregador): manifest, ícones, service worker, offline seguro | ✔ | ✔ (`pwa-check` 4/4) | — | — | Instalação testada em aparelho real — E |
 | Segurança e LGPD | ✔ | ✔ (autorização em todas as suítes) | — | — | Revisão jurídica, MFA admin, pentest — 3º/E |
@@ -67,7 +72,7 @@ Legenda: **I** implementado · **T** testado automaticamente · **S** validado e
 | Indicadores | Pedidos/semana, recompra em 30 dias, tempo médio de aceite (< 3 min), cancelamento (< 5%), reclamações por 100 pedidos, divergências na conciliação (= 0) |
 
 ## Evolução e expansão
-- **Curto prazo**: e-mail/push de status para o cliente; impressão de pedidos na loja; relatórios exportáveis (CSV); MFA admin.
+- **Curto prazo**: e-mail de status para o cliente; impressão de pedidos na loja; MFA admin; bairros por cidade na tela de Configurações.
 - **Médio prazo**: split do Mercado Pago; antecipação; chargebacks; nota fiscal da comissão; mapa com rotas (OSRM/Mapbox) quando o volume
   justificar; despacho automático de corridas por proximidade; app nativo (Capacitor) com rastreio em segundo plano consentido.
 - **Expansão**: o banco já é multicidade (cidades, bairros, fuso, coberturas). Nova cidade = cadastrar cidade/bairros, ativar, onboarding de

@@ -41,7 +41,7 @@ Fontes: [Asaas — preços](https://www.asaas.com/precos-e-taxas), [Blog Asaas �
 ## Para ativar de verdade (pendências do Erick)
 
 1. **Escolher o provedor e abrir a conta PJ** da plataforma (exige CNPJ e análise do provedor). Para Asaas: habilitar a API e o split; para cada loja, criar a subconta e anotar o `walletId`.
-2. **Decidir o CPF do pagador** (exigência do Asaas): o app precisa pedir o CPF antes do pagamento online — hoje o adaptador recusa sem CPF com mensagem clara.
+2. **CPF do pagador** (exigência do Asaas): já implementado — com o gateway Asaas, a finalização pede o CPF (validado, guardado só na conta da pessoa) e a função de pagamento o envia ao banco.
 3. **Cadastrar os segredos** no Supabase (Edge Functions → Secrets). Nunca no código:
    - Asaas: `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN`, `ASAAS_BASE_URL` (sandbox: `https://api-sandbox.asaas.com/v3`; produção: `https://api.asaas.com/v3`).
    - Mercado Pago: `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`.

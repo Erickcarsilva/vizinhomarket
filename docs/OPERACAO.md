@@ -15,7 +15,9 @@ Testes ponta a ponta e de concorrência (Postgres 16/17 na porta 54329 + PostgRE
    - instalação nova: `supabase/deploy/vizinhomarket_banco_completo.sql` (Partes 1 a 4);
    - quem já está no 08: `supabase/deploy/09_atualizacao_marketplace.sql`.
    Os arquivos são gerados por `node supabase/deploy/gerar.mjs` e conferidos no CI (`validar-deploy.mjs`: 10/10).
-2. **Funções** (Edge Functions): `novo-pedido`, `pagamentos`, `pagamentos-webhook`, `pagamentos-estornos`.
+2. **Funções** (Edge Functions): `novo-pedido`, `pagamentos`, `pagamentos-webhook`, `pagamentos-estornos`, `avisos`.
+   Para os avisos de cliente/entregador: publicar `avisos` com `--no-verify-jwt`, segredos `VAPID_*` e `CRON_SECRET`, e em
+   `platform_settings` a chave `notifications_function_url` (e `cron_secret`). Nos sites: `VITE_VAPID_PUBLIC_KEY`.
    O workflow "Publicar funções do Supabase" publica `novo-pedido`; as de pagamento seguem `docs/PAGAMENTOS.md`.
 3. **Sites** (Netlify, um site por produto, mesmo repositório): variável `PRODUTO` = `cliente`, `parceiro`, `admin`, `entregador`;
    `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_URL_*` (endereços dos outros produtos), `VITE_SUPPORT_*`.
@@ -32,6 +34,8 @@ Nada muda para os usuários ao aplicar o 09: pagamento online e entrega pela pla
 | Semanal | Saldos e repasses | Pagar lojas/entregadores (Pix) e registrar o repasse com o identificador |
 | Mensal | Comissões e faturas | Gerar faturas (pedidos pagos na entrega + serviços), cobrar e marcar como pagas |
 | Mensal | Erros e histórico | Ler erros do app e a auditoria de ações administrativas |
+| Quando precisar | Equipe e permissões | Dar à equipe acesso só à área dela (financeiro, atendimento, operação) |
+| Expansão | Cidades | Cadastrar cidade (nasce inativa), bairros, lojas e entregadores; depois ativar |
 
 ## Monitoramento e alertas
 - **Erros do app**: tabela `client_errors` (tela "Erros e histórico"), apagados em 30 dias.

@@ -15,7 +15,7 @@
 | Lojista vendo outra loja | Ler pedidos, CPF, saldo, cupons | RLS por `is_store_member`/`is_store_owner`; dados fiscais em tabela separada | `run.mjs`, `financeiro.mjs` |
 | Vazamento de dados pessoais | CPF de loja/entregador, telefone/endereço do cliente | Colunas sem `select` público; endereço do cliente só depois do aceite (entregador e prestador) | `run.mjs`, `logistica.mjs`, `servicos.mjs` |
 | Rastreamento indevido do entregador | GPS com app offline | Posição só por função, só online, histórico só durante a entrega; offline apaga a última posição; retenção de 30 dias | `logistica.mjs` |
-| Escalada de privilégio | Virar admin, aprovar a própria loja | `user_roles` sem escrita; funções `admin_*` conferem papel; auditoria | `run.mjs`, todas as suítes |
+| Escalada de privilégio | Virar admin, aprovar a própria loja | `user_roles` sem escrita; funções `admin_*` conferem papel; equipe interna com acesso só à sua área (financeiro, atendimento, operação); auditoria | `run.mjs`, `equipe.mjs` |
 | Alteração do histórico financeiro | Editar/apagar lançamento | Gatilho bloqueia update/delete (até superusuário); ajuste = lançamento novo com justificativa | `financeiro.mjs` |
 | Abuso (spam) | Muitos atendimentos/orçamentos | Limites por usuário/dia nas funções; limite do Supabase Auth para login | `servicos.mjs` |
 | XSS | Texto do usuário em telas | React escapa por padrão; sem `dangerouslySetInnerHTML` com dado de usuário | revisão de código |
@@ -42,7 +42,7 @@
 |---|---|
 | Acesso e portabilidade (art. 18, II e V) | `export_my_data()`; botão "Baixar meus dados" no perfil (JSON) |
 | Eliminação (art. 18, VI) | `delete_my_account()`: apaga conta, perfil, endereços, consentimentos; anonimiza pedidos, serviços e mensagens (mantidos por obrigação contábil); bloqueia se houver pedido/serviço em andamento ou ganhos a receber |
-| Consentimento | `user_consents` com tipo, versão e data; `record_consent()` |
+| Consentimento | `user_consents` com tipo, versão e data; aceite dos termos e da política registrado no cadastro |
 | Minimização | Data de nascimento não é guardada (só a confirmação de 18+); posição do entregador só durante a entrega |
 | Retenção | Erros do app: 30 dias; posições de entrega: 30 dias (configurável); auditoria e razão: permanentes (obrigação legal/contábil) |
 | Segurança | RLS, permissões por coluna, auditoria, backups com permissões (ver `RESTAURAR.md`) |
